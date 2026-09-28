@@ -355,29 +355,29 @@ const nm = id => NAMES[id][LANG === 'it' ? 0 : 1];
 /* ============================ look =============================== */
 // visual description of each species (shape + palette). Not balancing.
 const LOOK = {
-  sardina:  { shape: 'fish', h: .27, back: '#2f5f86', body: '#9fbcd0', belly: '#eef5fa', fin: '#8fb0c6', pat: 'spots', pc: '#23496a', tail: 'fork' },
-  occhiata: { shape: 'fish', h: .38, back: '#6f8a9c', body: '#c7d3db', belly: '#f2f6f8', fin: '#aebcc6', pat: 'band', pc: '#1b2630', tail: 'fork', eye: 1.35 },
-  sarago:   { shape: 'fish', h: .46, back: '#7f8f99', body: '#d5dde2', belly: '#f4f7f9', fin: '#b9c4cb', pat: 'stripesV', pc: '#3a4750', tail: 'fork' },
-  orata:    { shape: 'fish', h: .48, back: '#667f92', body: '#cfd9e0', belly: '#f5f8fa', fin: '#b7c3cc', pat: 'goldbrow', pc: '#f2c14e', tail: 'fork' },
-  spigola:  { shape: 'fish', h: .31, back: '#4a6278', body: '#b8c6d1', belly: '#eef3f7', fin: '#9fb0be', pat: 'lineH', pc: '#8ea2b3', tail: 'fork', dorsal: 1.3 },
+  sardina:  { shape: 'fish', h: .27, back: '#12798f', body: '#9fd0dc', belly: '#f2f8fb', fin: '#8fbccb', pat: 'dotrow', pc: '#0c4b5a', tail: 'fork' },
+  occhiata: { shape: 'fish', h: .38, back: '#5d7f98', body: '#c9d8e2', belly: '#f4f8fa', fin: '#aebfcb', pat: 'band', pc: '#10181f', tail: 'fork', eye: 1.35 },
+  sarago:   { shape: 'fish', h: .46, back: '#7f8f99', body: '#dde4e8', belly: '#f6f8fa', fin: '#b9c4cb', pat: 'stripesV', pc: '#1a2026', tail: 'fork' },
+  orata:    { shape: 'fish', h: .48, back: '#667f92', body: '#cfd9e0', belly: '#f5f8fa', fin: '#b7c3cc', pat: 'goldbrow', pc: '#ffc21a', tail: 'fork' },
+  spigola:  { shape: 'fish', h: .31, back: '#26384d', body: '#aebdca', belly: '#f0f4f7', fin: '#7f93a5', pat: 'gill', pc: '#1d2a38', tail: 'fork', dorsal: 1.3 },
   triglia:  { shape: 'fish', h: .32, back: '#cf4538', body: '#f18b79', belly: '#ffe6da', fin: '#f6a38f', pat: 'lineH', pc: '#f6c343', tail: 'fork', barbels: true },
   polpo:    { shape: 'octo', h: .7, back: '#a8405f', body: '#cf6283', belly: '#f0a9bd', fin: '#b94f70', pat: 'spots', pc: '#f3b8c9' },
   dentice:  { shape: 'fish', h: .42, back: '#946481', body: '#dcaab4', belly: '#f8e6ea', fin: '#c68ea0', pat: 'spots', pc: '#6aa3d8', tail: 'fork' },
   ricciola: { shape: 'fish', h: .31, back: '#4f6678', body: '#c5ced5', belly: '#f1f4f6', fin: '#e0b04a', pat: 'lineH', pc: '#f2b33d', tail: 'crescent' },
-  murena:   { shape: 'eel', h: .2, back: '#5b3d20', body: '#7a5530', belly: '#a07a44', fin: '#6b4a2a', pat: 'spots', pc: '#e8c85e' },
+  murena:   { shape: 'eel', h: .26, back: '#5b3d20', body: '#7a5530', belly: '#a07a44', fin: '#6b4a2a', pat: 'spots', pc: '#e8c85e' },
   lampuga:  { shape: 'fish', h: .4, back: '#169c8c', body: '#3fd07a', belly: '#f6e04b', fin: '#2fb3a0', pat: 'spots', pc: '#1a6fd0', tail: 'fork', dorsal: 1.2, blunt: true },
   tonno:    { shape: 'fish', h: .36, back: '#16305c', body: '#8fa6bf', belly: '#e9eef3', fin: '#f2cf3e', pat: 'finlets', pc: '#f2cf3e', tail: 'crescent' },
-  pesce_luna: { shape: 'sun', h: .95, back: '#6f7f8d', body: '#aab8c3', belly: '#dfe6ec', fin: '#8b9aa7', pat: 'spots', pc: '#c9d3db' },
+  pesce_luna: { shape: 'sun', h: .78, back: '#6f7f8d', body: '#aab8c3', belly: '#dfe6ec', fin: '#8b9aa7', pat: 'spots', pc: '#c9d3db' },
   verdesca: { shape: 'shark', h: .26, back: '#2f5fb5', body: '#4f82d6', belly: '#eaf1fb', fin: '#2b57a6', pat: 'none', tail: 'shark', dorsal: 1.7 },
   pesce_spada: { shape: 'sword', h: .27, back: '#3d4d70', body: '#6d7ea3', belly: '#dfe5ee', fin: '#34425f', pat: 'none', tail: 'crescent', dorsal: 1.9 },
   lanterna: { shape: 'fish', h: .36, back: '#1c2a45', body: '#2f4266', belly: '#546a92', fin: '#243555', pat: 'glow', pc: '#7ff3ff', tail: 'fork', eye: 1.6, glow: '#7ff3ff' },
   rana:     { shape: 'angler', h: .78, back: '#2f2526', body: '#4a3b3b', belly: '#6a5552', fin: '#3a2e2e', pat: 'none', glow: '#ffe27a' },
-  vipera:   { shape: 'viper', h: .24, back: '#101a26', body: '#1f2e40', belly: '#34475e', fin: '#16222f', pat: 'glow', pc: '#9dff9d', glow: '#9dff9d', tail: 'fork', eye: 1.3 },
+  vipera:   { shape: 'viper', h: .26, back: '#1c3452', body: '#35587f', belly: '#7394b8', fin: '#2a4868', pat: 'glow', pc: '#9dff9d', glow: '#b6ff9d', tail: 'fork', eye: 1.6, rim: '#8fdcff' },
   calamaro: { shape: 'squid', h: .34, back: '#8e2f2a', body: '#c0493f', belly: '#e88a7c', fin: '#a83c34', pat: 'spots', pc: '#e2766a' },
   pesce_oro: { shape: 'fish', h: .42, back: '#d0820a', body: '#ffc93a', belly: '#fff2a6', fin: '#ffb020', pat: 'shine', pc: '#fff7cc', tail: 'fork', dorsal: 1.4, eye: 1.2 },
-  cernia_gigante: { shape: 'fish', h: .5, back: '#4e2e1c', body: '#8a5a3c', belly: '#c8a07a', fin: '#6d4128', pat: 'spots', pc: '#c79a6b', tail: 'round', blunt: true, lips: true },
-  murena_regina: { shape: 'eel', h: .17, back: '#2e1f12', body: '#4a3219', belly: '#7a5a2e', fin: '#3a2715', pat: 'spots', pc: '#f0d060', crown: true },
-  pesce_spada_re: { shape: 'sword', h: .27, back: '#1f2c4d', body: '#465a86', belly: '#d4dcea', fin: '#1a2542', pat: 'none', tail: 'crescent', dorsal: 2.1, crown: true },
+  cernia_gigante: { shape: 'fish', h: .5, back: '#4e2e1c', body: '#8a5a3c', belly: '#c8a07a', fin: '#6d4128', pat: 'spots', pc: '#c79a6b', tail: 'round', blunt: true, lips: true, veteran: true },
+  murena_regina: { shape: 'eel', h: .22, back: '#2e1f12', body: '#4a3219', belly: '#7a5a2e', fin: '#3a2715', pat: 'spots', pc: '#f0d060', crown: true, pearls: true },
+  pesce_spada_re: { shape: 'sword', h: .27, back: '#1f2c4d', body: '#465a86', belly: '#d4dcea', fin: '#1a2542', pat: 'none', tail: 'crescent', dorsal: 2.1, crown: true, goldBill: true, moustache: true },
   kraken:   { shape: 'kraken', h: .75, back: '#6e1f22', body: '#9c2d2f', belly: '#d86a5f', fin: '#7d2427', pat: 'spots', pc: '#e59a8c' },
 };
 const RARITY_COL = ['#7d8a96', '#7d8a96', '#22a65a', '#2f7fe0', '#ff8a00'];
@@ -1294,11 +1294,13 @@ function drawBoat() {
   // hull
   const hullCol = ['#fbfbf6', '#2f6fc8', '#d2443b', '#f3f3f3'][lvl], trim = ['#2d6fd0', '#f7f7f2', '#f7f7f2', '#f08a24'][lvl];
   g.fillStyle = 'rgba(0,30,60,.18)'; g.beginPath(); g.ellipse(0, 6, W * .55, 6, 0, 0, 7); g.fill();
-  g.fillStyle = hullCol;
-  g.beginPath(); g.moveTo(-W / 2, -26); g.lineTo(W / 2 + 8, -30); g.quadraticCurveTo(W / 2 - 6, 4, W / 2 - 22, 8); g.lineTo(-W / 2 + 16, 8); g.quadraticCurveTo(-W / 2, -4, -W / 2, -26); g.fill();
-  g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 2; g.stroke();
-  g.fillStyle = trim; g.fillRect(-W / 2 + 4, -24, W, 6);
-  if (lvl === 0) { g.fillStyle = '#d2443b'; g.fillRect(-W / 2 + 6, -12, W - 24, 3); }
+  if (lvl === 0) drawGozzo(W);
+  else {
+    g.fillStyle = hullCol;
+    g.beginPath(); g.moveTo(-W / 2, -26); g.lineTo(W / 2 + 8, -30); g.quadraticCurveTo(W / 2 - 6, 4, W / 2 - 22, 8); g.lineTo(-W / 2 + 16, 8); g.quadraticCurveTo(-W / 2, -4, -W / 2, -26); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 2; g.stroke();
+    g.fillStyle = trim; g.fillRect(-W / 2 + 4, -24, W, 6);
+  }
   // cabins
   if (lvl >= 1) {
     g.fillStyle = lvl === 3 ? '#f7f7f7' : '#fbf6ea'; g.fillRect(-W * .32, -62, W * .36, 36);
@@ -1307,27 +1309,74 @@ function drawBoat() {
     g.fillStyle = '#e24'; g.fillRect(-W * .2, -84, 10, 6);
   }
   if (lvl >= 2) { g.fillStyle = '#fbf6ea'; g.fillRect(-W * .28, -84, W * .24, 22); g.fillStyle = '#6cc3ef'; g.fillRect(-W * .25, -78, W * .18, 8); }
-  if (lvl === 3) {
-    g.strokeStyle = '#f08a24'; g.lineWidth = 5; g.beginPath(); g.moveTo(-W * .42, -26); g.lineTo(-W * .5, -92); g.lineTo(-W * .62, -70); g.stroke();
-    g.fillStyle = '#ffd23f'; g.beginPath(); g.ellipse(-W * .62, -58, 12, 9, 0, 0, 7); g.fill();
-  }
-  // fisherman
-  const fx = W * .12;
-  g.fillStyle = '#2d5d8f'; g.fillRect(fx - 7, -48, 14, 22);
-  g.fillStyle = '#f2c29b'; g.beginPath(); g.arc(fx, -55, 8, 0, 7); g.fill();
-  g.fillStyle = '#e2463b'; g.beginPath(); g.arc(fx, -58, 8.5, Math.PI, 0); g.fill(); g.fillRect(fx, -59, 12, 3);
-  g.fillStyle = '#222'; g.beginPath(); g.arc(fx + 3, -55, 1.3, 0, 7); g.fill();
+  if (lvl === 3) drawResearchDeck(W);
+  drawFisherman(W * .12);
   g.restore();
   // rod
   const r = rodTip();
   g.strokeStyle = '#5a3a1e'; g.lineWidth = 3; g.lineCap = 'round';
   g.beginPath(); g.moveTo(bx + W * .12 + 6, -40 + bob); g.quadraticCurveTo(bx + W * .3, -76 + bob, r.x, r.y); g.stroke(); g.lineCap = 'butt';
 }
+// boat 1: a Mediterranean gozzo, double-ended wooden boat with a raised stem post and painted bands
+function drawGozzo(W) {
+  const L = -W / 2 - 4, R = W / 2 + 10;
+  const sheer = () => { g.moveTo(L, -36); g.quadraticCurveTo(0, -18, R, -40); };
+  // hull: white topsides, turquoise band, red antifouling at the waterline
+  g.save();
+  g.beginPath(); sheer(); g.quadraticCurveTo(R - 4, -6, R - 24, 8); g.lineTo(L + 20, 8); g.quadraticCurveTo(L + 2, -6, L, -36); g.closePath();
+  g.fillStyle = '#f6f1e4'; g.fill(); g.clip();
+  g.fillStyle = '#23a7b8'; g.beginPath(); g.moveTo(L, -22); g.quadraticCurveTo(0, -8, R, -26); g.lineTo(R, -16); g.quadraticCurveTo(0, 2, L, -12); g.fill();
+  g.fillStyle = '#c9463a'; g.fillRect(L, 1, R - L, 10);
+  g.restore();
+  g.beginPath(); sheer(); g.quadraticCurveTo(R - 4, -6, R - 24, 8); g.lineTo(L + 20, 8); g.quadraticCurveTo(L + 2, -6, L, -36);
+  g.strokeStyle = 'rgba(40,20,0,.35)'; g.lineWidth = 2; g.stroke();
+  // wooden gunwale and the two posts (the stem rises higher, as on a real gozzo)
+  g.strokeStyle = '#8a5a2b'; g.lineWidth = 5; g.lineCap = 'round';
+  g.beginPath(); sheer(); g.stroke();
+  g.lineWidth = 6; g.beginPath(); g.moveTo(R - 2, -38); g.quadraticCurveTo(R + 6, -46, R + 4, -56); g.stroke();
+  g.lineWidth = 5; g.beginPath(); g.moveTo(L + 2, -35); g.lineTo(L - 3, -44); g.stroke();
+  g.lineCap = 'butt';
+  // painted eye on the bow
+  g.fillStyle = '#f6f1e4'; g.strokeStyle = '#1b3a5c'; g.lineWidth = 1.5; g.beginPath(); g.ellipse(R - 22, -28, 5.5, 3.4, 0, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = '#1b3a5c'; g.beginPath(); g.arc(R - 21, -28, 1.8, 0, 7); g.fill();
+}
+// boat 4: A-frame at the stern with a yellow mini-sub, radar and antenna on the bridge
+function drawResearchDeck(W) {
+  const ax = -W * .44;
+  g.strokeStyle = '#f08a24'; g.lineWidth = 4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(ax + 10, -28); g.lineTo(ax - 6, -96); g.lineTo(ax - 24, -86); g.stroke();
+  g.strokeStyle = '#333'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(ax - 22, -86); g.lineTo(ax - 22, -72); g.stroke();
+  const sy = -60 + Math.sin(clock * 2) * 1.5;
+  g.fillStyle = '#ffd23f'; g.beginPath(); g.ellipse(ax - 22, sy, 17, 10, 0, 0, 7); g.fill();
+  g.strokeStyle = '#b58a00'; g.lineWidth = 1.5; g.stroke();
+  g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(ax - 38, sy); g.lineTo(ax - 46, sy - 7); g.lineTo(ax - 46, sy + 7); g.fill();
+  g.fillStyle = '#6cc3ef'; g.beginPath(); g.arc(ax - 16, sy - 2, 5, 0, 7); g.fill();
+  g.fillStyle = '#b58a00'; g.fillRect(ax - 25, sy - 15, 6, 6);
+  // radar and antenna on the upper bridge
+  const mx = -W * .16;
+  g.strokeStyle = '#445'; g.lineWidth = 2; g.beginPath(); g.moveTo(mx, -84); g.lineTo(mx, -100); g.stroke();
+  const rw = 12 * Math.cos(clock * 2.4);
+  g.strokeStyle = '#e8eef3'; g.lineWidth = 3; g.beginPath(); g.moveTo(mx - rw, -101); g.lineTo(mx + rw, -101); g.stroke();
+  g.strokeStyle = '#445'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-W * .07, -84); g.lineTo(-W * .07, -110); g.stroke();
+  g.fillStyle = '#e24'; g.beginPath(); g.arc(-W * .07, -111, 2, 0, 7); g.fill();
+  g.lineCap = 'butt';
+}
+// the old sea dog: striped shirt, white beard, flat cap
+function drawFisherman(fx) {
+  g.fillStyle = '#f7f7f2'; g.fillRect(fx - 7, -48, 14, 22);
+  g.fillStyle = '#2d5d8f'; for (let y = -46; y < -27; y += 5) g.fillRect(fx - 7, y, 14, 2.2);
+  g.fillStyle = '#f2c29b'; g.beginPath(); g.arc(fx, -55, 8, 0, 7); g.fill();
+  g.fillStyle = '#f4f4f0'; g.beginPath(); g.moveTo(fx - 7, -55); g.quadraticCurveTo(fx + 1, -38, fx + 8, -54); g.quadraticCurveTo(fx + 1, -50, fx - 7, -55); g.fill();
+  g.fillStyle = '#ddd'; g.beginPath(); g.ellipse(fx + 4, -52.5, 4, 1.6, 0, 0, 7); g.fill();
+  g.fillStyle = '#474d57'; g.beginPath(); g.ellipse(fx, -61.5, 9.5, 4.2, 0, Math.PI, 0); g.fill();
+  g.beginPath(); g.ellipse(fx + 8, -60.5, 6, 1.8, .15, 0, 7); g.fill();
+  g.fillStyle = '#222'; g.beginPath(); g.arc(fx + 3, -56, 1.3, 0, 7); g.fill();
+}
 const HOOK_LOOK = [
   { col: '#dfe8ee', dark: '#6f7d88', prongs: 1, s: 1 },
   { col: '#eaa55e', dark: '#7a4418', prongs: 1, s: 1.25, barb: true },
   { col: '#ffd84d', dark: '#9a6300', prongs: 2, s: 1.4, barb: true, shine: true },
-  { col: '#a6f6ff', dark: '#15708f', prongs: 3, s: 1.55, barb: true, shine: true, glow: true },
+  { col: '#a6f6ff', dark: '#15708f', prongs: 3, s: 1.55, barb: true, shine: true, glow: true, orbit: true, trail: true },
 ];
 const hookTier = (lv = S.l[1] + 1) => CONFIG.hookTiers.filter(x => lv >= x).length - 1;
 function drawHook(ctx, tier, tm) {
@@ -1348,6 +1397,13 @@ function drawHook(ctx, tier, tm) {
     if (H.prongs >= 3) { ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(0, 12); ctx.moveTo(-2.6, 9.5); ctx.lineTo(0, 12.5); ctx.lineTo(2.6, 9.5); ctx.stroke(); }
   }
   if (H.shine) star(-7 + Math.sin(tm * 2) * 2, -4, 3 + Math.sin(tm * 6) * 1.2, 'rgba(255,255,255,.95)', ctx);
+  if (H.orbit) {   // crystal shards circling the trident; the ones behind it are dimmer
+    for (let i = 0; i < 5; i++) {
+      const a = tm * 1.8 + i * Math.PI * 2 / 5, x = Math.cos(a) * 17, y = -2 + Math.sin(a) * 7, front = Math.sin(a) > 0, r = front ? 2.6 : 1.8;
+      ctx.fillStyle = front ? 'rgba(220,252,255,.95)' : 'rgba(160,235,255,.55)';
+      ctx.beginPath(); ctx.moveTo(x, y - r * 1.4); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r * 1.4); ctx.lineTo(x - r, y); ctx.closePath(); ctx.fill();
+    }
+  }
   ctx.restore(); ctx.lineCap = 'butt';
 }
 function showNewHook() {
@@ -1369,6 +1425,7 @@ function showNewHook() {
     r.querySelector('#okB').onclick = closeModal;
   });
 }
+const hookTrail = [];   // recent hook positions, for the crystal trident's light trail
 function drawLineAndHook() {
   if (cine && cine.type === 'haul') return;   // the boss scene draws its own line
   const r = rodTip();
@@ -1403,7 +1460,12 @@ function drawLineAndHook() {
     g.beginPath(); g.arc(hook.x, hook.y, pr - 2, clock * 2, clock * 2 + Math.PI * 2); g.stroke(); g.setLineDash([]);
   }
   // hook
-  g.save(); g.translate(hook.x, hook.y); drawHook(g, hookTier(), clock); g.restore();
+  const tier = hookTier();
+  if (HOOK_LOOK[tier].trail && (phase === 'down' || phase === 'up')) {
+    hookTrail.push([hook.x, hook.y]); if (hookTrail.length > 16) hookTrail.shift();
+    hookTrail.forEach(([x, y], i) => { const k = i / hookTrail.length; g.fillStyle = `rgba(166,246,255,${(k * .45).toFixed(3)})`; g.beginPath(); g.arc(x, y, 3 + k * 9, 0, 7); g.fill(); });
+  } else hookTrail.length = 0;
+  g.save(); g.translate(hook.x, hook.y); drawHook(g, tier, clock); g.restore();
   // capacity pill next to the hook
   if (phase === 'up') {
     const txt = `${Math.min(nCaught(), hookCap())}/${hookCap()}`;
@@ -1625,7 +1687,7 @@ function drawFishAt(lk, x, y, w, dir, ph, mode, ctx = g) {
 function pal(lk, mode) {
   if (mode === 2) return { back: SIL, body: SIL, belly: SIL, fin: SIL, pc: SIL, out: SIL };
   if (mode === 1) return GOLD;
-  return { back: lk.back, body: lk.body, belly: lk.belly, fin: lk.fin, pc: lk.pc || lk.fin, out: shade(lk.back, -.35) };
+  return { back: lk.back, body: lk.body, belly: lk.belly, fin: lk.fin, pc: lk.pc || lk.fin, out: lk.rim || shade(lk.back, -.35) };
 }
 function shade(hex, k) {
   const n = parseInt(hex.slice(1), 16); let r = n >> 16, gg = (n >> 8) & 255, b = n & 255;
@@ -1640,9 +1702,12 @@ let eyesClosed = false;
 function eye(ctx, x, y, r, mode) {
   if (mode === 2) return;
   if (eyesClosed) { ctx.strokeStyle = '#1a0f08'; ctx.lineWidth = Math.max(1.5, r * .35); ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(x, y - r * .2, r * .8, .3, Math.PI - .3); ctx.stroke(); ctx.lineCap = 'butt'; return; }
+  r *= 1.35;
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
-  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x + r * .25, y, r * .58, 0, 7); ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + r * .4, y - r * .3, r * .22, 0, 7); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = Math.max(.8, r * .12); ctx.stroke();
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x + r * .2, y + r * .05, r * .62, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + r * .38, y - r * .25, r * .26, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + r * .02, y + r * .3, r * .11, 0, 7); ctx.fill();
 }
 function glowDot(ctx, x, y, r, col, mode) {
   if (mode === 2) return;
@@ -1654,7 +1719,11 @@ function glowDot(ctx, x, y, r, col, mode) {
 function crown(ctx, x, y, s, mode) {
   ctx.fillStyle = mode === 2 ? SIL : '#ffcc2e'; ctx.strokeStyle = mode === 2 ? SIL : '#b27500'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(x - s, y); ctx.lineTo(x - s, y - s * .9); ctx.lineTo(x - s * .5, y - s * .4); ctx.lineTo(x, y - s * 1.2); ctx.lineTo(x + s * .5, y - s * .4); ctx.lineTo(x + s, y - s * .9); ctx.lineTo(x + s, y); ctx.closePath(); ctx.fill(); ctx.stroke();
-  if (mode !== 2) { ctx.fillStyle = '#e2463b'; ctx.beginPath(); ctx.arc(x, y - s * .35, s * .18, 0, 7); ctx.fill(); }
+  if (mode !== 2) {
+    ctx.fillStyle = '#e2463b'; ctx.beginPath(); ctx.arc(x, y - s * .35, s * .2, 0, 7); ctx.fill();
+    ctx.fillStyle = '#3aa0ff'; ctx.beginPath(); ctx.arc(x - s * .6, y - s * .25, s * .13, 0, 7); ctx.arc(x + s * .6, y - s * .25, s * .13, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff6c8'; [-1, 0, 1].forEach(k => { ctx.beginPath(); ctx.arc(x + k * s, y - (k ? s * .9 : s * 1.2), s * .12, 0, 7); ctx.fill(); });
+  }
 }
 function fishPath(w, h, lk) {
   const p = new Path2D(), nose = w * .5, tb = -w * .3, pointy = lk.shape === 'shark' || lk.shape === 'sword' || lk.shape === 'viper';
@@ -1687,7 +1756,7 @@ function drawShape(ctx, lk, w, ph, mode) {
   switch (lk.shape) {
     case 'eel': return drawEel(ctx, lk, w, ph, mode, c);
     case 'octo': return drawOcto(ctx, lk, w, ph, mode, c, 6);
-    case 'kraken': return drawOcto(ctx, lk, w, ph, mode, c, 8);
+    case 'kraken': return drawKraken(ctx, lk, w, ph, mode, c);
     case 'squid': return drawSquid(ctx, lk, w, ph, mode, c);
     case 'sun': return drawSun(ctx, lk, w, ph, mode, c);
     case 'angler': return drawAngler(ctx, lk, w, ph, mode, c);
@@ -1714,7 +1783,8 @@ function drawShape(ctx, lk, w, ph, mode) {
   ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.stroke(bp);
   // bill
   if (lk.shape === 'sword') {
-    ctx.fillStyle = mode === 2 ? SIL : shade(lk.back, .15); ctx.beginPath(); ctx.moveTo(w * .46, -h * .08); ctx.lineTo(w * .98, -h * .01); ctx.lineTo(w * .46, h * .06); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = mode === 2 ? SIL : lk.goldBill ? '#ffcc2e' : shade(lk.back, .15); ctx.beginPath(); ctx.moveTo(w * .46, lk.goldBill ? -h * .12 : -h * .08); ctx.lineTo(w * .98, -h * .01); ctx.lineTo(w * .46, lk.goldBill ? h * .1 : h * .06); ctx.closePath(); ctx.fill();
+    if (lk.goldBill && mode !== 2) { ctx.strokeStyle = '#b27500'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillRect(w * .5, -h * .04, w * .3, h * .025); ctx.strokeStyle = c.out; } else ctx.stroke();
   }
   // pectoral fin
   ctx.fillStyle = c.fin; ctx.beginPath(); ctx.ellipse(w * .12, h * .12, w * .09, h * .1, .6 + Math.sin(ph * 6) * .2, 0, 7); ctx.fill();
@@ -1731,34 +1801,89 @@ function drawShape(ctx, lk, w, ph, mode) {
   }
   if (lk.shape === 'shark' && mode !== 2) { ctx.strokeStyle = c.out; ctx.lineWidth = 1; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(w * (.18 - i * .04), -h * .05); ctx.lineTo(w * (.16 - i * .04), h * .18); ctx.stroke(); } }
   if (lk.glow && mode !== 2) { for (let i = 0; i < 5; i++) glowDot(ctx, w * (.25 - i * .12), h * .28 - Math.abs(i - 2) * h * .03, Math.max(1.4, w * .018), lk.glow, mode); }
-  if (lk.crown) crown(ctx, w * .26, -h * .5, Math.max(7, w * .05), mode);
+  if (lk.veteran && mode !== 2) {
+    // scars across the flank, with stitches
+    ctx.strokeStyle = 'rgba(255,225,200,.75)'; ctx.lineWidth = Math.max(1.5, w * .012); ctx.lineCap = 'round';
+    [[-.02, -.28, .1, .02], [-.14, -.2, -.04, .1]].forEach(([x1, y1, x2, y2]) => {
+      ctx.beginPath(); ctx.moveTo(w * x1, h * y1); ctx.lineTo(w * x2, h * y2); ctx.stroke();
+      for (let k = .25; k < 1; k += .25) { const mx = w * (x1 + (x2 - x1) * k), my = h * (y1 + (y2 - y1) * k); ctx.beginPath(); ctx.moveTo(mx - w * .02, my + h * .015); ctx.lineTo(mx + w * .02, my - h * .015); ctx.stroke(); }
+    });
+    // two broken hooks still stuck in the lip
+    ctx.strokeStyle = '#c9d3da'; ctx.lineWidth = Math.max(1.5, w * .014);
+    [[.47, .1, 1], [.43, .17, -1]].forEach(([hx, hy, d]) => {
+      const x0 = w * hx, y0 = h * hy;
+      ctx.beginPath(); ctx.moveTo(x0 + w * .05, y0 - h * .1 * d); ctx.lineTo(x0, y0); ctx.quadraticCurveTo(x0 - w * .03, y0 + h * .06 * d, x0 - w * .005, y0 + h * .09 * d); ctx.stroke();
+      ctx.strokeStyle = '#9aa7b1'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 + w * .05, y0 - h * .1 * d); ctx.lineTo(x0 + w * .09, y0 - h * .16 * d); ctx.stroke();
+      ctx.strokeStyle = '#c9d3da'; ctx.lineWidth = Math.max(1.5, w * .014);
+    });
+    ctx.lineCap = 'butt';
+  }
+  if (lk.moustache && mode !== 2) {
+    ctx.strokeStyle = '#f4f1e8'; ctx.lineWidth = Math.max(2.5, w * .02); ctx.lineCap = 'round';
+    [-1, 1].forEach(d => { ctx.beginPath(); ctx.moveTo(w * .47, h * .08); ctx.bezierCurveTo(w * .44, h * (.08 + .3 * d * .5 + .15), w * .34, h * .42, w * .3, h * .26); ctx.stroke(); });
+    ctx.lineCap = 'butt';
+  }
+  if (lk.crown) crown(ctx, w * .26, -h * .5, Math.max(10, w * .11), mode);
 }
 function drawPattern(ctx, lk, w, h, c, ph, mode) {
   const pc = mode === 1 ? GOLD.pc : c.pc;
   switch (lk.pat) {
     case 'lineH': ctx.fillStyle = pc; ctx.fillRect(-w * .5, -h * .06, w, h * .1); break;
     case 'stripesV': ctx.fillStyle = pc; ctx.globalAlpha = .75; for (let i = 0; i < 5; i++) ctx.fillRect(-w * .22 + i * w * .11, -h, w * .045, h * 2); ctx.globalAlpha = 1; break;
-    case 'band': ctx.fillStyle = mode === 1 ? '#b8730a' : pc; ctx.fillRect(-w * .31, -h, w * .08, h * 2); break;
-    case 'goldbrow': ctx.fillStyle = mode === 1 ? '#fff6c8' : pc; ctx.beginPath(); ctx.ellipse(w * .32, -h * .26, w * .07, h * .06, 0, 0, 7); ctx.fill(); break;
+    case 'band': ctx.fillStyle = mode === 1 ? '#b8730a' : pc; ctx.fillRect(-w * .28, -h, w * .09, h * 2); break;
+    case 'goldbrow':   // gilt-head bream: golden band between the eyes and a dark gill spot
+      ctx.fillStyle = mode === 1 ? '#fff6c8' : pc; ctx.beginPath(); ctx.moveTo(w * .2, -h * .32); ctx.quadraticCurveTo(w * .34, -h * .6, w * .47, -h * .18); ctx.quadraticCurveTo(w * .36, -h * .28, w * .2, -h * .32); ctx.fill();
+      if (mode !== 1) { ctx.fillStyle = '#2b3642'; ctx.beginPath(); ctx.ellipse(w * .1, -h * .12, w * .018, h * .09, .15, 0, 7); ctx.fill(); } break;
+    case 'gill':       // sea bass: dark gill-cover spot and a pale flank line
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(-w * .5, -h * .02, w, h * .05);
+      ctx.fillStyle = mode === 1 ? '#b8730a' : pc; ctx.beginPath(); ctx.ellipse(w * .12, -h * .1, w * .018, h * .09, .15, 0, 7); ctx.fill(); break;
+    case 'dotrow':     // sardine: a row of dark spots under the blue-green back
+      ctx.fillStyle = pc; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(w * (.2 - i * .08), -h * .12, Math.max(1, w * .02), 0, 7); ctx.fill(); } break;
     case 'finlets': ctx.fillStyle = pc; for (let i = 0; i < 5; i++) { const x = -w * .05 - i * w * .05; ctx.beginPath(); ctx.moveTo(x, -h * .32); ctx.lineTo(x - w * .025, -h * .4); ctx.lineTo(x - w * .04, -h * .3); ctx.fill(); } break;
     case 'spots': ctx.fillStyle = pc; for (let i = 0; i < 9; i++) { const sx = w * (.28 - (i * .37) % .6), sy = h * (((i * .53) % .7) - .35); ctx.beginPath(); ctx.arc(sx, sy, Math.max(1, w * .022), 0, 7); ctx.fill(); } break;
     case 'shine': ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.ellipse(w * .05, -h * .22, w * .22, h * .07, -.1, 0, 7); ctx.fill(); break;
   }
 }
 function drawEel(ctx, lk, w, ph, mode, c) {
-  const N = 16, pts = [], th = w * lk.h;
-  for (let i = 0; i <= N; i++) { const k = i / N, x = w * .5 - k * w; pts.push([x, Math.sin(k * 5 - ph * 5) * th * .7 * k]); }
-  ctx.lineCap = 'round';
-  for (let i = N; i > 0; i--) {
-    const k = i / N; ctx.strokeStyle = mode === 2 ? SIL : (i % 2 ? c.body : c.back); ctx.lineWidth = th * (1 - k * .75) + 1;
-    ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[i - 1][0], pts[i - 1][1]); ctx.stroke();
+  const N = 18, th = w * lk.h, top = [], bot = [], mid = [];
+  for (let i = 0; i <= N; i++) {
+    const k = i / N, x = w * .42 - k * w * .92, y = Math.sin(k * 5 - ph * 5) * th * .7 * k, half = th * .5 * (1 - k * .8);
+    mid.push([x, y]); top.push([x, y - half]); bot.push([x, y + half]);
   }
-  if (mode !== 2) { ctx.fillStyle = mode === 1 ? GOLD.pc : c.pc; for (let i = 2; i < N; i += 2) { ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1] - th * .15, Math.max(1, th * .12), 0, 7); ctx.fill(); } }
-  ctx.fillStyle = mode === 2 ? SIL : c.body; ctx.beginPath(); ctx.ellipse(w * .44, 0, th * .95, th * .62, 0, 0, 7); ctx.fill();
-  eye(ctx, w * .47, -th * .2, Math.max(2, th * .2), mode);
-  if (mode !== 2) { ctx.strokeStyle = c.out; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(w * .52, th * .15); ctx.lineTo(w * .4, th * .2); ctx.stroke(); }
-  ctx.lineCap = 'butt';
-  if (lk.crown) crown(ctx, w * .44, -th * .55, Math.max(7, th * .5), mode);
+  const body = new Path2D();
+  body.moveTo(top[0][0], top[0][1]); for (let i = 1; i <= N; i++) body.lineTo(top[i][0], top[i][1]);
+  for (let i = N; i >= 0; i--) body.lineTo(bot[i][0], bot[i][1]); body.closePath();
+  // fin ridge along the back, running into the tail
+  if (mode !== 2) {
+    ctx.fillStyle = c.fin; ctx.beginPath(); ctx.moveTo(top[1][0], top[1][1]);
+    for (let i = 2; i <= N; i++) ctx.lineTo(top[i][0], top[i][1] - th * .18 * (1 - i / N * .5));
+    for (let i = N; i >= 1; i--) ctx.lineTo(top[i][0], top[i][1]); ctx.fill();
+  }
+  ctx.fillStyle = mode === 2 ? SIL : bodyGrad(ctx, th, c); ctx.fill(body);
+  if (mode !== 2) {
+    ctx.save(); ctx.clip(body); ctx.fillStyle = mode === 1 ? GOLD.pc : c.pc;
+    for (let i = 1; i < N; i++) for (let j = 0; j < 2; j++) {
+      const k = i / N, r = Math.max(1, th * .13 * (1 - k * .6));
+      ctx.beginPath(); ctx.arc(mid[i][0] + (j ? w * .02 : 0), mid[i][1] + (j ? th * .16 : -th * .14) * (1 - k * .7), r, 0, 7); ctx.fill();
+    }
+    ctx.restore();
+  }
+  ctx.strokeStyle = c.out; ctx.lineWidth = Math.max(1.2, th * .08); ctx.lineJoin = 'round'; ctx.stroke(body);
+  // head: a little wider than the neck, mouth open with teeth
+  const hx = w * .38;
+  ctx.fillStyle = mode === 2 ? SIL : c.body; ctx.beginPath(); ctx.ellipse(hx, 0, th * .95, th * .6, 0, 0, 7); ctx.fill(); ctx.stroke();
+  if (mode !== 2) {
+    ctx.fillStyle = '#2a0f0a'; ctx.beginPath(); ctx.moveTo(hx + th * .95, -th * .02); ctx.lineTo(hx + th * .1, th * .12); ctx.lineTo(hx + th * .85, th * .34); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff'; for (let i = 0; i < 3; i++) { const tx = hx + th * (.35 + i * .2); ctx.beginPath(); ctx.moveTo(tx, th * .06); ctx.lineTo(tx + th * .06, th * .17); ctx.lineTo(tx + th * .12, th * .07); ctx.fill(); }
+  }
+  eye(ctx, hx + th * .2, -th * .22, Math.max(2, th * .17), mode);
+  if (lk.pearls && mode !== 2) {
+    for (let i = 0; i < 7; i++) { const a = -.9 + i * .3; ctx.fillStyle = '#fbf7ee'; ctx.beginPath(); ctx.arc(hx - th * .75 + Math.cos(a) * th * .15, Math.sin(a) * th * .5, Math.max(1.5, th * .1), 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = .8; ctx.stroke(); }
+    ctx.strokeStyle = '#111'; ctx.lineWidth = Math.max(1, th * .05); ctx.lineCap = 'round';
+    for (let i = 0; i < 3; i++) { const ex = hx + th * .2, ey = -th * .22, er = th * .17 * 1.35, a = -2.2 + i * .45; ctx.beginPath(); ctx.moveTo(ex + Math.cos(a) * er, ey + Math.sin(a) * er); ctx.lineTo(ex + Math.cos(a) * er * 1.5, ey + Math.sin(a) * er * 1.5); ctx.stroke(); }
+    ctx.lineCap = 'butt';
+  }
+  if (lk.crown) crown(ctx, hx, -th * .62, Math.max(10, th * .7), mode);
 }
 function drawOcto(ctx, lk, w, ph, mode, c, legs) {
   const h = w * lk.h, big = legs > 6;
@@ -1780,6 +1905,37 @@ function drawOcto(ctx, lk, w, ph, mode, c, legs) {
   eye(ctx, w * .26, h * .02, Math.max(2.5, w * .05), mode); eye(ctx, w * .14, h * .06, Math.max(2.5, w * .045), mode);
   if (big && mode !== 2) { ctx.strokeStyle = '#2a0808'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(w * .08, -h * .06); ctx.lineTo(w * .2, -h * .02); ctx.moveTo(w * .32, -h * .04); ctx.lineTo(w * .22, 0); ctx.stroke(); }
 }
+// the final boss: tall mantle, eight tentacles all around, slit-pupil yellow eyes, angry brows
+function drawKraken(ctx, lk, w, ph, mode, c) {
+  w *= 1.15; const h = w * lk.h, bx = w * .02, by = h * .12;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 8; i++) {
+    const a = Math.PI * (-.08 + i * 1.16 / 7), L = w * (.5 + (i % 3) * .06), N = 10;
+    let px = bx, py = by;
+    for (let s = 1; s <= N; s++) {
+      const k = s / N, wv = Math.sin(ph * 2.2 + i * 1.7 + k * 4) * .5 * k;
+      const x = bx + Math.cos(a + wv) * L * k, y = by + Math.sin(a + wv) * L * k * .8;
+      ctx.strokeStyle = mode === 2 ? SIL : (i % 2 ? c.body : c.back); ctx.lineWidth = w * .11 * (1 - k * .82) + 1.5;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke();
+      if (mode !== 2 && s > 1 && s < N - 1 && s % 2 === 0) { ctx.fillStyle = c.belly; ctx.beginPath(); ctx.arc(x, y, Math.max(1, w * .012 * (1 - k * .6)), 0, 7); ctx.fill(); }
+      px = x; py = y;
+    }
+  }
+  ctx.lineCap = 'butt';
+  const hp = new Path2D(); hp.moveTo(bx - w * .24, by); hp.bezierCurveTo(bx - w * .34, -h * .4, bx - w * .16, -h * .72, bx + w * .04, -h * .7); hp.bezierCurveTo(bx + w * .26, -h * .68, bx + w * .34, -h * .25, bx + w * .24, by); hp.quadraticCurveTo(bx, by + h * .2, bx - w * .24, by);
+  ctx.fillStyle = mode === 2 ? SIL : bodyGrad(ctx, h * 1.4, c); ctx.fill(hp);
+  if (mode !== 2) { ctx.save(); ctx.clip(hp); ctx.fillStyle = c.pc; for (let i = 0; i < 9; i++) { ctx.beginPath(); ctx.arc(bx + w * (-.16 + (i * .37) % .34), -h * (.15 + (i * .53) % .65), w * (.014 + (i % 3) * .006), 0, 7); ctx.fill(); } ctx.restore(); }
+  ctx.strokeStyle = c.out; ctx.lineWidth = Math.max(1.5, w * .018); ctx.stroke(hp);
+  if (mode === 2) return;
+  [[-.09, 1], [.1, -1]].forEach(([ex, d]) => {
+    const x = bx + w * ex, y = -h * .05, r = w * .06;
+    ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.strokeStyle = '#5a1010'; ctx.lineWidth = Math.max(1, r * .15); ctx.stroke();
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.ellipse(x, y, r * .22, r * .8, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + r * .35, y - r * .4, r * .18, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#2a0606'; ctx.lineWidth = Math.max(3, w * .025); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x - r * 1.1 * d, y - r * 1.5); ctx.lineTo(x + r * .9 * d, y - r * .95); ctx.stroke(); ctx.lineCap = 'butt';
+  });
+}
 function drawSquid(ctx, lk, w, ph, mode, c) {
   const h = w * lk.h;
   ctx.lineCap = 'round';
@@ -1798,11 +1954,11 @@ function drawSquid(ctx, lk, w, ph, mode, c) {
   eye(ctx, -w * .06, -h * .06, Math.max(3, h * .2), mode);
 }
 function drawSun(ctx, lk, w, ph, mode, c) {
-  const h = w * lk.h;
+  w *= .85; const h = w * lk.h;   // drawn a bit under its hit size: at full size it dwarfed every other fish
   ctx.fillStyle = c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = Math.max(1.2, w * .025);
   const fl = Math.sin(ph * 3) * h * .08;
-  ctx.beginPath(); ctx.moveTo(-w * .05, -h * .3); ctx.lineTo(-w * .18, -h * .95 + fl); ctx.lineTo(-w * .3, -h * .3); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(-w * .05, h * .3); ctx.lineTo(-w * .18, h * .95 - fl); ctx.lineTo(-w * .3, h * .3); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-w * .02, -h * .32); ctx.quadraticCurveTo(-w * .04, -h * .8 + fl, -w * .2, -h * .82 + fl); ctx.quadraticCurveTo(-w * .26, -h * .55, -w * .3, -h * .3); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-w * .02, h * .32); ctx.quadraticCurveTo(-w * .04, h * .8 - fl, -w * .2, h * .82 - fl); ctx.quadraticCurveTo(-w * .26, h * .55, -w * .3, h * .3); ctx.fill(); ctx.stroke();
   const p = new Path2D(); p.ellipse(w * .02, 0, w * .42, h * .48, 0, 0, 7);
   ctx.fillStyle = mode === 2 ? SIL : bodyGrad(ctx, h, c); ctx.fill(p);
   if (mode !== 2) { ctx.save(); ctx.clip(p); drawPattern(ctx, lk, w, h, c, ph, mode); ctx.restore(); }
