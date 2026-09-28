@@ -116,6 +116,7 @@ button{font:inherit;cursor:pointer}
 .hi.gold{background:linear-gradient(#fff7cf,#ffe28a)}
 .hi.boss{background:linear-gradient(#ffe9b0,#ffc94d)}
 .row{display:flex;gap:10px;margin-top:6px}
+.row .btn{font-size:16px;padding:13px 8px}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 14px}
 .stat{background:#fff;border-radius:12px;padding:8px;box-shadow:0 2px 0 var(--card-sh)}
 .stat b{display:block;font-size:20px;color:var(--ink)}
@@ -261,7 +262,7 @@ const TXT = {
     introZoneSub: '5 pesci nuovi fino a {m} m · {boss} ti aspetta sul fondo', newHook: 'Nuovo amo!', newHookText: 'Da adesso peschi con: {name}',
     hooks: ['Amo di ferro', 'Amo di bronzo', 'Amo d\'oro doppio', 'Tridente leggendario'], drag: 'Trascina per schivare i pesci', grab: 'Ora prendili tutti!',
     shop: 'Negozio', album: 'Collezione', line: 'Lenza', hook: 'Amo', bait: 'Esca', boat: 'Barca',
-    max: 'MAX', haul: 'Bottino!', double: 'Raddoppia', cont: 'Continua', best: 'Combo migliore',
+    max: 'MAX', haul: 'Bottino!', double: 'Guarda video ×2', cont: 'Continua', best: 'Combo migliore',
     fishN: '{n} pesci', fish1: '1 pesce', newSp: 'NUOVO', zoneDone: '{zone} completata! +25% sul valore',
     needBoat: 'Serve una barca più grande', needBoss: 'Cattura il boss: {boss}',
     bossLock: 'Serve Amo Lv. {n}', goalReach: 'Scendi a {m} m: lì vive {boss}',
@@ -296,7 +297,7 @@ const TXT = {
     introZoneSub: '5 new fish down to {m} m · the {boss} waits on the seabed', newHook: 'New hook!', newHookText: 'From now on you fish with: {name}',
     hooks: ['Iron hook', 'Bronze hook', 'Golden double hook', 'Legendary trident'], drag: 'Drag to dodge the fish', grab: 'Now grab them all!',
     shop: 'Shop', album: 'Collection', line: 'Line', hook: 'Hook', bait: 'Bait', boat: 'Boat',
-    max: 'MAX', haul: 'Your catch!', double: 'Double it', cont: 'Continue', best: 'Best combo',
+    max: 'MAX', haul: 'Your catch!', double: 'Watch ad ×2', cont: 'Continue', best: 'Best combo',
     fishN: '{n} fish', fish1: '1 fish', newSp: 'NEW', zoneDone: '{zone} complete! +25% value',
     needBoat: 'You need a bigger boat', needBoss: 'Catch the boss: {boss}',
     bossLock: 'Needs Hook Lv. {n}', goalReach: 'Reach {m} m: the {boss} lives there',
@@ -391,13 +392,85 @@ function fmt(n) {
 }
 const coinHTML = (cls = 'sm') => `<span class="coin ${cls}"></span>`;
 
-/* ============================ SDK wrapper ======================== */
+/* ============================ platform layer ===================== */
+/* One game, three hosts. The build decides which SDK script sits in <head>:
+   - YouTube Playables build: the YouTube game SDK   -> ytgame
+   - Playgama build:          the Playgama Bridge SDK -> bridge (also covers YouTube and 20+ portals)
+   - no SDK / local file:    localStorage + simulated rewarded ad
+   Everything the game needs from the host goes through PF. */
 const YT = (typeof ytgame !== 'undefined' && ytgame.IN_PLAYABLES_ENV) ? ytgame : null;
+const BR = (typeof bridge !== 'undefined') ? bridge : null;
 const QS = new URLSearchParams(location.search);
-// local testing only (localhost or a file opened from disk, never online or inside YouTube):
+// local testing only (localhost or a file opened from disk, never online or inside a host platform):
 // ?slot=name uses a separate save, ?soldi=N starts with N coins
 const LOCAL_TEST = !YT && (location.protocol === 'file:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname));
-const SAVE_KEY = 'hookandsell_v1' + (LOCAL_TEST && QS.get('slot') ? '_' + QS.get('slot') : '');
+const SAVE_KEY = 'hookandsell_v1' + (LOCAL_TEST && !BR && QS.get('slot') ? '_' + QS.get('slot') : '');
+function simulatedAd() {
+  return new Promise(res => {
+    const w = document.getElementById('adWrap'), bar = document.getElementById('adBar');
+    document.getElementById('adTxt').textContent = t('adSim');
+    w.classList.add('show'); bar.style.transition = 'none'; bar.style.width = '0';
+    requestAnimationFrame(() => { bar.style.transition = 'width 1.6s linear'; bar.style.width = '100%'; });
+    setTimeout(() => { w.classList.remove('show'); res(true); }, 1700);
+  });
+}
+const PF = BR ? (() => {
+  // Playgama Bridge SDK v2
+  let rewardWaiter = null, rewardGot = false;
+  const mock = () => { try { return BR.platform.id === 'mock'; } catch (e) { return true; } };
+  return {
+    name: 'bridge',
+    init: () => BR.initialize().then(() => {
+      BR.advertisement.on(BR.EVENT_NAME.REWARDED_STATE_CHANGED, st => {
+        if (st === 'rewarded') rewardGot = true;
+        if ((st === 'closed' || st === 'failed') && rewardWaiter) { const r = rewardWaiter; rewardWaiter = null; r(st === 'closed' && rewardGot); }
+      });
+    }),
+    firstFrame() {},
+    ready() { try { BR.platform.sendMessage('game_ready'); } catch (e) {} },
+    language: async () => BR.platform.language || navigator.language || 'en',
+    load: () => BR.storage.get(['hs_save']).then(d => { const v = d && d[0]; return v == null ? null : (typeof v === 'string' ? v : JSON.stringify(v)); }),
+    save: data => BR.storage.set(['hs_save'], [data]),
+    hookPause(onPause, onResume) { BR.platform.on(BR.EVENT_NAME.PAUSE_STATE_CHANGED, p => p ? onPause() : onResume()); },
+    audioEnabled: () => BR.platform.isAudioEnabled !== false,
+    onAudio(cb) { BR.platform.on(BR.EVENT_NAME.AUDIO_STATE_CHANGED, cb); },
+    score() {},
+    rewardedSupported: () => mock() || !!BR.advertisement.isRewardedSupported,
+    rewarded(id) {
+      if (mock()) return simulatedAd();
+      return new Promise(res => { rewardGot = false; rewardWaiter = res; try { BR.advertisement.showRewarded(id); } catch (e) { rewardWaiter = null; res(false); } });
+    },
+    interstitial(id) { try { if (!mock() && BR.advertisement.isInterstitialSupported) BR.advertisement.showInterstitial(id); } catch (e) {} },
+    warn() {}, error() {},
+  };
+})() : YT ? {
+  // YouTube Playables SDK
+  name: 'youtube',
+  init: async () => {},
+  firstFrame() { try { YT.game.firstFrameReady(); } catch (e) {} },
+  ready() { try { YT.game.gameReady(); } catch (e) {} },
+  language: () => YT.system.getLanguage(),
+  load: () => YT.game.loadData(),
+  save: data => YT.game.saveData(data),
+  hookPause(onPause, onResume) { YT.system.onPause(onPause); YT.system.onResume(onResume); },
+  audioEnabled: () => YT.system.isAudioEnabled(),
+  onAudio(cb) { YT.system.onAudioEnabledChange(cb); },
+  score(v) { try { YT.engagement.sendScore({ value: v }).catch(() => {}); } catch (e) {} },
+  rewardedSupported: () => !!(YT.ads && YT.ads.requestRewardedAd),
+  rewarded: id => YT.ads.requestRewardedAd(id).catch(() => false),
+  interstitial() {},
+  warn() { try { YT.health.logWarning(); } catch (e) {} },
+  error() { try { YT.health.logError(); } catch (e) {} },
+} : {
+  // no host: plain browser
+  name: 'local',
+  init: async () => {}, firstFrame() {}, ready() {},
+  language: async () => navigator.language || 'en',
+  load: async () => localStorage.getItem(SAVE_KEY),
+  save: async data => { localStorage.setItem(SAVE_KEY, data); },
+  hookPause() {}, audioEnabled: () => true, onAudio() {}, score() {},
+  rewardedSupported: () => true, rewarded: () => simulatedAd(), interstitial() {}, warn() {}, error() {},
+};
 const SAVE_VERSION = 1;
 function defaultState() {
   return { v: SAVE_VERSION, m: CONFIG.startMoney, te: 0, l: [0, 0, 0, 0], b: [0, 0, 0, 0],
@@ -420,7 +493,7 @@ let S = defaultState();
 let loaded = false, saving = false, saveDirty = false;
 async function loadGame() {
   let raw = null;
-  try { raw = YT ? await YT.game.loadData() : localStorage.getItem(SAVE_KEY); } catch (e) { warn(); }
+  try { raw = await PF.load(); } catch (e) { PF.warn(); }
   try { S = migrate(raw ? JSON.parse(raw) : null); } catch (e) { S = defaultState(); }
   if (LOCAL_TEST && QS.get('soldi')) S.m = Math.max(S.m, +QS.get('soldi') || 0);
   loaded = true;
@@ -430,32 +503,17 @@ function save() {
   S.ls = Date.now();
   let data = JSON.stringify(S);
   if (data.length > 60000) { data = JSON.stringify(defaultState()); } // safety: stay far below 64 KiB
-  if (YT) {
-    if (saving) { saveDirty = true; return; }
-    saving = true;
-    YT.game.saveData(data).catch(warn).finally(() => { saving = false; if (saveDirty) { saveDirty = false; save(); } });
-  } else { try { localStorage.setItem(SAVE_KEY, data); } catch (e) {} }
+  if (saving) { saveDirty = true; return; }
+  saving = true;
+  Promise.resolve().then(() => PF.save(data)).catch(() => PF.warn()).finally(() => { saving = false; if (saveDirty) { saveDirty = false; save(); } });
 }
-function warn() { try { YT && YT.health && YT.health.logWarning(); } catch (e) {} }
 async function getLang() {
   let l = 'en';
-  try { l = YT ? await YT.system.getLanguage() : (navigator.language || 'en'); } catch (e) {}
+  try { l = await PF.language(); } catch (e) {}
   return String(l).toLowerCase().startsWith('it') ? 'it' : 'en';
 }
-function sendScore() { try { YT && YT.engagement.sendScore({ value: Math.floor(S.te) }).catch(() => {}); } catch (e) {} }
-async function showRewardedAd() {
-  if (YT && YT.ads && typeof YT.ads.requestRewardedAd === 'function') {
-    try { return await YT.ads.requestRewardedAd('double_haul'); } catch (e) { return false; }
-  }
-  // local fallback: simulated ad
-  return new Promise(res => {
-    const w = document.getElementById('adWrap'), bar = document.getElementById('adBar');
-    document.getElementById('adTxt').textContent = t('adSim');
-    w.classList.add('show'); bar.style.transition = 'none'; bar.style.width = '0';
-    requestAnimationFrame(() => { bar.style.transition = 'width 1.6s linear'; bar.style.width = '100%'; });
-    setTimeout(() => { w.classList.remove('show'); res(true); }, 1700);
-  });
-}
+function sendScore() { PF.score(Math.floor(S.te)); }
+async function showRewardedAd() { try { return !!(await PF.rewarded('double_haul')); } catch (e) { return false; } }
 
 /* ============================ audio (WebAudio, generated) ========= */
 const Snd = {
@@ -1992,7 +2050,9 @@ function showChestModal() {
     btn.onclick = open; c.onclick = () => { if (!opened) open(); };
   });
 }
+let doubledNow = false;
 function showSummary() {
+  doubledNow = false;
   if (haulChest) { haulChest = false; showChestModal(); }
   // group the haul by species/golden
   const groups = [];
@@ -2021,6 +2081,7 @@ function showSummary() {
     tick();
     const dbl = root.querySelector('#dblBtn');
     if (haulTotal <= 0) dbl.disabled = true;
+    if (!PF.rewardedSupported()) dbl.style.display = 'none';
     dbl.onclick = async () => {
       dbl.disabled = true;
       const ok = await showRewardedAd();
@@ -2029,10 +2090,10 @@ function showSummary() {
         v.textContent = fmt(haulTotal * 2);
         const r = dbl.getBoundingClientRect();
         for (let i = 0; i < 30; i++) uparts.push({ x: (r.left + r.width / 2) / scale, y: r.top / scale, vx: rand(-260, 260), vy: rand(-320, 40), t: 0, delay: rand(.1, .35) });
-        dbl.textContent = '✓ ×2';
+        dbl.textContent = '✓ ×2'; doubledNow = true;
       } else { toast(t('adFail'), 'bad'); dbl.disabled = false; }
     };
-    root.querySelector('#contBtn').onclick = () => { closeModal(); };
+    root.querySelector('#contBtn').onclick = () => { closeModal(); if (!doubledNow) PF.interstitial('dive_end'); };
   });
   save(); sendScore();
   // boss follow-ups queue after the summary
@@ -2325,16 +2386,14 @@ async function boot() {
   // first frame: sky + sea while data loads
   camY = -VH * .5;
   render();
-  try { YT && YT.game.firstFrameReady(); } catch (e) {}
+  PF.firstFrame();
   rafId = requestAnimationFrame(frame);
-  if (YT) {
-    try {
-      Snd.sdkOn = YT.system.isAudioEnabled();
-      YT.system.onAudioEnabledChange(on => { Snd.sdkOn = on; Snd.init(); Snd.sync(); });
-      YT.system.onPause(pauseGame);
-      YT.system.onResume(resumeGame);
-    } catch (e) { warn(); }
-  }
+  try { await PF.init(); } catch (e) { PF.warn(); }
+  try {
+    Snd.sdkOn = PF.audioEnabled();
+    PF.onAudio(on => { Snd.sdkOn = on; Snd.init(); Snd.sync(); });
+    PF.hookPause(pauseGame, resumeGame);
+  } catch (e) { PF.warn(); }
   const [lang] = await Promise.all([getLang(), loadGame()]);
   LANG = lang; document.documentElement.lang = LANG;
   $('shopLbl').textContent = t('shop'); $('albumLbl').textContent = t('album');
@@ -2343,11 +2402,11 @@ async function boot() {
   started = true; window.__hsReady = true;
   if (S.st.d === 0) startIntro();
   refreshHUD(true);
-  try { YT && YT.game.gameReady(); } catch (e) {}
+  PF.ready();
   checkAway(away);
   save();
 }
-window.addEventListener('error', () => { try { YT && YT.health.logError(); } catch (e) {} });
+window.addEventListener('error', () => PF.error());
 boot();
 </script>
 </body>
