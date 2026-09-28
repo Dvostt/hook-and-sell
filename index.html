@@ -33,6 +33,9 @@ button{font:inherit;cursor:pointer}
 .goal.boost{background:linear-gradient(#fff3b8,#ffd24d);color:#5a3500;margin-top:6px}
 .iconbtn{width:44px;height:44px;border-radius:14px;border:0;background:rgba(6,26,48,.78);color:#fff;display:grid;place-items:center;box-shadow:0 3px 0 rgba(0,0,0,.28)}
 .iconbtn svg{width:24px;height:24px}
+.topR{display:flex;gap:8px}
+.pauseBox h2{margin:4px 0 16px;font-size:28px;font-weight:900}
+.pauseBox .btn{width:100%}
 .bottom{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 14px);display:flex;gap:10px;transition:transform .25s,opacity .25s}
 .bottom.hide{transform:translateY(140%);opacity:0}
 .btn{flex:1;border:0;border-radius:18px;padding:13px 10px;font-weight:900;font-size:18px;color:#fff;background:var(--blue);box-shadow:0 5px 0 var(--blue-d);position:relative;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .08s,box-shadow .08s}
@@ -142,7 +145,10 @@ button{font:inherit;cursor:pointer}
       <div class="money pe" id="moneyPill"><span class="coin"></span><span id="money">0</span></div><br>
       <div class="goal" id="goal"></div><br><div class="goal boost" id="boost"></div>
     </div>
-    <button class="iconbtn pe" id="soundBtn" aria-label="Audio"></button>
+    <div class="topR">
+      <button class="iconbtn pe" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg></button>
+      <button class="iconbtn pe" id="soundBtn" aria-label="Audio"></button>
+    </div>
   </div>
   <div class="hintArrow" id="hintArrow"></div>
   <div class="bottom" id="bottomBar">
@@ -155,6 +161,7 @@ button{font:inherit;cursor:pointer}
   <div class="sheet" id="crewP"><div class="sheetHead"><h2 id="crewTitle"></h2><button class="x" data-close>✕</button></div><div class="sheetBody" id="crewBody"></div></div>
   <div class="sheet" id="album"><div class="sheetHead"><h2 id="albumTitle"></h2><button class="x" data-close>✕</button></div><div class="sheetBody" id="albumBody"></div></div>
   <div class="modalWrap" id="modalWrap"><div class="modal" id="modal"></div></div>
+  <div class="modalWrap" id="pauseWrap"><div class="modal pauseBox"><h2 id="pauseT"></h2><button class="btn" id="resumeB"></button></div></div>
   <div class="modalWrap" id="adWrap"><div class="adBox"><div id="adTxt"></div><div class="bar"><i id="adBar"></i></div></div></div>
   <div id="toasts"></div>
   <canvas id="fx"></canvas>
@@ -286,7 +293,7 @@ const TXT = {
     effBait: 'Rari ×{a} → <b>×{b}</b> · Oro {c}% → <b>{d}%</b>', effBoat: '{zone} fino a {m} m · <b>vendita +25%</b>',
     maxed: 'Al massimo', adFail: 'Video non disponibile, riprova più tardi', firstBuy: 'Compra il tuo primo upgrade!',
     zoneProg: '{a}/5', zoneBonus: 'completa: +25%', zoneOn: '+25% attivo', unknown: '???',
-    ad: 'Pubblicità', adSim: 'Video pubblicitario (simulato)', full: 'AMO PIENO!', golden: 'DORATO',
+    paused: 'In pausa', resume: 'Riprendi', ad: 'Pubblicità', adSim: 'Video pubblicitario (simulato)', full: 'AMO PIENO!', golden: 'DORATO',
     reach: 'Raggiungi {m} m', lvl: 'Lv',
   },
   en: {
@@ -321,7 +328,7 @@ const TXT = {
     effBait: 'Rare ×{a} → <b>×{b}</b> · Gold {c}% → <b>{d}%</b>', effBoat: '{zone} down to {m} m · <b>+25% sell price</b>',
     maxed: 'Maxed out', adFail: 'Video not available, try again later', firstBuy: 'Buy your first upgrade!',
     zoneProg: '{a}/5', zoneBonus: 'complete: +25%', zoneOn: '+25% active', unknown: '???',
-    ad: 'Ad', adSim: 'Rewarded video (simulated)', full: 'HOOK FULL!', golden: 'GOLDEN',
+    paused: 'Paused', resume: 'Resume', ad: 'Ad', adSim: 'Rewarded video (simulated)', full: 'HOOK FULL!', golden: 'GOLDEN',
     reach: 'Reach {m} m', lvl: 'Lv',
   },
 };
@@ -781,6 +788,7 @@ window.addEventListener('pointerup', () => { pointerDown = false; });
 const keys = {};
 window.addEventListener('keydown', e => {
   keys[e.key] = true;
+  if (userPaused) { if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') userResume(); return; }
   if (e.key === 'Escape') {
     if ($('adWrap').classList.contains('show')) return;
     if (modalOpen()) {
@@ -2374,7 +2382,7 @@ function pauseGame() {
   Snd.sync(); if (loaded) save();
 }
 function resumeGame() {
-  if (!paused) return;
+  if (!paused || userPaused || hostPaused) return;
   paused = false; lastT = 0;
   const away = (Date.now() - pausedAt) / 1000;
   Snd.sync();
@@ -2382,6 +2390,22 @@ function resumeGame() {
   resumeQ.splice(0).forEach(f => requestAnimationFrame(f));
   rafId = requestAnimationFrame(frame);
 }
+// the player's own pause (button) and the host's pause (ads, tab switch) are tracked apart:
+// the game resumes only when neither is holding it
+let userPaused = false, hostPaused = false;
+function userPause() {
+  if (userPaused || !started) return;
+  userPaused = true; pointerDown = false; for (const k in keys) keys[k] = false;
+  $('pauseBtn').blur();   // a focused button would re-press itself on Space
+  $('pauseT').textContent = t('paused'); $('resumeB').textContent = t('resume');
+  $('pauseWrap').classList.add('show'); pauseGame();
+}
+function userResume() {
+  if (!userPaused) return;
+  userPaused = false; $('pauseWrap').classList.remove('show'); resumeGame();
+}
+$('pauseBtn').onclick = userPause;
+$('pauseWrap').onclick = userResume;
 async function boot() {
   // first frame: sky + sea while data loads
   camY = -VH * .5;
@@ -2392,7 +2416,7 @@ async function boot() {
   try {
     Snd.sdkOn = PF.audioEnabled();
     PF.onAudio(on => { Snd.sdkOn = on; Snd.init(); Snd.sync(); });
-    PF.hookPause(pauseGame, resumeGame);
+    PF.hookPause(() => { hostPaused = true; pauseGame(); }, () => { hostPaused = false; resumeGame(); });
   } catch (e) { PF.warn(); }
   const [lang] = await Promise.all([getLang(), loadGame()]);
   LANG = lang; document.documentElement.lang = LANG;
