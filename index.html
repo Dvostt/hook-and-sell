@@ -371,7 +371,7 @@ const LOOK = {
   verdesca: { shape: 'shark', h: .26, back: '#2f5fb5', body: '#4f82d6', belly: '#eaf1fb', fin: '#2b57a6', pat: 'none', tail: 'shark', dorsal: 1.7 },
   pesce_spada: { shape: 'sword', h: .27, back: '#3d4d70', body: '#6d7ea3', belly: '#dfe5ee', fin: '#34425f', pat: 'none', tail: 'crescent', dorsal: 1.9 },
   lanterna: { shape: 'fish', h: .36, back: '#1c2a45', body: '#2f4266', belly: '#546a92', fin: '#243555', pat: 'glow', pc: '#7ff3ff', tail: 'fork', eye: 1.6, glow: '#7ff3ff' },
-  rana:     { shape: 'angler', h: .78, back: '#2f2526', body: '#4a3b3b', belly: '#6a5552', fin: '#3a2e2e', pat: 'none', glow: '#ffe27a' },
+  rana:     { shape: 'angler', h: .78, back: '#3a2b33', body: '#5b4552', belly: '#8d737c', fin: '#4a3641', pat: 'none', pc: '#b89ca6', glow: '#ffe27a', rim: '#20151b' },
   vipera:   { shape: 'viper', h: .26, back: '#1c3452', body: '#35587f', belly: '#7394b8', fin: '#2a4868', pat: 'glow', pc: '#9dff9d', glow: '#b6ff9d', tail: 'fork', eye: 1.6, rim: '#8fdcff' },
   calamaro: { shape: 'squid', h: .34, back: '#8e2f2a', body: '#c0493f', belly: '#e88a7c', fin: '#a83c34', pat: 'spots', pc: '#e2766a' },
   pesce_oro: { shape: 'fish', h: .42, back: '#d0820a', body: '#ffc93a', belly: '#fff2a6', fin: '#ffb020', pat: 'shine', pc: '#fff7cc', tail: 'fork', dorsal: 1.4, eye: 1.2 },
@@ -1969,22 +1969,77 @@ function drawSun(ctx, lk, w, ph, mode, c) {
   eye(ctx, w * .3, -h * .08, Math.max(2.5, h * .07), mode);
   if (mode !== 2) { ctx.fillStyle = c.out; ctx.beginPath(); ctx.arc(w * .43, h * .04, Math.max(1.5, w * .02), 0, 7); ctx.fill(); }
 }
+// anglerfish: underbite full of needle teeth, warty skin, fan fins, a glowing lure on a jointed stalk
 function drawAngler(ctx, lk, w, ph, mode, c) {
-  const h = w * lk.h;
-  ctx.fillStyle = c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = Math.max(1.2, w * .025);
-  ctx.save(); ctx.translate(-w * .36, 0); ctx.rotate(Math.sin(ph * 5) * .2);
-  ctx.beginPath(); ctx.moveTo(4, 0); ctx.lineTo(-w * .16, -h * .3); ctx.lineTo(-w * .16, h * .3); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
-  const p = new Path2D(); p.ellipse(0, 0, w * .42, h * .5, 0, 0, 7);
-  ctx.fillStyle = mode === 2 ? SIL : bodyGrad(ctx, h, c); ctx.fill(p); ctx.stroke(p);
-  if (mode !== 2) {
-    ctx.fillStyle = '#1a0d0d'; ctx.beginPath(); ctx.moveTo(w * .42, -h * .05); ctx.quadraticCurveTo(w * .15, h * .15, w * .38, h * .32); ctx.lineTo(w * .45, h * .15); ctx.fill();
-    ctx.fillStyle = '#fff'; for (let i = 0; i < 4; i++) { const x = w * (.36 - i * .05); ctx.beginPath(); ctx.moveTo(x, h * (.0 + i * .06)); ctx.lineTo(x + 3, h * (.1 + i * .06)); ctx.lineTo(x + 6, h * (.0 + i * .06)); ctx.fill(); }
+  const h = w * lk.h, lw = Math.max(1.2, w * .022), sil = mode === 2;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const fan = (x0, y0, len, spread, rot) => {   // a fin with rays
+    ctx.save(); ctx.translate(x0, y0); ctx.rotate(rot);
+    ctx.fillStyle = c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = lw;
+    ctx.beginPath(); ctx.moveTo(0, -spread * .35); ctx.quadraticCurveTo(-len * .7, -spread, -len, -spread * .55); ctx.quadraticCurveTo(-len * 1.12, 0, -len, spread * .55); ctx.quadraticCurveTo(-len * .7, spread, 0, spread * .35); ctx.closePath(); ctx.fill(); ctx.stroke();
+    if (!sil) { ctx.strokeStyle = 'rgba(0,0,0,.22)'; ctx.lineWidth = Math.max(.8, lw * .5); for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(-len * .1, i * spread * .08); ctx.lineTo(-len * .95, i * spread * .26); ctx.stroke(); } }
+    ctx.restore();
+  };
+  // tail and dorsal spines behind the body
+  fan(-w * .3, 0, w * .2, h * .42, Math.sin(ph * 5) * .2);
+  ctx.strokeStyle = c.out; ctx.lineWidth = lw;
+  for (let i = 0; i < 3; i++) { const x = -w * (.02 + i * .09), y = -h * (.5 - i * .05); ctx.fillStyle = c.fin; ctx.beginPath(); ctx.moveTo(x + w * .04, y + h * .06); ctx.lineTo(x - w * .01, y - h * .14); ctx.lineTo(x - w * .05, y + h * .07); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  // open mouth behind the jaws
+  const UJ = [w * .41, -h * .1], MC = [w * .17, h * .06], LJ = [w * .5, h * .15];
+  if (!sil) {
+    const mg = ctx.createLinearGradient(MC[0], 0, LJ[0], 0); mg.addColorStop(0, '#0d0506'); mg.addColorStop(1, '#5a1a22');
+    ctx.fillStyle = mg; ctx.beginPath(); ctx.moveTo(UJ[0] + w * .02, UJ[1] - h * .02); ctx.quadraticCurveTo(MC[0] - w * .04, MC[1] - h * .02, MC[0], MC[1]); ctx.quadraticCurveTo(w * .3, h * .2, LJ[0] + w * .02, LJ[1] + h * .02); ctx.closePath(); ctx.fill();
   }
-  // lure
-  const lx = w * .5 + Math.sin(ph * 2) * w * .05, ly = -h * .85;
-  ctx.strokeStyle = mode === 2 ? SIL : c.fin; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(w * .12, -h * .45); ctx.quadraticCurveTo(w * .3, -h * 1.05, lx, ly); ctx.stroke();
-  if (mode === 2) { ctx.fillStyle = SIL; ctx.beginPath(); ctx.arc(lx, ly, 4, 0, 7); ctx.fill(); } else glowDot(ctx, lx, ly, Math.max(2.5, w * .06), lk.glow, mode);
-  eye(ctx, w * .22, -h * .18, Math.max(2, h * .09), mode);
+  // body: high forehead, the lower jaw juts past the upper one
+  const p = new Path2D();
+  p.moveTo(-w * .31, -h * .08);
+  p.bezierCurveTo(-w * .28, -h * .42, -w * .02, -h * .58, w * .2, -h * .48);
+  p.bezierCurveTo(w * .35, -h * .4, w * .42, -h * .24, UJ[0], UJ[1]);
+  p.quadraticCurveTo(w * .3, -h * .01, MC[0], MC[1]);
+  p.quadraticCurveTo(w * .33, h * .13, LJ[0], LJ[1]);
+  p.bezierCurveTo(w * .47, h * .42, w * .12, h * .54, -w * .1, h * .42);
+  p.bezierCurveTo(-w * .24, h * .34, -w * .32, h * .16, -w * .31, -h * .08);
+  ctx.fillStyle = sil ? SIL : bodyGrad(ctx, h, c); ctx.fill(p);
+  if (!sil) {
+    ctx.save(); ctx.clip(p);
+    for (let i = 0; i < 14; i++) {   // warts and speckles
+      const x = w * (.3 - (i * .41) % .62), y = h * (((i * .57) % .86) - .45), r = w * (.012 + (i % 3) * .007);
+      ctx.fillStyle = i % 3 ? c.pc : 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.ellipse(w * .02, -h * .3, w * .2, h * .08, -.2, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+  ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.stroke(p);
+  // needle teeth: upper row points down, lower row points up
+  if (!sil) {
+    ctx.fillStyle = '#f5f1e6'; ctx.strokeStyle = 'rgba(60,40,30,.5)'; ctx.lineWidth = .8;
+    const row = (A, B, n, dir) => { for (let i = 0; i < n; i++) {
+      const k = (i + .5) / n, x = A[0] + (B[0] - A[0]) * k, y = A[1] + (B[1] - A[1]) * k, L = h * (.07 + ((i * 7) % 5) * .018), tw = w * .014;
+      ctx.beginPath(); ctx.moveTo(x - tw, y); ctx.lineTo(x + w * .01 * dir, y + L * dir); ctx.lineTo(x + tw, y); ctx.closePath(); ctx.fill(); ctx.stroke();
+    } };
+    row(UJ, MC, 5, 1); row(MC, LJ, 6, -1);
+    // skin fringes under the chin
+    ctx.fillStyle = c.fin; for (let i = 0; i < 4; i++) { const x = w * (.42 - i * .09), y = h * (.36 + i * .03); ctx.beginPath(); ctx.moveTo(x - w * .025, y); ctx.lineTo(x, y + h * .08); ctx.lineTo(x + w * .025, y); ctx.fill(); }
+  }
+  fan(w * .02, h * .14, w * .13, h * .2, .5 + Math.sin(ph * 6) * .2);
+  // illicium: jointed stalk out of the forehead, bulb with filaments and a pulsing light
+  const sway = Math.sin(ph * 2) * w * .05, lx = w * .55 + sway, ly = -h * .95 + Math.cos(ph * 2) * h * .03;
+  const bx0 = w * .16, by0 = -h * .5, cx = w * .34, cy = -h * 1.15;
+  ctx.strokeStyle = sil ? SIL : c.fin; ctx.lineWidth = Math.max(2, w * .025);
+  ctx.beginPath(); ctx.moveTo(bx0, by0); ctx.quadraticCurveTo(cx, cy, lx, ly); ctx.stroke();
+  if (!sil) {
+    ctx.fillStyle = c.body; for (let k = .25; k < .9; k += .25) { const x = (1 - k) * (1 - k) * bx0 + 2 * (1 - k) * k * cx + k * k * lx, y = (1 - k) * (1 - k) * by0 + 2 * (1 - k) * k * cy + k * k * ly; ctx.beginPath(); ctx.arc(x, y, Math.max(1.2, w * .014), 0, 7); ctx.fill(); }
+    ctx.strokeStyle = 'rgba(255,240,170,.6)'; ctx.lineWidth = 1;
+    for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(lx, ly + w * .03); ctx.quadraticCurveTo(lx + i * w * .02, ly + w * .07, lx + i * w * .035 + Math.sin(ph * 3 + i) * 2, ly + w * .1); ctx.stroke(); }
+    const pulse = 1 + Math.sin(ph * 4) * .18;
+    glowDot(ctx, lx, ly, Math.max(2.5, w * .07) * pulse, lk.glow, mode);
+    ctx.fillStyle = mode === 1 ? '#fff6c8' : lk.glow; ctx.beginPath(); ctx.arc(lx, ly, Math.max(2, w * .035), 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(lx - w * .01, ly - w * .01, Math.max(1, w * .012), 0, 7); ctx.fill();
+  } else { ctx.fillStyle = SIL; ctx.beginPath(); ctx.arc(lx, ly, 4, 0, 7); ctx.fill(); }
+  // small eye under a grumpy brow
+  eye(ctx, w * .21, -h * .25, Math.max(2, h * .085), mode);
+  if (!sil) { ctx.strokeStyle = c.out; ctx.lineWidth = Math.max(2, w * .02); ctx.beginPath(); ctx.moveTo(w * .13, -h * .36); ctx.lineTo(w * .29, -h * .31); ctx.stroke(); }
+  ctx.lineCap = 'butt';
 }
 
 /* ============================ UI ================================= */
