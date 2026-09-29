@@ -34,6 +34,14 @@ button{font:inherit;cursor:pointer}
 .iconbtn{width:44px;height:44px;border-radius:14px;border:0;background:rgba(6,26,48,.78);color:#fff;display:grid;place-items:center;box-shadow:0 3px 0 rgba(0,0,0,.28)}
 .iconbtn svg{width:24px;height:24px}
 .topR{display:flex;gap:8px}
+#lbBtn{display:none}
+#lbBtn.on{display:grid}
+.lbRow{display:flex;align-items:center;gap:10px;padding:9px 12px;margin-top:6px;border-radius:14px;background:rgba(6,26,48,.06);font-weight:800;color:var(--ink)}
+.lbRow.me{background:linear-gradient(#fff3b8,#ffd24d)}
+.lbRow .rk{width:30px;text-align:center;font-weight:900}
+.lbRow .nmL{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lbRow img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.lbMsg{padding:18px 6px;text-align:center;font-weight:700;color:var(--ink);opacity:.75}
 .pauseBox h2{margin:4px 0 16px;font-size:28px;font-weight:900}
 .pauseBox .btn{width:100%}
 .bottom{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 14px);display:flex;gap:10px;transition:transform .25s,opacity .25s}
@@ -84,7 +92,7 @@ button{font:inherit;cursor:pointer}
 .card .ic svg{width:34px;height:34px}
 .card .info{flex:1;min-width:0}
 .card .name{font-weight:900;font-size:17px;color:var(--ink);display:flex;align-items:center;gap:6px}
-.lvpill{font-size:12px;font-weight:900;background:#e9f2ff;color:var(--blue-d);border-radius:999px;padding:2px 8px}
+.lvpill{font-size:12px;font-weight:900;background:#e9f2ff;color:var(--blue-d);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .card .eff{font-size:13.5px;color:var(--ink2);font-weight:800;margin-top:2px}
 .card .eff b{color:var(--green-d)}
 .buy{flex:none;min-width:98px;padding:10px 12px;font-size:16px;border-radius:14px}
@@ -146,6 +154,7 @@ button{font:inherit;cursor:pointer}
       <div class="goal" id="goal"></div><br><div class="goal boost" id="boost"></div>
     </div>
     <div class="topR">
+      <button class="iconbtn pe" id="lbBtn" aria-label="Leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4"/><path d="M12 13v4M8.5 20h7M10 17h4"/></svg></button>
       <button class="iconbtn pe" id="pauseBtn" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg></button>
       <button class="iconbtn pe" id="soundBtn" aria-label="Audio"></button>
     </div>
@@ -159,6 +168,7 @@ button{font:inherit;cursor:pointer}
   <div class="sheet" id="shop"><div class="sheetHead"><h2 id="shopTitle"></h2><button class="x" data-close>✕</button></div><div class="sheetBody" id="shopBody"></div></div>
   <button class="crewBubble pe" id="crewBtn"><span class="cbTop"><span class="coin sm"></span><span id="crewAmt">0</span></span><span class="cbBar"><i id="crewFill"></i></span></button>
   <div class="sheet" id="crewP"><div class="sheetHead"><h2 id="crewTitle"></h2><button class="x" data-close>✕</button></div><div class="sheetBody" id="crewBody"></div></div>
+  <div class="sheet" id="lbP"><div class="sheetHead"><h2 id="lbTitle"></h2><button class="x" data-close>✕</button></div><div class="sheetBody" id="lbBody"></div></div>
   <div class="sheet" id="album"><div class="sheetHead"><h2 id="albumTitle"></h2><button class="x" data-close>✕</button></div><div class="sheetBody" id="albumBody"></div></div>
   <div class="modalWrap" id="modalWrap"><div class="modal" id="modal"></div></div>
   <div class="modalWrap" id="pauseWrap"><div class="modal pauseBox"><h2 id="pauseT"></h2><button class="btn" id="resumeB"></button></div></div>
@@ -295,6 +305,7 @@ const TXT = {
     zoneProg: '{a}/5', zoneBonus: 'completa: +25%', zoneOn: '+25% attivo', unknown: '???',
     paused: 'In pausa', resume: 'Riprendi', ad: 'Pubblicità', adSim: 'Video pubblicitario (simulato)', full: 'AMO PIENO!', golden: 'DORATO',
     reach: 'Raggiungi {m} m', lvl: 'Lv',
+    lb: 'Classifica', lbEmpty: 'Ancora nessun punteggio: pesca e sarai il primo!', lbErr: 'Classifica non disponibile', lbYou: 'Tu',
   },
   en: {
     crew: 'Your crew', holdMove: 'Hold and move', tap: 'Tap to cast',
@@ -323,26 +334,221 @@ const TXT = {
     sDives: 'Dives', sDepth: 'Deepest dive', sCombo: 'Best combo', sEarn: 'Total earned', sTime: 'Time', sGold: 'Golden',
     ok: 'Awesome!', collect: 'Collect', rarity: ['Common', 'Common', 'Uncommon', 'Rare', 'Legendary'], bossR: 'Boss',
     zones: ['Coast', 'Reef', 'Open sea', 'Abyss'],
-    boats: ['Rowboat', 'Fishing boat', 'Trawler', 'Research ship'],
+    boats: ['Gozzo', 'Fishing boat', 'Trawler', 'Research ship'],
     effLine: '{a} m → <b>{b} m</b>', effHook: '{a} → <b>{b}</b> fish per dive',
     effBait: 'Rare ×{a} → <b>×{b}</b> · Gold {c}% → <b>{d}%</b>', effBoat: '{zone} down to {m} m · <b>+25% sell price</b>',
     maxed: 'Maxed out', adFail: 'Video not available, try again later', firstBuy: 'Buy your first upgrade!',
     zoneProg: '{a}/5', zoneBonus: 'complete: +25%', zoneOn: '+25% active', unknown: '???',
     paused: 'Paused', resume: 'Resume', ad: 'Ad', adSim: 'Rewarded video (simulated)', full: 'HOOK FULL!', golden: 'GOLDEN',
     reach: 'Reach {m} m', lvl: 'Lv',
+    lb: 'Leaderboard', lbEmpty: 'No scores yet: go fishing and be the first!', lbErr: 'Leaderboard not available', lbYou: 'You',
+  },
+  ru: {
+    crew: 'Твоя команда', holdMove: 'Удерживай и веди', tap: 'Нажми, чтобы забросить',
+    chest: 'Сундук!', chestFound: 'Сундук найден!', chestTap: 'Что же внутри?', open: 'Открыть',
+    chestUp: '{up} ур. {lv} бесплатно!', chestBait: 'Золотая наживка на {n} погружений: редкие ×{r}, золото +{g}%', chestCoins: 'Отличный клад!',
+    boost: '✦ Золотая наживка: {n} погр.', introBoss: 'Однажды он станет твоим…', introSub: 'Гигантский групер ждёт на {m} м',
+    introZoneSub: '5 новых рыб до {m} м · {boss} ждёт на дне', newHook: 'Новый крючок!', newHookText: 'Теперь ты ловишь на: {name}',
+    hooks: ['Железный крючок', 'Бронзовый крючок', 'Двойной золотой крючок', 'Легендарный трезубец'], drag: 'Веди, чтобы уворачиваться от рыб', grab: 'А теперь хватай их всех!',
+    shop: 'Магазин', album: 'Коллекция', line: 'Леска', hook: 'Крючок', bait: 'Наживка', boat: 'Лодка',
+    max: 'МАКС', haul: 'Улов!', double: 'Реклама ×2', cont: 'Дальше', best: 'Лучшее комбо',
+    fishN: 'Рыб: {n}', fish1: '1 рыба', newSp: 'НОВАЯ', zoneDone: '{zone}: собрано! +25% к цене',
+    needBoat: 'Нужна лодка побольше', needBoss: 'Поймай босса: {boss}',
+    bossLock: 'Нужен крючок ур. {n}', goalReach: 'Спустись на {m} м: там живёт {boss}',
+    goalHook: '{boss}: нужен крючок ур. {n}', goalCatch: 'Поймай: {boss}, {m} м!',
+    goalBoat: 'Купи лодку: {boat}', goalDone: 'Море твоё! Собери всю коллекцию',
+    away: 'Пока тебя не было, команда рыбачила за тебя', crewUnlocked: 'Команда открыта!',
+    crewText: 'Теперь команда ловит рыбу за тебя, даже когда ты не играешь. Нажми на её лодку, чтобы забрать улов.',
+    crewTitle: 'Команда', crewRate: 'Улов', hold: 'Трюм', claim: 'Забрать', holdFull: 'Трюм полон: команда стоит',
+    upg: 'Улучшения', sailors: 'Матросы', luck: 'Удача', effSailors: '{a}/мин → <b>{b}/мин</b>',
+    effHold: '{a} → <b>{b}</b> рыбалки', effLuck: 'Сбор ×{m}: {a}% → <b>{b}%</b>', lucky: 'Удачный улов! ×{m}',
+    goCrew: 'К команде', awayFull: 'Трюм полон, и команда остановилась. Улучши трюм, чтобы она рыбачила дольше.',
+    fullShort: 'ПОЛОН', nothing: 'Трюм пуст', perMinU: '/мин',
+    newBoat: 'Новая лодка в магазине!', newBoatText: '{boat}: зона «{zone}», до {m} м.',
+    bossCaught: 'ЛЕГЕНДАРНЫЙ УЛОВ: {boss}!', victory: 'Ты поймал Кракена!',
+    victoryText: 'Средиземное море твоё. Рыбачь дальше, чтобы собрать коллекцию и найти всех золотых рыб.',
+    sDives: 'Погружения', sDepth: 'Рекорд глубины', sCombo: 'Рекорд комбо', sEarn: 'Всего заработано', sTime: 'Время', sGold: 'Золотые',
+    ok: 'Отлично!', collect: 'Забрать', rarity: ['Обычная', 'Обычная', 'Необычная', 'Редкая', 'Легендарная'], bossR: 'Босс',
+    zones: ['Побережье', 'Риф', 'Открытое море', 'Бездна'],
+    boats: ['Гоццо', 'Рыбацкая лодка', 'Траулер', 'Научное судно'],
+    effLine: '{a} м → <b>{b} м</b>', effHook: '{a} → <b>{b}</b> рыб за погружение',
+    effBait: 'Редкие ×{a} → <b>×{b}</b> · Золото {c}% → <b>{d}%</b>', effBoat: '{zone} до {m} м · <b>продажа +25%</b>',
+    maxed: 'Максимум', adFail: 'Видео недоступно, попробуй позже', firstBuy: 'Купи первое улучшение!',
+    zoneProg: '{a}/5', zoneBonus: 'полностью: +25%', zoneOn: '+25% активно', unknown: '???',
+    paused: 'Пауза', resume: 'Продолжить', ad: 'Реклама', adSim: 'Рекламное видео (имитация)', full: 'КРЮЧОК ПОЛОН!', golden: 'ЗОЛОТАЯ',
+    reach: 'Достигни {m} м', lvl: 'ур.',
+    lb: 'Рейтинг', lbEmpty: 'Пока нет результатов: рыбачь и стань первым!', lbErr: 'Рейтинг недоступен', lbYou: 'Ты',
+  },
+  tr: {
+    crew: 'Tayfan', holdMove: 'Basılı tut ve kaydır', tap: 'Oltayı atmak için dokun',
+    chest: 'Hazine sandığı!', chestFound: 'Sandık bulundu!', chestTap: 'İçinde ne var?', open: 'Aç',
+    chestUp: 'Bedava {up} Sv {lv}!', chestBait: '{n} dalış için altın yem: nadir ×{r}, altın +%{g}', chestCoins: 'Güzel bir hazine!',
+    boost: '✦ Altın yem: {n} dalış', introBoss: 'Bir gün senin olacak…', introSub: 'Dev Orfoz {m} m\'de seni bekliyor',
+    introZoneSub: '{m} m\'ye kadar 5 yeni balık · {boss} dipte bekliyor', newHook: 'Yeni iğne!', newHookText: 'Artık bununla avlanıyorsun: {name}',
+    hooks: ['Demir iğne', 'Bronz iğne', 'Çift altın iğne', 'Efsanevi zıpkın'], drag: 'Balıklardan kaçmak için kaydır', grab: 'Şimdi hepsini yakala!',
+    shop: 'Mağaza', album: 'Koleksiyon', line: 'Misina', hook: 'İğne', bait: 'Yem', boat: 'Tekne',
+    max: 'MAKS', haul: 'Av!', double: 'Reklam izle ×2', cont: 'Devam', best: 'En iyi kombo',
+    fishN: '{n} balık', fish1: '1 balık', newSp: 'YENİ', zoneDone: '{zone} tamamlandı! Değer +%25',
+    needBoat: 'Daha büyük bir tekne lazım', needBoss: 'Boss\'u yakala: {boss}',
+    bossLock: 'İğne Sv. {n} gerekli', goalReach: '{m} m\'ye in: {boss} orada yaşıyor',
+    goalHook: '{boss}: İğne Sv. {n} gerekli', goalCatch: '{boss} için {m} m\'ye in!',
+    goalBoat: 'Tekneyi satın al: {boat}', goalDone: 'Deniz senin! Koleksiyonu tamamla',
+    away: 'Sen yokken tayfan senin için balık tuttu', crewUnlocked: 'Tayfa açıldı!',
+    crewText: 'Artık bir tayfa senin için balık tutuyor, oynamadığında bile. Avı toplamak için teknelerine dokun.',
+    crewTitle: 'Tayfa', crewRate: 'Av', hold: 'Ambar', claim: 'Topla', holdFull: 'Ambar dolu: tayfa durdu',
+    upg: 'Geliştirmeler', sailors: 'Denizciler', luck: 'Şans', effSailors: '{a}/dk → <b>{b}/dk</b>',
+    effHold: '{a} → <b>{b}</b> av süresi', effLuck: 'Toplama ×{m}: %{a} → <b>%{b}</b>', lucky: 'Şanslı av! ×{m}',
+    goCrew: 'Tayfaya git', awayFull: 'Ambar doldu ve tayfa durdu. Daha uzun avlanmaları için Ambarı geliştir.',
+    fullShort: 'DOLU', nothing: 'Ambar boş', perMinU: '/dk',
+    newBoat: 'Mağazada yeni tekne!', newBoatText: '{boat} seni {zone} bölgesine, {m} m\'ye kadar götürür.',
+    bossCaught: 'EFSANEVİ AV: {boss}!', victory: 'Kraken\'i yakaladın!',
+    victoryText: 'Akdeniz artık senin. Koleksiyonu tamamlamak ve tüm altın balıkları bulmak için avlanmaya devam et.',
+    sDives: 'Dalışlar', sDepth: 'Derinlik rekoru', sCombo: 'Kombo rekoru', sEarn: 'Toplam kazanç', sTime: 'Süre', sGold: 'Altın',
+    ok: 'Harika!', collect: 'Topla', rarity: ['Yaygın', 'Yaygın', 'Seyrek', 'Nadir', 'Efsanevi'], bossR: 'Boss',
+    zones: ['Kıyı', 'Resif', 'Açık deniz', 'Derinlik'],
+    boats: ['Gozzo', 'Balıkçı teknesi', 'Trol teknesi', 'Araştırma gemisi'],
+    effLine: '{a} m → <b>{b} m</b>', effHook: '{a} → <b>{b}</b> balık/dalış',
+    effBait: 'Nadir ×{a} → <b>×{b}</b> · Altın %{c} → <b>%{d}</b>', effBoat: '{zone}, {m} m\'ye kadar · <b>satış +%25</b>',
+    maxed: 'Maksimum', adFail: 'Video şu an yok, sonra tekrar dene', firstBuy: 'İlk geliştirmeni satın al!',
+    zoneProg: '{a}/5', zoneBonus: 'tamamla: +%25', zoneOn: '+%25 aktif', unknown: '???',
+    paused: 'Duraklatıldı', resume: 'Devam et', ad: 'Reklam', adSim: 'Ödüllü video (simülasyon)', full: 'İĞNE DOLU!', golden: 'ALTIN',
+    reach: '{m} m\'ye ulaş', lvl: 'Sv',
+    lb: 'Sıralama', lbEmpty: 'Henüz skor yok: avlan ve ilk sen ol!', lbErr: 'Sıralama şu an yok', lbYou: 'Sen',
+  },
+  es: {
+    crew: 'Tu tripulación', holdMove: 'Mantén y mueve', tap: 'Toca para lanzar',
+    chest: '¡Cofre del tesoro!', chestFound: '¡Cofre encontrado!', chestTap: '¿Qué habrá dentro?', open: 'Abrir',
+    chestUp: '¡{up} Nv {lv} gratis!', chestBait: 'Cebo dorado para {n} inmersiones: raros ×{r}, oro +{g}%', chestCoins: '¡Un buen botín!',
+    boost: '✦ Cebo dorado: {n} inmersiones', introBoss: 'Algún día será tuyo…', introSub: 'El Mero Gigante te espera a {m} m',
+    introZoneSub: '5 peces nuevos hasta {m} m · {boss} te espera en el fondo', newHook: '¡Anzuelo nuevo!', newHookText: 'Desde ahora pescas con: {name}',
+    hooks: ['Anzuelo de hierro', 'Anzuelo de bronce', 'Anzuelo doble de oro', 'Tridente legendario'], drag: 'Arrastra para esquivar los peces', grab: '¡Ahora atrápalos todos!',
+    shop: 'Tienda', album: 'Colección', line: 'Sedal', hook: 'Anzuelo', bait: 'Cebo', boat: 'Barco',
+    max: 'MÁX', haul: '¡Tu captura!', double: 'Ver anuncio ×2', cont: 'Continuar', best: 'Mejor combo',
+    fishN: '{n} peces', fish1: '1 pez', newSp: 'NUEVO', zoneDone: '¡{zone} completada! +25% de valor',
+    needBoat: 'Necesitas un barco más grande', needBoss: 'Atrapa al jefe: {boss}',
+    bossLock: 'Requiere Anzuelo Nv. {n}', goalReach: 'Baja a {m} m: ahí vive {boss}',
+    goalHook: '{boss}: requiere Anzuelo Nv. {n}', goalCatch: '¡Atrapa a {boss} a {m} m!',
+    goalBoat: 'Compra el barco: {boat}', goalDone: '¡El mar es tuyo! Completa la colección',
+    away: 'Mientras no estabas, tu tripulación pescó por ti', crewUnlocked: '¡Tripulación desbloqueada!',
+    crewText: 'Ahora una tripulación pesca por ti, incluso cuando no juegas. Toca su barco para recoger la captura.',
+    crewTitle: 'Tripulación', crewRate: 'Pesca', hold: 'Bodega', claim: 'Recoger', holdFull: 'Bodega llena: la tripulación paró',
+    upg: 'Mejoras', sailors: 'Marineros', luck: 'Suerte', effSailors: '{a}/min → <b>{b}/min</b>',
+    effHold: '{a} → <b>{b}</b> de pesca', effLuck: 'Cobro ×{m}: {a}% → <b>{b}%</b>', lucky: '¡Golpe de suerte! ×{m}',
+    goCrew: 'Ir a la tripulación', awayFull: 'La bodega está llena y la tripulación se detuvo. Mejora la Bodega para que pesquen más tiempo.',
+    fullShort: 'LLENA', nothing: 'Bodega vacía', perMinU: '/min',
+    newBoat: '¡Barco nuevo en la tienda!', newBoatText: 'El {boat} te lleva a la zona {zone}, hasta {m} m.',
+    bossCaught: 'CAPTURA LEGENDARIA: {boss}!', victory: '¡Atrapaste al Kraken!',
+    victoryText: 'El Mediterráneo es tuyo. Sigue pescando para completar la colección y encontrar todos los peces dorados.',
+    sDives: 'Inmersiones', sDepth: 'Récord de profundidad', sCombo: 'Récord de combo', sEarn: 'Ganancia total', sTime: 'Tiempo', sGold: 'Dorados',
+    ok: '¡Genial!', collect: 'Cobrar', rarity: ['Común', 'Común', 'Poco común', 'Raro', 'Legendario'], bossR: 'Jefe',
+    zones: ['Costa', 'Arrecife', 'Mar abierto', 'Abismo'],
+    boats: ['Gozzo', 'Barco pesquero', 'Arrastrero', 'Buque oceanográfico'],
+    effLine: '{a} m → <b>{b} m</b>', effHook: '{a} → <b>{b}</b> peces por inmersión',
+    effBait: 'Raros ×{a} → <b>×{b}</b> · Oro {c}% → <b>{d}%</b>', effBoat: '{zone} hasta {m} m · <b>venta +25%</b>',
+    maxed: 'Al máximo', adFail: 'Vídeo no disponible, inténtalo más tarde', firstBuy: '¡Compra tu primera mejora!',
+    zoneProg: '{a}/5', zoneBonus: 'completa: +25%', zoneOn: '+25% activo', unknown: '???',
+    paused: 'En pausa', resume: 'Reanudar', ad: 'Anuncio', adSim: 'Vídeo con recompensa (simulado)', full: '¡ANZUELO LLENO!', golden: 'DORADO',
+    reach: 'Llega a {m} m', lvl: 'Nv',
+    lb: 'Clasificación', lbEmpty: 'Aún no hay puntuaciones: ¡pesca y sé el primero!', lbErr: 'Clasificación no disponible', lbYou: 'Tú',
+  },
+  pt: {
+    crew: 'Sua tripulação', holdMove: 'Segure e mova', tap: 'Toque para lançar',
+    chest: 'Baú do tesouro!', chestFound: 'Baú encontrado!', chestTap: 'O que tem dentro?', open: 'Abrir',
+    chestUp: '{up} Nv {lv} grátis!', chestBait: 'Isca dourada por {n} mergulhos: raros ×{r}, ouro +{g}%', chestCoins: 'Um belo tesouro!',
+    boost: '✦ Isca dourada: {n} mergulhos', introBoss: 'Um dia ele será seu…', introSub: 'O Mero Gigante espera a {m} m',
+    introZoneSub: '5 peixes novos até {m} m · {boss} espera no fundo', newHook: 'Anzol novo!', newHookText: 'Agora você pesca com: {name}',
+    hooks: ['Anzol de ferro', 'Anzol de bronze', 'Anzol duplo de ouro', 'Tridente lendário'], drag: 'Arraste para desviar dos peixes', grab: 'Agora pegue todos!',
+    shop: 'Loja', album: 'Coleção', line: 'Linha', hook: 'Anzol', bait: 'Isca', boat: 'Barco',
+    max: 'MÁX', haul: 'Sua pesca!', double: 'Ver anúncio ×2', cont: 'Continuar', best: 'Melhor combo',
+    fishN: '{n} peixes', fish1: '1 peixe', newSp: 'NOVO', zoneDone: '{zone} completa! +25% de valor',
+    needBoat: 'Você precisa de um barco maior', needBoss: 'Pegue o chefe: {boss}',
+    bossLock: 'Requer Anzol Nv. {n}', goalReach: 'Desça a {m} m: lá vive {boss}',
+    goalHook: '{boss}: requer Anzol Nv. {n}', goalCatch: 'Pegue {boss} a {m} m!',
+    goalBoat: 'Compre o barco: {boat}', goalDone: 'O mar é seu! Complete a coleção',
+    away: 'Enquanto você estava fora, sua tripulação pescou por você', crewUnlocked: 'Tripulação desbloqueada!',
+    crewText: 'Agora uma tripulação pesca por você, mesmo quando você não joga. Toque no barco dela para recolher a pesca.',
+    crewTitle: 'Tripulação', crewRate: 'Pesca', hold: 'Porão', claim: 'Recolher', holdFull: 'Porão cheio: a tripulação parou',
+    upg: 'Melhorias', sailors: 'Marinheiros', luck: 'Sorte', effSailors: '{a}/min → <b>{b}/min</b>',
+    effHold: '{a} → <b>{b}</b> de pesca', effLuck: 'Coleta ×{m}: {a}% → <b>{b}%</b>', lucky: 'Golpe de sorte! ×{m}',
+    goCrew: 'Ir à tripulação', awayFull: 'O porão está cheio e a tripulação parou. Melhore o Porão para pescarem por mais tempo.',
+    fullShort: 'CHEIO', nothing: 'Porão vazio', perMinU: '/min',
+    newBoat: 'Barco novo na loja!', newBoatText: 'O {boat} leva você à zona {zone}, até {m} m.',
+    bossCaught: 'PESCA LENDÁRIA: {boss}!', victory: 'Você pegou o Kraken!',
+    victoryText: 'O Mediterrâneo é seu. Continue pescando para completar a coleção e encontrar todos os peixes dourados.',
+    sDives: 'Mergulhos', sDepth: 'Recorde de profundidade', sCombo: 'Recorde de combo', sEarn: 'Ganho total', sTime: 'Tempo', sGold: 'Dourados',
+    ok: 'Demais!', collect: 'Recolher', rarity: ['Comum', 'Comum', 'Incomum', 'Raro', 'Lendário'], bossR: 'Chefe',
+    zones: ['Costa', 'Recife', 'Mar aberto', 'Abismo'],
+    boats: ['Gozzo', 'Barco de pesca', 'Traineira', 'Navio oceanográfico'],
+    effLine: '{a} m → <b>{b} m</b>', effHook: '{a} → <b>{b}</b> peixes por mergulho',
+    effBait: 'Raros ×{a} → <b>×{b}</b> · Ouro {c}% → <b>{d}%</b>', effBoat: '{zone} até {m} m · <b>venda +25%</b>',
+    maxed: 'No máximo', adFail: 'Vídeo indisponível, tente mais tarde', firstBuy: 'Compre sua primeira melhoria!',
+    zoneProg: '{a}/5', zoneBonus: 'completa: +25%', zoneOn: '+25% ativo', unknown: '???',
+    paused: 'Pausado', resume: 'Continuar', ad: 'Anúncio', adSim: 'Vídeo premiado (simulado)', full: 'ANZOL CHEIO!', golden: 'DOURADO',
+    reach: 'Alcance {m} m', lvl: 'Nv',
+    lb: 'Ranking', lbEmpty: 'Ainda sem pontuações: pesque e seja o primeiro!', lbErr: 'Ranking indisponível', lbYou: 'Você',
+  },
+  de: {
+    crew: 'Deine Crew', holdMove: 'Halten und bewegen', tap: 'Tippen zum Auswerfen',
+    chest: 'Schatztruhe!', chestFound: 'Truhe gefunden!', chestTap: 'Was ist wohl drin?', open: 'Öffnen',
+    chestUp: '{up} Lv {lv} gratis!', chestBait: 'Goldköder für {n} Tauchgänge: selten ×{r}, Gold +{g}%', chestCoins: 'Ein schöner Schatz!',
+    boost: '✦ Goldköder: {n} Tauchgänge', introBoss: 'Eines Tages gehört er dir…', introSub: 'Der Riesenzackenbarsch wartet in {m} m',
+    introZoneSub: '5 neue Fische bis {m} m · {boss} wartet am Grund', newHook: 'Neuer Haken!', newHookText: 'Ab jetzt angelst du mit: {name}',
+    hooks: ['Eisenhaken', 'Bronzehaken', 'Goldener Doppelhaken', 'Legendärer Dreizack'], drag: 'Ziehen, um den Fischen auszuweichen', grab: 'Jetzt schnapp sie dir alle!',
+    shop: 'Laden', album: 'Sammlung', line: 'Schnur', hook: 'Haken', bait: 'Köder', boat: 'Boot',
+    max: 'MAX', haul: 'Dein Fang!', double: 'Werbung ×2', cont: 'Weiter', best: 'Beste Kombo',
+    fishN: '{n} Fische', fish1: '1 Fisch', newSp: 'NEU', zoneDone: '{zone} komplett! +25% Wert',
+    needBoat: 'Du brauchst ein größeres Boot', needBoss: 'Fang den Boss: {boss}',
+    bossLock: 'Braucht Haken Lv. {n}', goalReach: 'Tauche auf {m} m: dort lebt {boss}',
+    goalHook: '{boss}: braucht Haken Lv. {n}', goalCatch: 'Fang {boss} in {m} m!',
+    goalBoat: 'Kauf das Boot: {boat}', goalDone: 'Das Meer gehört dir! Vervollständige die Sammlung',
+    away: 'Während du weg warst, hat deine Crew für dich geangelt', crewUnlocked: 'Crew freigeschaltet!',
+    crewText: 'Jetzt angelt eine Crew für dich, auch wenn du nicht spielst. Tippe auf ihr Boot, um den Fang einzusammeln.',
+    crewTitle: 'Crew', crewRate: 'Fang', hold: 'Laderaum', claim: 'Einsammeln', holdFull: 'Laderaum voll: die Crew pausiert',
+    upg: 'Upgrades', sailors: 'Matrosen', luck: 'Glück', effSailors: '{a}/Min → <b>{b}/Min</b>',
+    effHold: '{a} → <b>{b}</b> Angelzeit', effLuck: 'Einsammeln ×{m}: {a}% → <b>{b}%</b>', lucky: 'Glücksfang! ×{m}',
+    goCrew: 'Zur Crew', awayFull: 'Der Laderaum ist voll, deshalb hat die Crew aufgehört. Verbessere den Laderaum, damit sie länger angelt.',
+    fullShort: 'VOLL', nothing: 'Laderaum leer', perMinU: '/Min',
+    newBoat: 'Neues Boot im Laden!', newBoatText: 'Das {boat} bringt dich in die Zone {zone}, bis {m} m.',
+    bossCaught: 'LEGENDÄRER FANG: {boss}!', victory: 'Du hast den Kraken gefangen!',
+    victoryText: 'Das Mittelmeer gehört dir. Angle weiter, um die Sammlung zu vervollständigen und alle goldenen Fische zu finden.',
+    sDives: 'Tauchgänge', sDepth: 'Tiefenrekord', sCombo: 'Kombo-Rekord', sEarn: 'Gesamtverdienst', sTime: 'Zeit', sGold: 'Goldene',
+    ok: 'Super!', collect: 'Kassieren', rarity: ['Häufig', 'Häufig', 'Ungewöhnlich', 'Selten', 'Legendär'], bossR: 'Boss',
+    zones: ['Küste', 'Riff', 'Offenes Meer', 'Tiefsee'],
+    boats: ['Gozzo', 'Fischerboot', 'Trawler', 'Forschungsschiff'],
+    effLine: '{a} m → <b>{b} m</b>', effHook: '{a} → <b>{b}</b> Fische pro Tauchgang',
+    effBait: 'Selten ×{a} → <b>×{b}</b> · Gold {c}% → <b>{d}%</b>', effBoat: '{zone} bis {m} m · <b>Verkauf +25%</b>',
+    maxed: 'Maximal', adFail: 'Video nicht verfügbar, versuch es später', firstBuy: 'Kauf dein erstes Upgrade!',
+    zoneProg: '{a}/5', zoneBonus: 'komplett: +25%', zoneOn: '+25% aktiv', unknown: '???',
+    paused: 'Pause', resume: 'Weiter', ad: 'Werbung', adSim: 'Belohnungsvideo (simuliert)', full: 'HAKEN VOLL!', golden: 'GOLDEN',
+    reach: 'Erreiche {m} m', lvl: 'Lv',
+    lb: 'Bestenliste', lbEmpty: 'Noch keine Punkte: geh angeln und sei der Erste!', lbErr: 'Bestenliste nicht verfügbar', lbYou: 'Du',
   },
 };
-const NAMES = {
-  sardina: ['Sardina', 'Sardine'], occhiata: ['Occhiata', 'Saddled Bream'], sarago: ['Sarago', 'White Seabream'],
-  orata: ['Orata', 'Gilt-head Bream'], spigola: ['Spigola', 'Sea Bass'],
-  triglia: ['Triglia', 'Red Mullet'], polpo: ['Polpo', 'Octopus'], dentice: ['Dentice', 'Dentex'],
-  ricciola: ['Ricciola', 'Amberjack'], murena: ['Murena', 'Moray Eel'],
-  lampuga: ['Lampuga', 'Mahi-mahi'], tonno: ['Tonno Rosso', 'Bluefin Tuna'], pesce_luna: ['Pesce Luna', 'Sunfish'],
-  verdesca: ['Verdesca', 'Blue Shark'], pesce_spada: ['Pesce Spada', 'Swordfish'],
-  lanterna: ['Pesce Lanterna', 'Lanternfish'], rana: ['Rana Pescatrice', 'Anglerfish'], vipera: ['Pesce Vipera', 'Viperfish'],
-  calamaro: ['Calamaro Gigante', 'Giant Squid'], pesce_oro: ["Pesce d'Oro", 'Golden Fish'],
-  cernia_gigante: ['Cernia Gigante', 'Giant Grouper'], murena_regina: ['Murena Regina', 'Moray Queen'],
-  pesce_spada_re: ['Pesce Spada Re', 'Swordfish King'], kraken: ['Kraken', 'Kraken'],
+const NAMES = {   // it, en, ru, tr, es, pt, de (same order as LANGS)
+  sardina: ["Sardina", "Sardine", "Сардина", "Sardalya", "Sardina", "Sardinha", "Sardine"],
+  occhiata: ["Occhiata", "Saddled Bream", "Облада", "Melanurya", "Oblada", "Dobradiça", "Brandbrasse"],
+  sarago: ["Sarago", "White Seabream", "Белый сарг", "Karagöz", "Sargo", "Sargo", "Geißbrasse"],
+  orata: ["Orata", "Gilt-head Bream", "Дорада", "Çipura", "Dorada", "Dourada", "Goldbrasse"],
+  spigola: ["Spigola", "Sea Bass", "Сибас", "Levrek", "Lubina", "Robalo", "Wolfsbarsch"],
+  triglia: ["Triglia", "Red Mullet", "Барабулька", "Barbunya", "Salmonete", "Salmonete", "Rotbarbe"],
+  polpo: ["Polpo", "Octopus", "Осьминог", "Ahtapot", "Pulpo", "Polvo", "Oktopus"],
+  dentice: ["Dentice", "Dentex", "Зубан", "Sinarit", "Dentón", "Dentão", "Zahnbrasse"],
+  ricciola: ["Ricciola", "Amberjack", "Сериола", "Sarıkuyruk", "Pez limón", "Charuteiro", "Bernsteinmakrele"],
+  murena: ["Murena", "Moray Eel", "Мурена", "Müren", "Morena", "Moreia", "Muräne"],
+  lampuga: ["Lampuga", "Mahi-mahi", "Корифена", "Lambuka", "Lampuga", "Dourado-do-mar", "Goldmakrele"],
+  tonno: ["Tonno Rosso", "Bluefin Tuna", "Голубой тунец", "Orkinos", "Atún rojo", "Atum-rabilho", "Roter Thun"],
+  pesce_luna: ["Pesce Luna", "Sunfish", "Рыба-луна", "Aybalığı", "Pez luna", "Peixe-lua", "Mondfisch"],
+  verdesca: ["Verdesca", "Blue Shark", "Синяя акула", "Mavi köpekbalığı", "Tintorera", "Tintureira", "Blauhai"],
+  pesce_spada: ["Pesce Spada", "Swordfish", "Меч-рыба", "Kılıç balığı", "Pez espada", "Espadarte", "Schwertfisch"],
+  lanterna: ["Pesce Lanterna", "Lanternfish", "Рыба-фонарь", "Işıldak balığı", "Pez linterna", "Peixe-lanterna", "Laternenfisch"],
+  rana: ["Rana Pescatrice", "Anglerfish", "Морской чёрт", "Fener balığı", "Rape", "Tamboril", "Seeteufel"],
+  vipera: ["Pesce Vipera", "Viperfish", "Рыба-гадюка", "Engerek balığı", "Pez víbora", "Peixe-víbora", "Viperfisch"],
+  calamaro: ["Calamaro Gigante", "Giant Squid", "Гигантский кальмар", "Dev kalamar", "Calamar gigante", "Lula-gigante", "Riesenkalmar"],
+  pesce_oro: ["Pesce d'Oro", "Golden Fish", "Золотая рыбка", "Altın balık", "Pez de oro", "Peixe de Ouro", "Goldfisch"],
+  cernia_gigante: ["Cernia Gigante", "Giant Grouper", "Гигантский групер", "Dev orfoz", "Mero gigante", "Mero gigante", "Riesenzackenbarsch"],
+  murena_regina: ["Murena Regina", "Moray Queen", "Королева мурен", "Müren Kraliçesi", "Reina Morena", "Rainha Moreia", "Muränenkönigin"],
+  pesce_spada_re: ["Pesce Spada Re", "Swordfish King", "Король меч-рыб", "Kılıç Balığı Kralı", "Rey Pez Espada", "Rei Espadarte", "Schwertfischkönig"],
+  kraken: ["Kraken", "Kraken", "Кракен", "Kraken", "Kraken", "Kraken", "Kraken"],
 };
 let LANG = 'it';
 const t = (k, vars) => {
@@ -350,7 +556,10 @@ const t = (k, vars) => {
   if (vars) for (const v in vars) s = s.split('{' + v + '}').join(vars[v]);
   return s;
 };
-const nm = id => NAMES[id][LANG === 'it' ? 0 : 1];
+const LANGS = ['it', 'en', 'ru', 'tr', 'es', 'pt', 'de'];
+const LOCALE = { it: 'it-IT', en: 'en-US', ru: 'ru-RU', tr: 'tr-TR', es: 'es-ES', pt: 'pt-BR', de: 'de-DE' };
+const up = str => str.toLocaleUpperCase(LOCALE[LANG]);   // Turkish needs its dotted capital İ
+const nm = id => NAMES[id][LANGS.indexOf(LANG)] || NAMES[id][1];
 
 /* ============================ look =============================== */
 // visual description of each species (shape + palette). Not balancing.
@@ -392,9 +601,9 @@ CONFIG.bosses.forEach((b, i) => { b.boss = true; b.i = 5; SP[b.id] = b; });
 const ZONE_SPECIES = CONFIG.zones.map((_, z) => CONFIG.species.filter(s => s.z === z));
 function fmt(n) {
   n = Math.floor(n);
-  if (n < 100000) return n.toLocaleString(LANG === 'it' ? 'it-IT' : 'en-US');
+  if (n < 100000) return n.toLocaleString(LOCALE[LANG]);
   const u = [[1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
-  for (const [v, s] of u) if (n >= v) { const x = n / v; return (x >= 100 ? Math.floor(x) : x.toFixed(1).replace(/\.0$/, '')).toString().replace('.', LANG === 'it' ? ',' : '.') + s; }
+  for (const [v, s] of u) if (n >= v) { const x = n / v; return (x >= 100 ? Math.floor(x) : x.toFixed(1).replace(/\.0$/, '')).toString().replace('.', (1.5).toLocaleString(LOCALE[LANG])[1]) + s; }
   return String(n);
 }
 const coinHTML = (cls = 'sm') => `<span class="coin ${cls}"></span>`;
@@ -421,6 +630,7 @@ function simulatedAd() {
     setTimeout(() => { w.classList.remove('show'); res(true); }, 1700);
   });
 }
+const LB_ID = 'top_earnings';   // leaderboard tag, same id in the Playgama cabinet and in playgama-bridge-config.json
 const PF = BR ? (() => {
   // Playgama Bridge SDK v2
   let rewardWaiter = null, rewardGot = false;
@@ -441,7 +651,11 @@ const PF = BR ? (() => {
     hookPause(onPause, onResume) { BR.platform.on(BR.EVENT_NAME.PAUSE_STATE_CHANGED, p => p ? onPause() : onResume()); },
     audioEnabled: () => BR.platform.isAudioEnabled !== false,
     onAudio(cb) { BR.platform.on(BR.EVENT_NAME.AUDIO_STATE_CHANGED, cb); },
-    score() {},
+    score(v) { try { if (BR.leaderboards.type !== 'not_available') BR.leaderboards.setScore(LB_ID, v).catch(() => {}); } catch (e) {} },
+    lbType: () => { try { return BR.leaderboards.type; } catch (e) { return 'not_available'; } },
+    lbEntries: () => BR.leaderboards.getEntries(LB_ID),
+    lbPopup: () => BR.leaderboards.showNativePopup(LB_ID),
+    playerId: () => { try { return BR.player.id; } catch (e) { return null; } },
     rewardedSupported: () => mock() || !!BR.advertisement.isRewardedSupported,
     rewarded(id) {
       if (mock()) return simulatedAd();
@@ -517,7 +731,8 @@ function save() {
 async function getLang() {
   let l = 'en';
   try { l = await PF.language(); } catch (e) {}
-  return String(l).toLowerCase().startsWith('it') ? 'it' : 'en';
+  const code = String(l).toLowerCase().slice(0, 2);
+  return LANGS.includes(code) ? code : 'en';
 }
 function sendScore() { PF.score(Math.floor(S.te)); }
 async function showRewardedAd() { try { return !!(await PF.rewarded('double_haul')); } catch (e) { return false; } }
@@ -751,7 +966,7 @@ function bossEncounter() {
     S.b[z] = 1; boss.gone = true;
     caught.unshift({ sp: boss.sp, lk: boss.lk, golden: false, val: Math.round(boss.sp.value * sellMult(z)), mult: 1, sw: 0, boss: true });
     shake = 16; flash = .75; sfx.boss(); cine = { type: 'catch', t: 0 };
-    bossBanner = { txt: t('bossCaught', { boss: nm(boss.sp.id).toUpperCase() }), life: 2.6 };
+    bossBanner = { txt: t('bossCaught', { boss: up(nm(boss.sp.id)) }), life: 2.6 };
     if (z < 3) pendingModals.push({ type: 'boat', z: z + 1 });
     if (z === 0 && !S.cr) { S.cr = 1; pendingModals.push({ type: 'crew' }); }
     if (z === 3 && !S.win) { S.win = 1; pendingModals.push({ type: 'win' }); }
@@ -1179,7 +1394,7 @@ function drawSeaWorld() {
     g.strokeStyle = 'rgba(255,255,255,.18)'; g.setLineDash([8, 10]); g.lineWidth = 2;
     g.beginPath(); g.moveTo(0, y); g.lineTo(VW, y); g.stroke(); g.setLineDash([]);
     g.fillStyle = 'rgba(255,255,255,.55)'; g.font = '900 13px ui-rounded,system-ui,sans-serif'; g.textAlign = 'left';
-    g.fillText(t('zones')[z + 1].toUpperCase() + ' ↓', 10, y + 18);
+    g.fillText(up(t('zones')[z + 1]) + ' ↓', 10, y + 18);
   }
   // end of the line: seabed or dashed MAX marker
   if (intro) { if (maxPx > v0 && maxPx < v1 + 200) drawSeabed(maxPx); }
@@ -1570,13 +1785,13 @@ function drawScreenFX() {
   if (zoneLabel && zoneLabel.life > 0 && (phase === 'down')) {
     const a = clamp(zoneLabel.life, 0, 1);
     g.globalAlpha = a; g.font = '900 30px ui-rounded,system-ui,sans-serif'; g.textAlign = 'center';
-    g.lineWidth = 6; g.strokeStyle = 'rgba(6,26,48,.6)'; const s = t('zones')[zoneLabel.z].toUpperCase();
+    g.lineWidth = 6; g.strokeStyle = 'rgba(6,26,48,.6)'; const s = up(t('zones')[zoneLabel.z]);
     g.strokeText(s, VW / 2, VH * .45); g.fillStyle = '#bff3ff'; g.fillText(s, VW / 2, VH * .45); g.globalAlpha = 1;
   }
   if (intro) {
     const k = intro.t, a = clamp(Math.min(k * 2.5, (intro.hold + .3 - k) * 2.5), 0, 1), z = intro.z, Z = CONFIG.zones[z];
     if (a > 0) {
-      const title = z ? t('zones')[z].toUpperCase() : t('introBoss');
+      const title = z ? up(t('zones')[z]) : t('introBoss');
       const sub = z ? t('introZoneSub', { m: Z.floor, boss: nm(Z.boss) }) : t('introSub', { m: Z.floor });
       const y0 = VH * .8, sc = 1 + Math.max(0, .35 - k) * 1.2;
       g.save(); g.globalAlpha = a; g.textAlign = 'center'; g.translate(VW / 2, y0); g.scale(sc, sc);
@@ -1613,7 +1828,7 @@ function drawScreenFX() {
     const val = cine.it.val * (1 - Math.pow(1 - Math.min(1, k / 1.5), 3)), pop = 1 + Math.max(0, .25 - k) * 2;
     g.save(); g.globalAlpha = a; g.translate(VW / 2, VH * .24); g.scale(pop, pop); g.textAlign = 'center';
     g.font = '900 20px ui-rounded,system-ui,sans-serif'; g.lineWidth = 6; g.strokeStyle = 'rgba(80,40,0,.75)';
-    const nmU = nm(cine.it.sp.id).toUpperCase(); g.strokeText(nmU, 0, -46); g.fillStyle = '#fff'; g.fillText(nmU, 0, -46);
+    const nmU = up(nm(cine.it.sp.id)); g.strokeText(nmU, 0, -46); g.fillStyle = '#fff'; g.fillText(nmU, 0, -46);
     g.font = '900 54px ui-rounded,system-ui,sans-serif'; g.lineWidth = 10;
     const txt = '+' + fmt(val); const tw = g.measureText(txt).width;
     g.strokeText(txt, 16, 8); const tg = g.createLinearGradient(0, -36, 0, 8); tg.addColorStop(0, '#fff6c2'); tg.addColorStop(1, '#ffb300'); g.fillStyle = tg; g.fillText(txt, 16, 8);
@@ -2046,12 +2261,34 @@ function drawAngler(ctx, lk, w, ph, mode, c) {
 const $ = id => document.getElementById(id);
 const moneyPill = $('moneyPill'), moneyEl = $('money');
 const shopEl = $('shop'), albumEl = $('album'), backdrop = $('backdrop');
-const crewEl = document.getElementById('crewP');
-function anyPanelOpen() { return shopEl.classList.contains('open') || albumEl.classList.contains('open') || crewEl.classList.contains('open'); }
+const crewEl = document.getElementById('crewP'), lbEl = $('lbP');
+function anyPanelOpen() { return [shopEl, albumEl, crewEl, lbEl].some(el => el.classList.contains('open')); }
 function modalOpen() { return $('modalWrap').classList.contains('show') || $('adWrap').classList.contains('show'); }
 function setBottom(on) { $('bottomBar').classList.toggle('hide', !on); }
-function openPanel(el) { if (phase !== 'surface') return; Snd.init(); Snd.sync(); el.classList.add('open'); backdrop.classList.add('show'); hideHint(); if (el === shopEl) renderShop(); else if (el === crewEl) renderCrew(); else renderAlbum(); }
-function closePanels() { shopEl.classList.remove('open'); albumEl.classList.remove('open'); crewEl.classList.remove('open'); backdrop.classList.remove('show'); }
+function openPanel(el) { if (phase !== 'surface') return; Snd.init(); Snd.sync(); el.classList.add('open'); backdrop.classList.add('show'); hideHint(); if (el === shopEl) renderShop(); else if (el === crewEl) renderCrew(); else if (el === lbEl) renderLeaderboard(); else renderAlbum(); }
+function closePanels() { [shopEl, albumEl, crewEl, lbEl].forEach(el => el.classList.remove('open')); backdrop.classList.remove('show'); }
+// leaderboard: our own panel where the platform hands us the entries (Playgama SaaS, Yandex, Y8),
+// the platform's overlay where it has one (Facebook); elsewhere the score is only submitted
+function lbMode() { return PF.lbType ? PF.lbType() : 'not_available'; }
+$('lbBtn').onclick = () => {
+  if (lbMode() === 'native_popup') { PF.lbPopup().catch(() => toast(t('lbErr'), 'bad')); return; }
+  openPanel(lbEl);
+};
+async function renderLeaderboard() {
+  $('lbTitle').textContent = '🏆 ' + t('lb');
+  const body = $('lbBody'); body.innerHTML = '<div class="lbMsg">…</div>';
+  let rows;
+  try { rows = await PF.lbEntries(); } catch (e) { body.innerHTML = `<div class="lbMsg">${t('lbErr')}</div>`; return; }
+  if (!rows || !rows.length) { body.innerHTML = `<div class="lbMsg">${t('lbEmpty')}</div>`; return; }
+  const me = PF.playerId(), esc = v => String(v ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+  body.innerHTML = '';
+  rows.slice(0, 50).forEach((r, i) => {
+    const d = document.createElement('div'); d.className = 'lbRow' + (me && r.id === me ? ' me' : '');
+    const medal = ['🥇', '🥈', '🥉'][(r.rank || i + 1) - 1] || (r.rank || i + 1);
+    d.innerHTML = `<span class="rk">${medal}</span>${r.photo ? `<img src="${esc(r.photo)}" alt="">` : ''}<span class="nmL">${esc(r.name) || (me && r.id === me ? t('lbYou') : '?')}</span><span>${coinHTML()} ${fmt(Math.round(r.score || 0))}</span>`;
+    body.appendChild(d);
+  });
+}
 document.getElementById('crewBtn').onclick = () => openPanel(crewEl);
 $('shopBtn').onclick = () => openPanel(shopEl);
 $('albumBtn').onclick = () => { albumSeen = albumCount(); openPanel(albumEl); };
@@ -2633,6 +2870,7 @@ async function boot() {
   LANG = lang; document.documentElement.lang = LANG;
   $('shopLbl').textContent = t('shop'); $('albumLbl').textContent = t('album');
   displayMoney = S.m; albumSeen = albumCount(); renderSoundBtn();
+  $('lbBtn').classList.toggle('on', ['in_game', 'native_popup'].includes(lbMode()));
   const away = (Date.now() - (S.ls || Date.now())) / 1000;
   started = true; window.__hsReady = true;
   if (S.st.d === 0) startIntro();
