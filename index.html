@@ -34,6 +34,8 @@ button{font:inherit;cursor:pointer}
 .iconbtn{width:44px;height:44px;border-radius:14px;border:0;background:rgba(6,26,48,.78);color:#fff;display:grid;place-items:center;box-shadow:0 3px 0 rgba(0,0,0,.28)}
 .iconbtn svg{width:24px;height:24px}
 .topR{display:flex;gap:8px}
+.rules{display:grid;gap:8px;margin:8px 0 14px;text-align:left}
+.rules div{background:rgba(6,26,48,.06);border-radius:14px;padding:10px 12px;font-weight:800;font-size:17px;line-height:1.25;color:var(--ink)}
 .mult{position:absolute;z-index:80;pointer-events:none;text-align:center;font-weight:900;white-space:nowrap;transform:translate(-50%,-50%);animation:multPop 1.6s cubic-bezier(.2,.9,.3,1.3) forwards}
 .mult b{position:relative;display:block;font-size:88px;line-height:1;background:linear-gradient(#fff8d2,#ffd23f 45%,#f08a24);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:3px #7a3d00;filter:drop-shadow(0 4px 0 rgba(0,0,0,.25)) drop-shadow(0 0 16px rgba(255,210,63,.85))}
 .mult span{position:relative;display:inline-block;margin-top:6px;padding:5px 14px;border-radius:999px;background:rgba(6,26,48,.88);color:#fff;font-size:17px;box-shadow:0 3px 0 rgba(0,0,0,.25)}
@@ -247,8 +249,13 @@ const CONFIG = {
     weights: [55, 25, 20],  // coins / free upgrade / golden bait
     baitDives: 3, baitRare: 2, baitGold: 0.05,
   },
-  tutorialDives: 2,         // the "hold and move" slider shows during the first dives
-  firstGoldenDive: 3,       // from this dive on, 2 golden fish are guaranteed until the first one is caught
+  tutorialDives: 3,         // the "hold and move" slider shows during the first dives
+  firstGoldenDive: 1,       // from this dive on, 2 golden fish are guaranteed until the first one is caught
+  onboarding: {             // the first minute: nobody should leave before seeing the real loop
+    freeDives: 2,           // in the first dives fish pass through the hook: everyone reaches the end of the line
+    firstHaulCap: 6,        // the very first dive holds 6 fish instead of the hook's 2
+    quests: [['q1', 5, 25], ['q2', 1, 50], ['q3', 30, 100]],   // [text, target, reward]: catch fish, buy an upgrade, reach a depth
+  },
   intro: { hold: 2.4, zoneHold: 3.2, rise: 1.3 },   // unskippable intro (first launch and every new boat): seabed view, then a fast rise (s)
   hookTiers: [1, 4, 7, 10],  // Hook levels where the hook gets a new look
   goldenMult: 10,
@@ -314,6 +321,7 @@ const TXT = {
     paused: 'In pausa', resume: 'Riprendi', ad: 'Pubblicità', adSim: 'Video pubblicitario (simulato)', full: 'AMO PIENO!', golden: 'DORATO',
     reach: 'Raggiungi {m} m', lvl: 'Lv',
     lb: 'Classifica', lbEmpty: 'Ancora nessun punteggio: pesca e sarai il primo!', lbErr: 'Classifica non disponibile', lbYou: 'Tu', lbLogin: 'Accedi per mostrare il tuo nome', lbLoginFail: 'Accesso non riuscito',
+    freeDown: "Scendi fino in fondo!", newRule: "Nuova regola!", rule1: "Scendendo, schiva i pesci", rule2: "Se ne tocchi uno, si risale", rule3: "Risalendo, prendili tutti!", gotIt: "Capito!", bumped: "Toccato! Si risale", q1: "Prendi {n} pesci", q2: "Compra un potenziamento", q3: "Scendi a {m} m", qDone: "Obiettivo completato!",
   },
   en: {
     crew: 'Your crew', holdMove: 'Hold and move', tap: 'Tap to cast',
@@ -350,6 +358,7 @@ const TXT = {
     paused: 'Paused', resume: 'Resume', ad: 'Ad', adSim: 'Rewarded video (simulated)', full: 'HOOK FULL!', golden: 'GOLDEN',
     reach: 'Reach {m} m', lvl: 'Lv',
     lb: 'Leaderboard', lbEmpty: 'No scores yet: go fishing and be the first!', lbErr: 'Leaderboard not available', lbYou: 'You', lbLogin: 'Log in to show your name', lbLoginFail: 'Login failed',
+    freeDown: "Dive all the way down!", newRule: "New rule!", rule1: "Going down, dodge the fish", rule2: "Touch one and you head back up", rule3: "Coming up, grab them all!", gotIt: "Got it!", bumped: "Bumped! Heading up", q1: "Catch {n} fish", q2: "Buy an upgrade", q3: "Reach {m} m", qDone: "Goal complete!",
   },
   ru: {
     crew: 'Твоя команда', holdMove: 'Удерживай и веди', tap: 'Нажми, чтобы забросить',
@@ -386,6 +395,7 @@ const TXT = {
     paused: 'Пауза', resume: 'Продолжить', ad: 'Реклама', adSim: 'Рекламное видео (имитация)', full: 'КРЮЧОК ПОЛОН!', golden: 'ЗОЛОТАЯ',
     reach: 'Достигни {m} м', lvl: 'ур.',
     lb: 'Рейтинг', lbEmpty: 'Пока нет результатов: рыбачь и стань первым!', lbErr: 'Рейтинг недоступен', lbYou: 'Ты', lbLogin: 'Войди, чтобы показать своё имя', lbLoginFail: 'Не удалось войти',
+    freeDown: "Спустись до самого дна!", newRule: "Новое правило!", rule1: "Вниз: уворачивайся от рыб", rule2: "Задел рыбу, и ты поднимаешься", rule3: "Вверх: хватай всех!", gotIt: "Понятно!", bumped: "Задел! Поднимаемся", q1: "Поймай рыб: {n}", q2: "Купи улучшение", q3: "Спустись на {m} м", qDone: "Цель выполнена!",
   },
   tr: {
     crew: 'Tayfan', holdMove: 'Basılı tut ve kaydır', tap: 'Oltayı atmak için dokun',
@@ -422,6 +432,7 @@ const TXT = {
     paused: 'Duraklatıldı', resume: 'Devam et', ad: 'Reklam', adSim: 'Ödüllü video (simülasyon)', full: 'İĞNE DOLU!', golden: 'ALTIN',
     reach: '{m} m\'ye ulaş', lvl: 'Sv',
     lb: 'Sıralama', lbEmpty: 'Henüz skor yok: avlan ve ilk sen ol!', lbErr: 'Sıralama şu an yok', lbYou: 'Sen', lbLogin: 'Adını göstermek için giriş yap', lbLoginFail: 'Giriş başarısız',
+    freeDown: "Sonuna kadar in!", newRule: "Yeni kural!", rule1: "İnerken balıklardan kaç", rule2: "Birine değersen yukarı çıkarsın", rule3: "Çıkarken hepsini yakala!", gotIt: "Anladım!", bumped: "Değdin! Yukarı çıkıyorsun", q1: "{n} balık yakala", q2: "Bir geliştirme satın al", q3: "{m} m'ye in", qDone: "Görev tamam!",
   },
   es: {
     crew: 'Tu tripulación', holdMove: 'Mantén y mueve', tap: 'Toca para lanzar',
@@ -458,6 +469,7 @@ const TXT = {
     paused: 'En pausa', resume: 'Reanudar', ad: 'Anuncio', adSim: 'Vídeo con recompensa (simulado)', full: '¡ANZUELO LLENO!', golden: 'DORADO',
     reach: 'Llega a {m} m', lvl: 'Nv',
     lb: 'Clasificación', lbEmpty: 'Aún no hay puntuaciones: ¡pesca y sé el primero!', lbErr: 'Clasificación no disponible', lbYou: 'Tú', lbLogin: 'Inicia sesión para mostrar tu nombre', lbLoginFail: 'No se pudo iniciar sesión',
+    freeDown: "¡Baja hasta el fondo!", newRule: "¡Nueva regla!", rule1: "Al bajar, esquiva los peces", rule2: "Si tocas uno, empiezas a subir", rule3: "Al subir, ¡atrápalos todos!", gotIt: "¡Entendido!", bumped: "¡Tocado! A subir", q1: "Atrapa {n} peces", q2: "Compra una mejora", q3: "Baja a {m} m", qDone: "¡Objetivo cumplido!",
   },
   pt: {
     crew: 'Sua tripulação', holdMove: 'Segure e mova', tap: 'Toque para lançar',
@@ -494,6 +506,7 @@ const TXT = {
     paused: 'Pausado', resume: 'Continuar', ad: 'Anúncio', adSim: 'Vídeo premiado (simulado)', full: 'ANZOL CHEIO!', golden: 'DOURADO',
     reach: 'Alcance {m} m', lvl: 'Nv',
     lb: 'Ranking', lbEmpty: 'Ainda sem pontuações: pesque e seja o primeiro!', lbErr: 'Ranking indisponível', lbYou: 'Você', lbLogin: 'Entre para mostrar seu nome', lbLoginFail: 'Não foi possível entrar',
+    freeDown: "Desça até o fundo!", newRule: "Nova regra!", rule1: "Descendo, desvie dos peixes", rule2: "Tocou em um, você começa a subir", rule3: "Subindo, pegue todos!", gotIt: "Entendi!", bumped: "Tocou! Subindo", q1: "Pegue {n} peixes", q2: "Compre uma melhoria", q3: "Desça a {m} m", qDone: "Objetivo concluído!",
   },
   de: {
     crew: 'Deine Crew', holdMove: 'Halten und bewegen', tap: 'Tippen zum Auswerfen',
@@ -530,6 +543,7 @@ const TXT = {
     paused: 'Pause', resume: 'Weiter', ad: 'Werbung', adSim: 'Belohnungsvideo (simuliert)', full: 'HAKEN VOLL!', golden: 'GOLDEN',
     reach: 'Erreiche {m} m', lvl: 'Lv',
     lb: 'Bestenliste', lbEmpty: 'Noch keine Punkte: geh angeln und sei der Erste!', lbErr: 'Bestenliste nicht verfügbar', lbYou: 'Du', lbLogin: 'Melde dich an, um deinen Namen zu zeigen', lbLoginFail: 'Anmeldung fehlgeschlagen',
+    freeDown: "Tauch ganz nach unten!", newRule: "Neue Regel!", rule1: "Beim Abtauchen: weich den Fischen aus", rule2: "Berührst du einen, geht es nach oben", rule3: "Beim Auftauchen: schnapp sie dir alle!", gotIt: "Verstanden!", bumped: "Berührt! Es geht nach oben", q1: "Fang {n} Fische", q2: "Kauf ein Upgrade", q3: "Tauche auf {m} m", qDone: "Ziel erreicht!",
   },
 };
 const NAMES = {   // it, en, ru, tr, es, pt, de (same order as LANGS)
@@ -707,17 +721,19 @@ const SAVE_VERSION = 1;
 function defaultState() {
   return { v: SAVE_VERSION, m: CONFIG.startMoney, te: 0, l: [0, 0, 0, 0], b: [0, 0, 0, 0],
     c: CONFIG.species.map(() => 0), n: CONFIG.species.map(() => 0), cr: 0, cw: 0, cu: [0, 0, 0], ls: Date.now(), tu: 0, gb: 0,
-    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0 }, win: 0, snd: 1 };
+    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0 }, win: 0, snd: 1, q: 0, rl: 0 };
 }
 function migrate(o) {
   const d = defaultState();
   if (!o || typeof o !== 'object') return d;
   // v1 is the first version: fill any missing field so older/partial saves never break
+  const noQuests = o.q === undefined;
   for (const k in d) if (o[k] === undefined) o[k] = d[k];
   for (const k in d.st) if (o.st[k] === undefined) o.st[k] = d.st[k];
   ['l', 'b'].forEach(k => { while (o[k].length < 4) o[k].push(0); });
   while (o.cu.length < 3) o.cu.push(0);
   ['c', 'n'].forEach(k => { while (o[k].length < CONFIG.species.length) o[k].push(0); });
+  if (noQuests && o.st.d > CONFIG.onboarding.freeDives) { o.q = CONFIG.onboarding.quests.length; o.rl = 1; }   // players from before the onboarding skip it
   o.v = SAVE_VERSION;
   return o;
 }
@@ -829,7 +845,7 @@ const expressPx = () => { const m = maxDepthM(); return Math.max(0, Math.min(zon
 const lineDepth = () => CONFIG.upgrades.line.values[S.l[0]];
 const boatFloor = () => CONFIG.zones[S.l[3]].floor;
 const maxDepthM = () => Math.min(lineDepth(), boatFloor());
-const hookCap = () => CONFIG.upgrades.hook.values[S.l[1]];
+const hookCap = () => Math.max(CONFIG.upgrades.hook.values[S.l[1]], S.st.d === 0 ? CONFIG.onboarding.firstHaulCap : 0);
 const rareMult = (lv = S.l[2]) => 1 + CONFIG.upgrades.bait.rarePer * lv;
 const goldChance = (lv = S.l[2]) => CONFIG.upgrades.bait.goldBase + CONFIG.upgrades.bait.goldPer * lv;
 const zoneAt = m => { for (let z = 0; z < CONFIG.zones.length; z++) if (m < CONFIG.zones[z].floor) return z; return CONFIG.zones.length - 1; };
@@ -917,9 +933,19 @@ function endIntro() { if (!intro) return; intro = null; fishes = []; boss = null
 function animFrame(fn) { if (paused) resumeQ.push(fn); else requestAnimationFrame(fn); }
 
 /* ============================ dive flow ========================== */
+const freeDive = () => S.st.d < CONFIG.onboarding.freeDives;
+// before the first normal dive: the dodge rule in three lines, then the dive starts
+function showRuleCard() {
+  showModal(`<h2>${t('newRule')}</h2><div class="rules"><div>⬇️ ${t('rule1')}</div><div>💥 ${t('rule2')}</div><div>⬆️ ${t('rule3')}</div></div><button class="btn green" style="width:100%" id="okB">${t('gotIt')}</button>`,
+    r => {
+      $('toasts').innerHTML = '';   // nothing on top of the rule
+      r.querySelector('#okB').onclick = () => { questNext = performance.now() + 2500; closeModal(); cast(); };   // goal rewards wait for the surface
+    });
+}
 function cast() {
   if (phase !== 'surface' || anyPanelOpen() || modalOpen()) return;
   if (intro) return;   // intros cannot be skipped
+  if (S.st.d === CONFIG.onboarding.freeDives && !S.rl) { S.rl = 1; save(); showRuleCard(); return; }
   Snd.init(); Snd.sync();
   spawnDive(); zoneLabel = null;
   phase = 'down'; caught = []; combo = 0; lastCatch = -9; diveBest = 0; grace = CONFIG.grace; diveT = 0; full = false;
@@ -1081,9 +1107,12 @@ function update(dt) {
       if (turbo && hook.y >= turboPx) { turbo = false; grace = Math.max(grace, .3); shake = Math.max(shake, 3); }
       if (Math.random() < dt * 8) Snd.ok() && sfx.reel();
       if (grace <= 0 && !turbo) {
-        for (const f of fishes) {
+        if (!freeDive()) for (const f of fishes) {
           if (f.gone || Math.abs(f.y - hook.y) > 80) continue;
-          if (hitTest(f, CONFIG.hookRadius)) { startAscent(f); break; }
+          if (hitTest(f, CONFIG.hookRadius)) {
+            if (S.st.d < CONFIG.onboarding.freeDives + 3) floats.push({ x: hook.x, y: hook.y - 56, txt: t('bumped'), col: '#ffd84d', life: 1.5, max: 1.5, size: 20, world: true });
+            startAscent(f); break;
+          }
         }
       }
       if (phase === 'down' && hook.y >= maxPx) {
@@ -1106,7 +1135,9 @@ function update(dt) {
       }
       if (hook.y <= 0) startSell();
     }
-    if (chest && !chestGot && Math.abs(chest.y - hook.y) < 60) {
+    const firstChest = S.st.ch === 0;   // the first chest is magnetic: nobody misses it
+    if (chest && !chestGot && Math.abs(chest.y - hook.y) < (firstChest ? 170 : 60)) {
+      if (firstChest) chest.x += (hook.x - chest.x) * Math.min(1, dt * 7);
       const dx = hook.x - chest.x, dy = hook.y - chest.y, r = 24 + CONFIG.catchRadius * .6;
       if (dx * dx + dy * dy < r * r) grabChest();
     }
@@ -1785,8 +1816,8 @@ function drawScreenFX() {
       for (const d of [-1, 1]) { const ax = kx + d * (pr + 12 + Math.abs(Math.sin(clock * 4)) * 5); g.beginPath(); g.moveTo(ax + d * 7, y); g.lineTo(ax - d * 3, y - 7); g.lineTo(ax - d * 3, y + 7); g.closePath(); g.fill(); }
       g.font = '900 17px ui-rounded,system-ui,sans-serif'; g.textAlign = 'center'; g.lineWidth = 5; g.strokeStyle = 'rgba(6,26,48,.6)';
       g.strokeText(t('holdMove'), VW / 2, y - 32); g.fillStyle = '#fff'; g.fillText(t('holdMove'), VW / 2, y - 32);
-      if (S.st.d === 0) {
-        const cap = phase === 'down' ? t('drag') : t('grab');
+      if (S.st.d <= CONFIG.onboarding.freeDives) {
+        const cap = phase !== 'down' ? t('grab') : freeDive() ? t('freeDown') : t('drag');
         g.font = '900 20px ui-rounded,system-ui,sans-serif'; g.lineWidth = 6;
         g.strokeText(cap, VW / 2, y - 62); g.fillStyle = '#fff'; g.fillText(cap, VW / 2, y - 62);
       }
@@ -2411,7 +2442,24 @@ function renderAlbum() {
     sec.appendChild(grid); body.appendChild(sec);
   });
 }
+const QUESTS = () => CONFIG.onboarding.quests;
+const questProg = i => i === 0 ? S.n.reduce((a, b) => a + b, 0) : i === 1 ? (S.l[0] + S.l[1] + S.l[2] > 0 ? 1 : 0) : S.st.md;
+// first goals: short, rewarded, checked whenever the HUD refreshes on the surface
+let questNext = 0;   // goals completed together still get their own moment, 2.5 s apart
+function checkQuest() {
+  if (S.q >= QUESTS().length || phase !== 'surface' || intro || modalOpen() || performance.now() < questNext) return;
+  const [, n, reward] = QUESTS()[S.q];
+  if (questProg(S.q) < n) return;
+  S.q++; S.m += reward; S.te += reward; save(); sendScore(); questNext = performance.now() + 2500;
+  toast(`🎯 ${t('qDone')} +${fmt(reward)} ${coinHTML()}`, 'gold'); sfx.gold();
+  const e = $('goal').getBoundingClientRect(), m = moneyPill.getBoundingClientRect(), r = e.width ? e : m;
+  payout(reward, (r.left + r.width / 2) / scale, (r.top + r.height / 2) / scale, .8);
+}
 function goalText() {
+  if (S.q < QUESTS().length) {
+    const [key, n, reward] = QUESTS()[S.q];
+    return `🎯 ${t(key, { n, m: n })} · ${Math.min(n, questProg(S.q))}/${n} · +${fmt(reward)} ${coinHTML()}`;
+  }
   const z = S.l[3], Z = CONFIG.zones[z], boss = nm(Z.boss);
   if (!S.b[z]) {
     if (maxDepthM() < Z.floor) return '🎯 ' + t('goalReach', { m: Z.floor, boss });
@@ -2434,17 +2482,18 @@ function refreshCrewBubble() {
   b.classList.toggle('full', crewFull());
 }
 function refreshHUD(force) {
+  checkQuest();
   moneyEl.textContent = fmt(displayMoney);
   refreshCrewBubble();
   if (crewEl.classList.contains('open')) updateCrewLive();
   const surf = phase === 'surface';
   const n = surf ? affordableCount() : 0;
-  const key = [phase, n, S.st.d, S.tu, albumCount(), albumSeen, S.l.join(), S.b.join(), LANG, anyPanelOpen(), !!intro, S.gb, modalOpen()].join('|');
+  const key = [phase, n, S.st.d, S.tu, S.q, S.q < QUESTS().length ? questProg(S.q) : 0, albumCount(), albumSeen, S.l.join(), S.b.join(), LANG, anyPanelOpen(), !!intro, S.gb, modalOpen()].join('|');
   if (!force && key === lastHUD) return; lastHUD = key;
   const b = $('shopBadge'); b.textContent = n; b.classList.toggle('show', n > 0);
   $('albumBadge').classList.toggle('show', albumCount() > albumSeen && S.st.d > 0);
   $('albumBadge').textContent = '!';
-  const gl = $('goal'); gl.textContent = goalText(); gl.classList.toggle('show', surf && S.st.d > 0 && !intro);
+  const gl = $('goal'); gl.innerHTML = goalText(); gl.classList.toggle('show', surf && S.st.d > 0 && !intro);
   const bo = $('boost'); bo.textContent = t('boost', { n: S.gb }); bo.classList.toggle('show', surf && S.gb > 0 && !intro);
   setBottom(surf && !intro);
   const ha = $('hintArrow');
