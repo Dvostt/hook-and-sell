@@ -34,6 +34,7 @@ button{font:inherit;cursor:pointer}
 .iconbtn{width:44px;height:44px;border-radius:14px;border:0;background:rgba(6,26,48,.78);color:#fff;display:grid;place-items:center;box-shadow:0 3px 0 rgba(0,0,0,.28)}
 .iconbtn svg{width:24px;height:24px}
 .topR{display:flex;gap:8px}
+.luckCd{margin-top:6px;text-align:center;font-size:13px;font-weight:800;color:var(--ink);opacity:.7;min-height:16px}
 .rules{display:grid;gap:8px;margin:8px 0 14px;text-align:left}
 .rules div{background:rgba(6,26,48,.06);border-radius:14px;padding:10px 12px;font-weight:800;font-size:17px;line-height:1.25;color:var(--ink)}
 .mult{position:absolute;z-index:80;pointer-events:none;text-align:center;font-weight:900;white-space:nowrap;transform:translate(-50%,-50%);animation:multPop 1.6s cubic-bezier(.2,.9,.3,1.3) forwards}
@@ -272,6 +273,7 @@ const CONFIG = {
     ratePer: 0.35,                           // Sailors: +35% per level
     holdHours: [0.5, 1, 2, 4, 8, 12, 24],    // Hold: hours of fishing that fit before the crew stops
     luckPer: 0.05, luckMult: 5,              // Luck: chance per level that a collection is worth ×5
+    luckCooldown: 360,                       // s after a lucky collection before the next one can be lucky: no spamming Collect
     costs: {
       sailors: [3000, 9000, 30000, 100000, 350000, 1200000, 4000000, 13000000],
       hold:    [2500, 12000, 60000, 300000, 1500000, 7000000],
@@ -321,7 +323,7 @@ const TXT = {
     paused: 'In pausa', resume: 'Riprendi', ad: 'Pubblicità', adSim: 'Video pubblicitario (simulato)', full: 'AMO PIENO!', golden: 'DORATO',
     reach: 'Raggiungi {m} m', lvl: 'Lv',
     lb: 'Classifica', lbEmpty: 'Ancora nessun punteggio: pesca e sarai il primo!', lbErr: 'Classifica non disponibile', lbYou: 'Tu', lbLogin: 'Accedi per mostrare il tuo nome', lbLoginFail: 'Accesso non riuscito',
-    freeDown: "Scendi fino in fondo!", newRule: "Nuova regola!", rule1: "Scendendo, schiva i pesci", rule2: "Se ne tocchi uno, si risale", rule3: "Risalendo, prendili tutti!", gotIt: "Capito!", bumped: "Toccato! Si risale", q1: "Prendi {n} pesci", q2: "Compra un potenziamento", q3: "Scendi a {m} m", qDone: "Obiettivo completato!",
+    freeDown: "Scendi fino in fondo!", newRule: "Nuova regola!", rule1: "Scendendo, schiva i pesci", rule2: "Se ne tocchi uno, si risale", rule3: "Risalendo, prendili tutti!", gotIt: "Capito!", bumped: "Toccato! Si risale", q1: "Prendi {n} pesci", q2: "Compra un potenziamento", q3: "Scendi a {m} m", qDone: "Obiettivo completato!", luckWait: "Fortuna di nuovo pronta tra {t}",
   },
   en: {
     crew: 'Your crew', holdMove: 'Hold and move', tap: 'Tap to cast',
@@ -358,7 +360,7 @@ const TXT = {
     paused: 'Paused', resume: 'Resume', ad: 'Ad', adSim: 'Rewarded video (simulated)', full: 'HOOK FULL!', golden: 'GOLDEN',
     reach: 'Reach {m} m', lvl: 'Lv',
     lb: 'Leaderboard', lbEmpty: 'No scores yet: go fishing and be the first!', lbErr: 'Leaderboard not available', lbYou: 'You', lbLogin: 'Log in to show your name', lbLoginFail: 'Login failed',
-    freeDown: "Dive all the way down!", newRule: "New rule!", rule1: "Going down, dodge the fish", rule2: "Touch one and you head back up", rule3: "Coming up, grab them all!", gotIt: "Got it!", bumped: "Bumped! Heading up", q1: "Catch {n} fish", q2: "Buy an upgrade", q3: "Reach {m} m", qDone: "Goal complete!",
+    freeDown: "Dive all the way down!", newRule: "New rule!", rule1: "Going down, dodge the fish", rule2: "Touch one and you head back up", rule3: "Coming up, grab them all!", gotIt: "Got it!", bumped: "Bumped! Heading up", q1: "Catch {n} fish", q2: "Buy an upgrade", q3: "Reach {m} m", qDone: "Goal complete!", luckWait: "Luck ready again in {t}",
   },
   ru: {
     crew: 'Твоя команда', holdMove: 'Удерживай и веди', tap: 'Нажми, чтобы забросить',
@@ -395,7 +397,7 @@ const TXT = {
     paused: 'Пауза', resume: 'Продолжить', ad: 'Реклама', adSim: 'Рекламное видео (имитация)', full: 'КРЮЧОК ПОЛОН!', golden: 'ЗОЛОТАЯ',
     reach: 'Достигни {m} м', lvl: 'ур.',
     lb: 'Рейтинг', lbEmpty: 'Пока нет результатов: рыбачь и стань первым!', lbErr: 'Рейтинг недоступен', lbYou: 'Ты', lbLogin: 'Войди, чтобы показать своё имя', lbLoginFail: 'Не удалось войти',
-    freeDown: "Спустись до самого дна!", newRule: "Новое правило!", rule1: "Вниз: уворачивайся от рыб", rule2: "Задел рыбу, и ты поднимаешься", rule3: "Вверх: хватай всех!", gotIt: "Понятно!", bumped: "Задел! Поднимаемся", q1: "Поймай рыб: {n}", q2: "Купи улучшение", q3: "Спустись на {m} м", qDone: "Цель выполнена!",
+    freeDown: "Спустись до самого дна!", newRule: "Новое правило!", rule1: "Вниз: уворачивайся от рыб", rule2: "Задел рыбу, и ты поднимаешься", rule3: "Вверх: хватай всех!", gotIt: "Понятно!", bumped: "Задел! Поднимаемся", q1: "Поймай рыб: {n}", q2: "Купи улучшение", q3: "Спустись на {m} м", qDone: "Цель выполнена!", luckWait: "Удача снова через {t}",
   },
   tr: {
     crew: 'Tayfan', holdMove: 'Basılı tut ve kaydır', tap: 'Oltayı atmak için dokun',
@@ -432,7 +434,7 @@ const TXT = {
     paused: 'Duraklatıldı', resume: 'Devam et', ad: 'Reklam', adSim: 'Ödüllü video (simülasyon)', full: 'İĞNE DOLU!', golden: 'ALTIN',
     reach: '{m} m\'ye ulaş', lvl: 'Sv',
     lb: 'Sıralama', lbEmpty: 'Henüz skor yok: avlan ve ilk sen ol!', lbErr: 'Sıralama şu an yok', lbYou: 'Sen', lbLogin: 'Adını göstermek için giriş yap', lbLoginFail: 'Giriş başarısız',
-    freeDown: "Sonuna kadar in!", newRule: "Yeni kural!", rule1: "İnerken balıklardan kaç", rule2: "Birine değersen yukarı çıkarsın", rule3: "Çıkarken hepsini yakala!", gotIt: "Anladım!", bumped: "Değdin! Yukarı çıkıyorsun", q1: "{n} balık yakala", q2: "Bir geliştirme satın al", q3: "{m} m'ye in", qDone: "Görev tamam!",
+    freeDown: "Sonuna kadar in!", newRule: "Yeni kural!", rule1: "İnerken balıklardan kaç", rule2: "Birine değersen yukarı çıkarsın", rule3: "Çıkarken hepsini yakala!", gotIt: "Anladım!", bumped: "Değdin! Yukarı çıkıyorsun", q1: "{n} balık yakala", q2: "Bir geliştirme satın al", q3: "{m} m'ye in", qDone: "Görev tamam!", luckWait: "Şans {t} sonra hazır",
   },
   es: {
     crew: 'Tu tripulación', holdMove: 'Mantén y mueve', tap: 'Toca para lanzar',
@@ -469,7 +471,7 @@ const TXT = {
     paused: 'En pausa', resume: 'Reanudar', ad: 'Anuncio', adSim: 'Vídeo con recompensa (simulado)', full: '¡ANZUELO LLENO!', golden: 'DORADO',
     reach: 'Llega a {m} m', lvl: 'Nv',
     lb: 'Clasificación', lbEmpty: 'Aún no hay puntuaciones: ¡pesca y sé el primero!', lbErr: 'Clasificación no disponible', lbYou: 'Tú', lbLogin: 'Inicia sesión para mostrar tu nombre', lbLoginFail: 'No se pudo iniciar sesión',
-    freeDown: "¡Baja hasta el fondo!", newRule: "¡Nueva regla!", rule1: "Al bajar, esquiva los peces", rule2: "Si tocas uno, empiezas a subir", rule3: "Al subir, ¡atrápalos todos!", gotIt: "¡Entendido!", bumped: "¡Tocado! A subir", q1: "Atrapa {n} peces", q2: "Compra una mejora", q3: "Baja a {m} m", qDone: "¡Objetivo cumplido!",
+    freeDown: "¡Baja hasta el fondo!", newRule: "¡Nueva regla!", rule1: "Al bajar, esquiva los peces", rule2: "Si tocas uno, empiezas a subir", rule3: "Al subir, ¡atrápalos todos!", gotIt: "¡Entendido!", bumped: "¡Tocado! A subir", q1: "Atrapa {n} peces", q2: "Compra una mejora", q3: "Baja a {m} m", qDone: "¡Objetivo cumplido!", luckWait: "Suerte lista de nuevo en {t}",
   },
   pt: {
     crew: 'Sua tripulação', holdMove: 'Segure e mova', tap: 'Toque para lançar',
@@ -506,7 +508,7 @@ const TXT = {
     paused: 'Pausado', resume: 'Continuar', ad: 'Anúncio', adSim: 'Vídeo premiado (simulado)', full: 'ANZOL CHEIO!', golden: 'DOURADO',
     reach: 'Alcance {m} m', lvl: 'Nv',
     lb: 'Ranking', lbEmpty: 'Ainda sem pontuações: pesque e seja o primeiro!', lbErr: 'Ranking indisponível', lbYou: 'Você', lbLogin: 'Entre para mostrar seu nome', lbLoginFail: 'Não foi possível entrar',
-    freeDown: "Desça até o fundo!", newRule: "Nova regra!", rule1: "Descendo, desvie dos peixes", rule2: "Tocou em um, você começa a subir", rule3: "Subindo, pegue todos!", gotIt: "Entendi!", bumped: "Tocou! Subindo", q1: "Pegue {n} peixes", q2: "Compre uma melhoria", q3: "Desça a {m} m", qDone: "Objetivo concluído!",
+    freeDown: "Desça até o fundo!", newRule: "Nova regra!", rule1: "Descendo, desvie dos peixes", rule2: "Tocou em um, você começa a subir", rule3: "Subindo, pegue todos!", gotIt: "Entendi!", bumped: "Tocou! Subindo", q1: "Pegue {n} peixes", q2: "Compre uma melhoria", q3: "Desça a {m} m", qDone: "Objetivo concluído!", luckWait: "Sorte pronta de novo em {t}",
   },
   de: {
     crew: 'Deine Crew', holdMove: 'Halten und bewegen', tap: 'Tippen zum Auswerfen',
@@ -543,7 +545,7 @@ const TXT = {
     paused: 'Pause', resume: 'Weiter', ad: 'Werbung', adSim: 'Belohnungsvideo (simuliert)', full: 'HAKEN VOLL!', golden: 'GOLDEN',
     reach: 'Erreiche {m} m', lvl: 'Lv',
     lb: 'Bestenliste', lbEmpty: 'Noch keine Punkte: geh angeln und sei der Erste!', lbErr: 'Bestenliste nicht verfügbar', lbYou: 'Du', lbLogin: 'Melde dich an, um deinen Namen zu zeigen', lbLoginFail: 'Anmeldung fehlgeschlagen',
-    freeDown: "Tauch ganz nach unten!", newRule: "Neue Regel!", rule1: "Beim Abtauchen: weich den Fischen aus", rule2: "Berührst du einen, geht es nach oben", rule3: "Beim Auftauchen: schnapp sie dir alle!", gotIt: "Verstanden!", bumped: "Berührt! Es geht nach oben", q1: "Fang {n} Fische", q2: "Kauf ein Upgrade", q3: "Tauche auf {m} m", qDone: "Ziel erreicht!",
+    freeDown: "Tauch ganz nach unten!", newRule: "Neue Regel!", rule1: "Beim Abtauchen: weich den Fischen aus", rule2: "Berührst du einen, geht es nach oben", rule3: "Beim Auftauchen: schnapp sie dir alle!", gotIt: "Verstanden!", bumped: "Berührt! Es geht nach oben", q1: "Fang {n} Fische", q2: "Kauf ein Upgrade", q3: "Tauche auf {m} m", qDone: "Ziel erreicht!", luckWait: "Glück wieder bereit in {t}",
   },
 };
 const NAMES = {   // it, en, ru, tr, es, pt, de (same order as LANGS)
@@ -721,7 +723,7 @@ const SAVE_VERSION = 1;
 function defaultState() {
   return { v: SAVE_VERSION, m: CONFIG.startMoney, te: 0, l: [0, 0, 0, 0], b: [0, 0, 0, 0],
     c: CONFIG.species.map(() => 0), n: CONFIG.species.map(() => 0), cr: 0, cw: 0, cu: [0, 0, 0], ls: Date.now(), tu: 0, gb: 0,
-    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0 }, win: 0, snd: 1, q: 0, rl: 0 };
+    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0 }, win: 0, snd: 1, q: 0, rl: 0, lk: 0 };
 }
 function migrate(o) {
   const d = defaultState();
@@ -2687,6 +2689,7 @@ function renderCrew() {
     <div class="crewStats"><div>${t('crewRate')}<b id="crRate"></b></div><div>${t('hold')}<b id="crHold"></b></div></div>
     <div class="holdBar" id="crBarW"><i id="crBar"></i></div>
     <button class="btn gold" style="width:100%" id="claimB"></button>
+    <div class="luckCd" id="luckCd"></div>
     <h3 class="upgH">${t('upg')}</h3><div id="crewCards"></div>`;
   $('claimB').onclick = () => claimCrew($('claimB'));
   renderCrewCards(); updateCrewLive(); startCrewScene($('crewCv'));
@@ -2717,6 +2720,8 @@ function updateCrewLive() {
   $('crHold').textContent = `${fmt(S.cw)} / ${fmt(cap)}`;
   $('crBar').style.width = (cap ? clamp(S.cw / cap, 0, 1) * 100 : 0) + '%';
   $('crBarW').classList.toggle('full', full);
+  const lw = luckLeft(), lcd = $('luckCd');
+  lcd.textContent = S.cu[2] > 0 && lw > 0 ? '🍀 ' + t('luckWait', { t: `${Math.floor(lw / 60)}:${String(Math.floor(lw % 60)).padStart(2, '0')}` }) : '';
   const cb = $('claimB'), n = Math.floor(S.cw);
   if (performance.now() < crewClaimUntil) return;
   cb.disabled = n < 1;
@@ -2732,11 +2737,13 @@ function multStamp(m, x, y, sub) {
   d.innerHTML = `<i></i><b>×${m}</b>${sub ? `<span>${sub}</span>` : ''}`;
   $('ui').appendChild(d); setTimeout(() => d.remove(), 1700);
 }
+// seconds until a collection can be lucky again (saved as a timestamp, so reloading does not reset it)
+const luckLeft = () => Math.max(0, CONFIG.crew.luckCooldown - (Date.now() - (S.lk || 0)) / 1000);
 function claimCrew(btn) {
   let n = Math.floor(S.cw); if (n < 1) return;
   S.cw -= n;
-  const lucky = Math.random() < CONFIG.crew.luckPer * S.cu[2], base = n;
-  if (lucky) { n *= CONFIG.crew.luckMult; flash = .6; }
+  const lucky = luckLeft() <= 0 && Math.random() < CONFIG.crew.luckPer * S.cu[2], base = n;
+  if (lucky) { n *= CONFIG.crew.luckMult; flash = .6; S.lk = Date.now(); }
   S.m += n; S.te += n; save(); sendScore();
   lucky ? sfx.gold() : sfx.buy();
   // the coins pour out of the hold in the scene and fly into your money
