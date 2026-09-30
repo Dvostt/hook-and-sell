@@ -134,6 +134,9 @@ button{font:inherit;cursor:pointer}
 .tile.boss{background:linear-gradient(#fff4d6,#ffe7ad)}
 .tile .star{position:absolute;top:4px;right:6px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff7c9,#ffc400 60%,#c98a00);box-shadow:0 0 6px #ffd24d;display:none}
 .tile .star.on{display:block}
+.tile .rbw{position:absolute;top:4px;right:26px;width:16px;height:16px;border-radius:50%;background:conic-gradient(#ff5f6d,#ffc371,#fff36b,#6bffb8,#5fc9ff,#b98bff,#ff5f6d);box-shadow:0 0 6px rgba(185,139,255,.8);display:none}
+.tile .rbw.on{display:block}
+.tile.rainbow{background:linear-gradient(135deg,#ffe3ef,#fff6cf,#dcffe8,#dcefff,#efe1ff)}
 .rar{font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.3px}
 .modalWrap{position:absolute;inset:0;background:rgba(3,15,30,.6);display:none;align-items:center;justify-content:center;padding:18px;pointer-events:auto}
 .modalWrap.show{display:flex}
@@ -1088,6 +1091,7 @@ function attach(f, isFirst) {
     const i = f.sp.idx, wasZone = zoneComplete(f.sp.z);
     if (!(S.c[i] & 1)) { toast(`<span class="tag">${t('newSp')}</span> ${nm(f.sp.id)}`, 'new'); sfx.fresh(); }
     S.c[i] |= 1; S.n[i] = Math.min(99999, S.n[i] + 1);
+    if (f.rainbow) S.c[i] |= 4;   // collection: 1 caught, 2 golden, 4 rainbow
     if (f.golden && !f.rainbow) { if (!(S.c[i] & 2)) S.c[i] |= 2; S.st.g++; toast(`✦ ${nm(f.sp.id)} ${t('golden')} ×${CONFIG.goldenMult}`, 'gold'); sfx.gold(); }
     if (!wasZone && zoneComplete(f.sp.z)) { toast(t('zoneDone', { zone: t('zones')[f.sp.z] }), 'gold'); }
   }
@@ -2612,15 +2616,15 @@ function renderAlbum() {
     sec.innerHTML = `<div class="zoneHead"><h3>${t('zones')[zi]} · ${z.floor} m</h3><span class="${done ? 'on' : ''}">${t('zoneProg', { a: got })} · ${done ? t('zoneOn') : t('zoneBonus')}</span></div>`;
     const grid = document.createElement('div'); grid.className = 'grid';
     [...sp, SP[z.boss]].forEach(s => {
-      const isB = !!s.boss, has = isB ? !!S.b[zi] : !!(S.c[s.idx] & 1), gold = !isB && !!(S.c[s.idx] & 2);
-      const tile = document.createElement('div'); tile.className = 'tile' + (isB ? ' boss' : '');
+      const isB = !!s.boss, has = isB ? !!S.b[zi] : !!(S.c[s.idx] & 1), gold = !isB && !!(S.c[s.idx] & 2), rbw = !isB && !!(S.c[s.idx] & 4);
+      const tile = document.createElement('div'); tile.className = 'tile' + (isB ? ' boss' : rbw ? ' rainbow' : '');
       const cvs = document.createElement('canvas'); cvs.width = 180; cvs.height = 110;
       const cx = cvs.getContext('2d'); cx.scale(2, 2);
       const w = isB ? 70 : Math.min(62, Math.max(34, s.size * .9));
-      drawFishAt(LOOK[s.id], 45, 29, w, 1, 1.3, has ? (gold ? 1 : 0) : 2, cx);
+      drawFishAt(LOOK[s.id], 45, 29, w, 1, 1.3, has ? (rbw ? 3 : gold ? 1 : 0) : 2, cx);
       const rar = isB ? t('bossR') : t('rarity')[s.i];
       tile.appendChild(cvs);
-      tile.insertAdjacentHTML('beforeend', `<div class="tn">${has ? nm(s.id) : t('unknown')}${isB && (S.br >> zi & 1) ? ' ⭐' : ''}</div><div class="rar" style="color:${isB ? '#c27c00' : RARITY_COL[s.i]}">${rar}</div>${!isB && has ? `<div class="tc">×${fmt(S.n[s.idx])}</div>` : ''}<span class="star ${gold ? 'on' : ''}"></span>`);
+      tile.insertAdjacentHTML('beforeend', `<div class="tn">${has ? nm(s.id) : t('unknown')}${isB && (S.br >> zi & 1) ? ' ⭐' : ''}</div><div class="rar" style="color:${isB ? '#c27c00' : RARITY_COL[s.i]}">${rar}</div>${!isB && has ? `<div class="tc">×${fmt(S.n[s.idx])}</div>` : ''}<span class="star ${gold ? 'on' : ''}"></span><span class="rbw ${rbw ? 'on' : ''}"></span>`);
       grid.appendChild(tile);
     });
     sec.appendChild(grid); body.appendChild(sec);
