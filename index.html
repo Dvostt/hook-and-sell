@@ -268,9 +268,10 @@ const CONFIG = {
     slices: [['coins', .6, 22], ['bait', 0, 16], ['coins', 1, 18], ['upgrade', 0, 12], ['coins', .6, 14], ['coins', 2, 10], ['bait', 0, 4], ['coins', 5, 4]] },
   frenzy: {                 // golden water on the way up: a school of fish, every catch ×3 for a few seconds
     chance: 1 / 12, gap: 4, pity: 24, fromDive: 6,   // ~1 dive in 12, at least 4 dives between two, sure within 24
-    secs: 5, mult: 3, maxMult: 6, school: [10, 14],   // ×3 on top of the combo, capped at ×6 in all (sim: Kraken stays ~45 min)
-    minDepth: 18,           // m: starts only if the hook is at least this deep, so there is time to play it
+    secs: 5, mult: 3, maxMult: 6, school: [9, 12],    // ×3 on top of the combo, capped at ×6 in all (sim: Kraken stays ~45 min)
+    band: [12, 40],         // m: height of the golden band, shown faintly on the way down; crossing it on the way up takes ~secs
   },
+  bossReturn: { chance: 1 / 10, size: 1.2, goldMult: 2 },   // a beaten boss swims back now and then: 2× the zone's best golden fish
   boosts: {                 // timed items in the shop; price = the player's average haul × k (never below min)
     armor: { dives: 3, k: 2.5, min: 30 },   // Armored hook: the first fish touched on the way down does not stop you
     gbait: { dives: 3, k: 3,   min: 40 },   // Golden bait: the chest boost, now also for sale (S.gb)
@@ -764,7 +765,7 @@ const SAVE_VERSION = 1;
 function defaultState() {
   return { v: SAVE_VERSION, m: CONFIG.startMoney, te: 0, l: [0, 0, 0, 0], b: [0, 0, 0, 0],
     c: CONFIG.species.map(() => 0), n: CONFIG.species.map(() => 0), cr: 0, cw: 0, cu: [0, 0, 0], ls: Date.now(), tu: 0, gb: 0,
-    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0, bh: 0, rb: 0 }, win: 0, snd: 1, q: 0, rl: 0, lk: 0, hh: [], wd: 0, fz: 0, ar: 0, nt: 0 };
+    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0, bh: 0, rb: 0 }, win: 0, snd: 1, q: 0, rl: 0, lk: 0, hh: [], wd: 0, fz: 0, ar: 0, nt: 0, br: 0 };
 }
 function migrate(o) {
   const d = defaultState();
@@ -962,8 +963,21 @@ function spawnDive() {
   if (floorHere && !S.b[z]) boss = makeBoss(z, maxPx);
   // frenzy: decided at the cast, starts on the way up; never in boss dives, never too close to the last one
   const F = CONFIG.frenzy, n = S.st.d + 1, since = n - S.fz;
-  frenzyPlan = !boss && n >= F.fromDive && since > F.gap && (Math.random() < F.chance || since >= F.pity) ? { atPx: maxPx * rand(.45, .8) } : null;
-  frenzy = null;
+  frenzyPlan = null; frenzy = null;
+  if (!boss && n >= F.fromDive && since > F.gap && (Math.random() < F.chance || since >= F.pity)) {
+    const lim = Math.max(expressPx(), 8 * PX), room = maxPx - 20 - lim;
+    const H = Math.min(room, clamp(maxPx * .4, F.band[0] * PX, F.band[1] * PX));
+    if (H >= F.band[0] * PX * .75) { const bottom = rand(lim + H, maxPx - 20); frenzyPlan = { top: bottom - H, bottom, speed: Math.max(70, H / F.secs), done: false }; }
+  }
+  // a beaten boss sometimes swims back, deep in its zone, as a bonus fish
+  const R = CONFIG.bossReturn;
+  if (S.b[z] && !boss && Math.random() < R.chance) {
+    const bs = SP[CONFIG.zones[z].boss], zs = ZONE_SPECIES[z], y = Math.min(maxPx - 40, Math.max(zoneTop(z) * PX + (maxM - zoneTop(z)) * .55 * PX, maxPx * .6));
+    const f = makeFish(bs, y, 0), big = Math.max(...zs.map(sp => sp.size));
+    f.w = Math.min(160, big * R.size); f.hh = f.w * Math.max(.3, f.lk.h); f.v = rand(45, 70); f.golden = false; f.rainbow = false; f.ret = true;
+    f.retVal = Math.max(...zs.map(sp => sp.value)) * CONFIG.goldenMult * R.goldMult;
+    fishes.push(f);
+  }
   // timed boosts: one charge per dive
   armorOn = S.ar > 0 && !freeDive(); if (armorOn) S.ar--;   // no charge spent while fish still pass through
   netOn = S.nt > 0; if (netOn) S.nt--;
@@ -1012,26 +1026,42 @@ function cast() {
   setBottom(false); hideHint();
   if (S.tu === 0) { S.tu = 1; tutT = 3.2; }
 }
+// the hook enters the golden band on the way up: the school swims in from both sides, the hook slows
+// the golden band: faint on the way down, brighter on the way up, blazing while the hook is inside it
+function drawFrenzyBand(P) {
+  const on = !!frenzy, a = on ? .5 + Math.sin(clock * 9) * .08 : P.done ? .12 : (phase === 'up' ? .38 : .32) + Math.sin(clock * 3) * .05;
+  const x0 = X0(), w = XW(), h = P.bottom - P.top, gr = g.createLinearGradient(0, P.top - 30, 0, P.bottom + 30);
+  gr.addColorStop(0, 'rgba(255,205,60,0)'); gr.addColorStop(.18, `rgba(255,205,60,${a})`); gr.addColorStop(.5, `rgba(255,225,110,${a * 1.15})`);
+  gr.addColorStop(.82, `rgba(255,205,60,${a})`); gr.addColorStop(1, 'rgba(255,205,60,0)');
+  g.fillStyle = gr; g.fillRect(x0, P.top - 30, w, h + 60);
+  if (!P.done) {   // edges: where the frenzy starts and ends
+    g.strokeStyle = `rgba(255,236,150,${on ? .95 : .7})`; g.lineWidth = on ? 3 : 2.5; g.setLineDash(on ? [] : [12, 8]);
+    for (const y of [P.top, P.bottom]) { g.beginPath(); g.moveTo(x0, y); g.lineTo(x0 + w, y); g.stroke(); }
+    g.setLineDash([]);
+    if (Math.random() < (on ? .6 : .35)) parts.push({ x: rand(10, VW - 10), y: rand(P.top, P.bottom), vx: 0, vy: -25, life: .7, max: .7, type: 'spark', r: rand(1.5, 3) });
+  }
+}
 function startFrenzy() {
-  const F = CONFIG.frenzy, plan = frenzyPlan; frenzyPlan = null;
-  // only with time to play it: deep enough, hook not already racing up full, no boss scene
-  if (hook.y < F.minDepth * PX || full || cine) return;
+  const F = CONFIG.frenzy, P = frenzyPlan;
+  if (cine) { P.done = true; return; }
   S.fz = S.st.d + 1; save();
-  const speed = clamp(hook.y / F.secs, 90, 320);   // the hook slows so the frenzy lasts about until the surface
-  frenzy = { t: 0, dur: F.secs, speed };
-  const n = Math.round(rand(F.school[0], F.school[1])), top = Math.max(30, hook.y - speed * F.secs * .95), gc = goldChance();
+  frenzy = { t: 0 };
+  const n = Math.round(rand(F.school[0], F.school[1])), hi = P.top + 20, lo = Math.min(hook.y - 50, P.bottom - 10), gc = goldChance();
   for (let i = 0; i < n; i++) {
-    const y = hook.y - 70 - (hook.y - 70 - top) * (i + rand(0, .6)) / n;
+    const y = lo - (lo - hi) * (i + rand(0, .7)) / n, dir = i % 2 ? 1 : -1;
     const f = makeFish(pickSpecies(Math.max(1, y / PX)), y, gc);
-    f.x = clamp(hook.x + rand(-150, 150), 30, VW - 30); f.v *= .45; f.frenzy = true; f.rainbow = false;
+    f.dir = dir; f.x = dir > 0 ? -f.w : VW + f.w; f.v = rand(110, 170); f.enter = true; f.frenzy = true; f.rainbow = false;
     fishes.push(f);
   }
-  flash = .45; shake = Math.max(shake, 6); sfx.frenzy();
+  flash = .35; shake = Math.max(shake, 6); sfx.frenzy();
   bossBanner = { txt: t('frenzy'), life: 1.6, frenzy: true };
 }
+// leaving the band from the top: the hook speeds up again, the rest of the school is ordinary fish
 function endFrenzy() {
-  frenzy = null;
-  for (const f of fishes) f.frenzy = false;   // what is left of the school is ordinary fish again
+  frenzy = null; frenzyPlan.done = true;
+  for (const f of fishes) { f.frenzy = false; f.enter = false; }
+  sfx.fresh();
+  for (let i = 0; i < 18; i++) parts.push({ x: hook.x + rand(-50, 50), y: hook.y, vx: rand(-140, 140), vy: rand(-200, 20), life: rand(.4, .8), max: .8, type: 'spark', r: rand(1.5, 3.5) });
 }
 function startAscent(first) {
   phase = 'up'; lastCatch = clock - 99;
@@ -1039,21 +1069,22 @@ function startAscent(first) {
   shake = Math.max(shake, 4); sfx.bump();
 }
 function attach(f, isFirst) {
-  if (nCaught() >= hookCap() && !f.sp.boss && !f.frenzy) return;
+  if (nCaught() >= hookCap() && (!f.sp.boss || f.ret) && !f.frenzy) return;
   f.gone = true;
   combo = (clock - lastCatch <= CONFIG.combo.window || isFirst) ? combo + 1 : 1;
   if (isFirst) combo = 1;
   lastCatch = clock; diveBest = Math.max(diveBest, combo);
   const cm = comboMult(combo);   // a frenzy fish is ×3 on top of the combo, capped, but never worth less than the combo alone
-  const mult = f.sp.boss ? 1 : f.frenzy ? Math.max(cm, Math.min(CONFIG.frenzy.maxMult, cm * CONFIG.frenzy.mult)) : cm;
-  const val = Math.round(f.sp.value * (f.rainbow ? CONFIG.rainbow.mult : f.golden ? CONFIG.goldenMult : 1) * mult * sellMult(f.sp.z));
-  caught.push({ sp: f.sp, lk: f.lk, golden: !!f.golden && !f.rainbow, rainbow: !!f.rainbow, frenzy: !!f.frenzy, val, mult, sw: rand(-.4, .4) });
+  const mult = f.sp.boss && !f.ret ? 1 : f.frenzy ? Math.max(cm, Math.min(CONFIG.frenzy.maxMult, cm * CONFIG.frenzy.mult)) : cm;
+  const val = Math.round((f.ret ? f.retVal : f.sp.value * (f.rainbow ? CONFIG.rainbow.mult : f.golden ? CONFIG.goldenMult : 1)) * mult * sellMult(f.sp.z));
+  caught.push({ sp: f.sp, lk: f.lk, golden: !!f.golden && !f.rainbow, rainbow: !!f.rainbow, frenzy: !!f.frenzy, ret: !!f.ret, val, mult, sw: rand(-.4, .4) });
+  if (f.ret) { S.br |= 1 << f.sp.z; toast(`👑 ${nm(f.sp.id)} +${fmt(val)}`, 'gold'); sfx.gold(); }
   if (f.rainbow) {   // jackpot: slow motion, flash, its own sound
     S.st.rb++; rainbowSlow = .9; flash = .7; shake = Math.max(shake, 10); sfx.rainbow();
     toast(`🌈 ${nm(f.sp.id)} ${t('rainbow')} ×${CONFIG.rainbow.mult}!`, 'gold');
   }
   // album
-  if (!f.sp.boss) {
+  if (!f.sp.boss) {   // (returning bosses are not collection fish)
     const i = f.sp.idx, wasZone = zoneComplete(f.sp.z);
     if (!(S.c[i] & 1)) { toast(`<span class="tag">${t('newSp')}</span> ${nm(f.sp.id)}`, 'new'); sfx.fresh(); }
     S.c[i] |= 1; S.n[i] = Math.min(99999, S.n[i] + 1);
@@ -1065,7 +1096,7 @@ function attach(f, isFirst) {
   floats.push({ x: f.x, y: f.y - 14, txt: '+' + fmt(val), col: f.rainbow ? `hsl(${(clock * 300) % 360},95%,70%)` : f.golden ? '#ffd84d' : '#ffffff', life: f.rainbow ? 1.6 : .9, max: f.rainbow ? 1.6 : .9, size: f.rainbow ? 30 : f.golden ? 22 : 17, world: true });
   if (mult > 1) floats.push({ x: f.x + 26, y: f.y - 34, txt: '×' + mult, col: '#ffcf33', life: .8, max: .8, size: 24, world: true });
   for (let i = 0; i < (f.rainbow ? 60 : f.golden ? 22 : 8); i++) parts.push({ x: f.x, y: f.y, vx: rand(-120, 120), vy: rand(-120, 60), life: rand(.35, .7), max: .7, type: f.golden ? 'spark' : 'bub', r: rand(1.5, 3.5) });
-  if (nCaught() >= hookCap() && !full && !f.sp.boss) { full = true; sfx.full(); floats.push({ x: hook.x, y: hook.y - 40, txt: t('full'), col: '#7dffb3', life: 1.1, max: 1.1, size: 22, world: true }); }
+  if (nCaught() >= hookCap() && !full && (!f.sp.boss || f.ret)) { full = true; sfx.full(); floats.push({ x: hook.x, y: hook.y - 40, txt: t('full'), col: '#7dffb3', life: 1.1, max: 1.1, size: 22, world: true }); }
 }
 function grabChest() {
   chestGot = true; sfx.gold(); shake = Math.max(shake, 5);
@@ -1160,7 +1191,8 @@ function update(dt) {
     if (f.gone || f.y < vy0 - 600 || f.y > vy1 + 600) continue;
     f.ph += dt; f.x += f.dir * f.v * dt;
     const m = f.w * .5 + 4;
-    if (f.x < m) { f.x = m; f.dir = 1; } else if (f.x > VW - m) { f.x = VW - m; f.dir = -1; }
+    if (f.enter) { if (f.x > m && f.x < VW - m) f.enter = false; }
+    else if (f.x < m) { f.x = m; f.dir = 1; } else if (f.x > VW - m) { f.x = VW - m; f.dir = -1; }
   }
   if (boss) {
     boss.ph += dt;
@@ -1220,8 +1252,10 @@ function update(dt) {
     } else {
       let sp = Math.min(CONFIG.ascent.max, CONFIG.ascent.base + hook.y * CONFIG.ascent.accel) * (full ? CONFIG.ascent.fullMult : 1);
       if (full && S.l[3] >= CONFIG.ascent.fullTurboZone) sp = Math.max(sp * .6, Math.min(CONFIG.ascent.fullTurbo, hook.y * CONFIG.descent.brake));
-      if (frenzyPlan && !frenzy && hook.y <= frenzyPlan.atPx) startFrenzy();
-      if (frenzy) { frenzy.t += dt; if (frenzy.t >= frenzy.dur) endFrenzy(); else sp = frenzy.speed; }
+      const P = frenzyPlan;
+      if (P && !P.done && !frenzy && hook.y <= P.bottom && hook.y > P.top) startFrenzy();
+      if (P && !P.done && !frenzy && hook.y <= P.top) P.done = true;   // turned back above the band: missed
+      if (frenzy) { frenzy.t += dt; if (hook.y <= P.top) endFrenzy(); else sp = P.speed; }
       hook.speed = sp; hook.y -= sp * dt;
       const cr = CONFIG.catchRadius * (netOn ? CONFIG.boosts.net.radius : 1);
       for (const f of fishes) {
@@ -1559,6 +1593,7 @@ function drawSeaWorld() {
     drawChest(g, chest.x, cy, 1, false, Math.sin(chest.ph * 3) * .08);
     if (Math.random() < .15) parts.push({ x: chest.x + rand(-22, 22), y: cy + rand(-18, 10), vx: 0, vy: -20, life: .6, max: .6, type: 'spark', r: rand(1.5, 3) });
   }
+  if (frenzyPlan && (phase === 'down' || phase === 'up')) drawFrenzyBand(frenzyPlan);
   if (phase === 'down' || phase === 'up' || intro) {
     for (const f of fishes) {
       if (f.gone || f.y < v0 || f.y > v1) continue;
@@ -1567,6 +1602,7 @@ function drawSeaWorld() {
       drawFishAt(f.lk, f.x, f.y, f.w, f.dir, f.ph, fishMode(f));
       if (ghost) g.globalAlpha = 1;
       if (intro && f.label) pill(clamp(f.x, 70, VW - 70), f.y - f.hh * .5 - 14, nm(f.sp.id), RARITY_COL[f.sp.i], true);
+      if (f.ret) pill(clamp(f.x, 80, VW - 80), f.y - f.hh * .5 - 14, '👑 ' + nm(f.sp.id), '#c27c00', true);
     }
     if (boss && !boss.gone && boss.y > v0 && boss.y < v1 + 100) drawBoss();
   }
@@ -1593,7 +1629,7 @@ function drawSeaWorld() {
   for (const s of sellFly) {
     const k = s.t / s.burst, sc = 1 + k * .25;
     g.save(); g.translate(s.x, s.y); g.rotate(-.6 + k * 1.4); g.scale(sc, sc);
-    drawFishAt(s.it.lk, 0, 0, s.it.boss ? Math.min(130, s.it.sp.size * .6) : Math.max(34, s.it.sp.size * .9), 1, clock, fishMode(s.it));
+    drawFishAt(s.it.lk, 0, 0, s.it.boss ? Math.min(130, s.it.sp.size * .6) : s.it.ret ? 90 : Math.max(34, s.it.sp.size * .9), 1, clock, fishMode(s.it));
     g.restore();
   }
   // particles (world)
@@ -1819,11 +1855,6 @@ function drawLineAndHook() {
     hookTrail.push([hook.x, hook.y]); if (hookTrail.length > 16) hookTrail.shift();
     hookTrail.forEach(([x, y], i) => { const k = i / hookTrail.length; g.fillStyle = `rgba(166,246,255,${(k * .45).toFixed(3)})`; g.beginPath(); g.arc(x, y, 3 + k * 9, 0, 7); g.fill(); });
   } else hookTrail.length = 0;
-  if (frenzy) {   // time left, as a ring around the hook
-    const k = 1 - frenzy.t / frenzy.dur;
-    g.lineWidth = 5; g.lineCap = 'round'; g.strokeStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.arc(hook.x, hook.y, 30, 0, 7); g.stroke();
-    g.strokeStyle = '#ffd23f'; g.beginPath(); g.arc(hook.x, hook.y, 30, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); g.stroke(); g.lineCap = 'butt';
-  }
   g.save(); g.translate(hook.x, hook.y); drawHook(g, tier, clock); g.restore();
   // capacity pill next to the hook
   if (phase === 'up') {
@@ -1873,7 +1904,7 @@ function floatText(f) {
 function drawScreenFX() {
   g.setTransform(DPR * scale, 0, 0, DPR * scale, DPR * scale * offX, 0);
   if (frenzy) {   // golden water, pulsing
-    const a = .2 + Math.sin(clock * 8) * .06;
+    const a = .08 + Math.sin(clock * 8) * .03;
     g.fillStyle = `rgba(255,196,50,${a})`; g.fillRect(-offX - 10, 0, VW + offX * 2 + 20, VH);
   }
   if (((phase === 'down' && turbo) || (phase === 'up' && full)) && hook.speed > 700) {
@@ -2589,7 +2620,7 @@ function renderAlbum() {
       drawFishAt(LOOK[s.id], 45, 29, w, 1, 1.3, has ? (gold ? 1 : 0) : 2, cx);
       const rar = isB ? t('bossR') : t('rarity')[s.i];
       tile.appendChild(cvs);
-      tile.insertAdjacentHTML('beforeend', `<div class="tn">${has ? nm(s.id) : t('unknown')}</div><div class="rar" style="color:${isB ? '#c27c00' : RARITY_COL[s.i]}">${rar}</div>${!isB && has ? `<div class="tc">×${fmt(S.n[s.idx])}</div>` : ''}<span class="star ${gold ? 'on' : ''}"></span>`);
+      tile.insertAdjacentHTML('beforeend', `<div class="tn">${has ? nm(s.id) : t('unknown')}${isB && (S.br >> zi & 1) ? ' ⭐' : ''}</div><div class="rar" style="color:${isB ? '#c27c00' : RARITY_COL[s.i]}">${rar}</div>${!isB && has ? `<div class="tc">×${fmt(S.n[s.idx])}</div>` : ''}<span class="star ${gold ? 'on' : ''}"></span>`);
       grid.appendChild(tile);
     });
     sec.appendChild(grid); body.appendChild(sec);
@@ -2820,7 +2851,7 @@ function showSummary() {
   // group the haul by species/golden
   const groups = [];
   for (const it of haulItems) {
-    const key = it.sp.id + (it.rainbow ? '~' : it.golden ? '*' : '');
+    const key = it.sp.id + (it.ret ? '^' : it.rainbow ? '~' : it.golden ? '*' : '');
     let gr = groups.find(x => x.key === key);
     if (!gr) groups.push(gr = { key, it, n: 0, val: 0 }); gr.n++; gr.val += it.val;
   }
@@ -2833,7 +2864,7 @@ function showSummary() {
   showModal(html, root => {
     const list = root.querySelector('#haulList');
     groups.slice(0, 12).forEach(gr => {
-      const d = document.createElement('div'); d.className = 'hi' + (gr.it.rainbow ? ' rainbow' : gr.it.golden ? ' gold' : '') + (gr.it.boss ? ' boss' : '');
+      const d = document.createElement('div'); d.className = 'hi' + (gr.it.rainbow ? ' rainbow' : gr.it.golden ? ' gold' : '') + (gr.it.boss || gr.it.ret ? ' boss' : '');
       d.appendChild(thumb(gr.it.lk, gr.it.boss ? 56 : Math.min(48, Math.max(28, gr.it.sp.size * .8)), fishMode(gr.it)));
       d.insertAdjacentHTML('beforeend', `<span>${gr.n > 1 ? '×' + gr.n + ' · ' : ''}${fmt(gr.val)}</span>`);
       list.appendChild(d);
