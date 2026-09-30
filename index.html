@@ -278,7 +278,7 @@ const CONFIG = {
   boosts: {                 // timed items in the shop; price = the player's average haul × k (never below min)
     armor: { dives: 3, k: 2.5, min: 30 },   // Armored hook: on the way down you pass through the first fish you already own; golden, special and new fish still stop you
     gbait: { dives: 3, k: 3,   min: 40 },   // Golden bait: the chest boost, now also for sale (S.gb)
-    net:   { dives: 5, k: 2,   min: 25, radius: 1.6 },   // Wide net: bigger catch radius on the way up
+    net:   { dives: 5, k: 2,   min: 25, reach: 36, pull: 110 },   // Wide net: +36 px of catch reach on the way up (normal is ~11 px past the fish's edge), and fish within pull px drift into it
     cap: 10,                // max dives of one boost you can stack
   },
   tutorialDives: 3,         // the "hold and move" slider shows during the first dives
@@ -1111,8 +1111,8 @@ function grabChest() {
   for (let i = 0; i < 26; i++) parts.push({ x: chest.x, y: chest.y, vx: rand(-170, 170), vy: rand(-170, 90), life: rand(.4, .8), max: .8, type: 'spark', r: rand(2, 4) });
 }
 function nCaught() { let n = 0; for (const c of caught) if (!c.boss && !c.frenzy) n++; return n; }   // frenzy fish are extra
-function hitTest(f, r) {
-  const rx = f.w * .5 + r * .6, ry = f.hh * .5 + r * .6;
+function hitTest(f, r, extra = 0) {
+  const rx = f.w * .5 + r * .6 + extra, ry = f.hh * .5 + r * .6 + extra;
   const dx = (hook.x - f.x) / rx, dy = (hook.y - f.y) / ry;
   return dx * dx + dy * dy < 1;
 }
@@ -1263,10 +1263,15 @@ function update(dt) {
       if (P && !P.done && !frenzy && hook.y <= P.top) P.done = true;   // turned back above the band: missed
       if (frenzy) { frenzy.t += dt; if (hook.y <= P.top) endFrenzy(); else sp = P.speed; }
       hook.speed = sp; hook.y -= sp * dt;
-      const cr = CONFIG.catchRadius * (netOn ? CONFIG.boosts.net.radius : 1);
+      const cr = CONFIG.catchRadius, reach = netOn ? CONFIG.boosts.net.reach : 0;
+      if (netOn) for (const f of fishes) {   // the net pulls nearby fish in: you can see it working
+        if (f.gone || f.passed) continue;
+        const dy = hook.y - f.y, dx = hook.x - f.x;
+        if (dy > -20 && dy < 140 && Math.abs(dx) < CONFIG.boosts.net.pull + f.w * .5) { f.x += dx * Math.min(1, dt * 3.2); f.y += Math.sign(dy) * Math.min(Math.abs(dy), 40 * dt); }
+      }
       for (const f of fishes) {
         if (f.gone || Math.abs(f.y - hook.y) > 80 || (full && !f.frenzy)) continue;
-        if (hitTest(f, cr)) attach(f, false);
+        if (hitTest(f, cr, reach)) attach(f, false);
       }
       if (hook.y <= 0) { if (frenzy) endFrenzy(); startSell(); }
     }
@@ -1831,7 +1836,7 @@ function drawBoostFX() {
     if (Math.random() < .25) parts.push({ x: x + rand(-10, 10), y: y + rand(-8, 8), vx: rand(-20, 20), vy: phase === 'down' ? -60 : 40, life: .5, max: .5, type: 'spark', r: rand(1.2, 2.4) });
   }
   if (netOn) {
-    const R = CONFIG.catchRadius * CONFIG.boosts.net.radius * .6 + 14, a = phase === 'up' ? .55 : .3;
+    const R = CONFIG.catchRadius * .6 + CONFIG.boosts.net.reach, a = phase === 'up' ? .55 : .3;   // exactly the catch reach
     g.save(); g.beginPath(); g.arc(x, y, R, 0, 7); g.clip();
     g.strokeStyle = `rgba(255,255,255,${a * .7})`; g.lineWidth = 1;
     g.translate(x, y); g.rotate(clock * .6);
