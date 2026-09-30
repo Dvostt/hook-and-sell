@@ -278,7 +278,7 @@ const CONFIG = {
   boosts: {                 // timed items in the shop; price = the player's average haul × k (never below min)
     armor: { dives: 3, k: 2.5, min: 30 },   // Armored hook: on the way down you pass through the first fish you already own; golden, special and new fish still stop you
     gbait: { dives: 3, k: 3,   min: 40 },   // Golden bait: the chest boost, now also for sale (S.gb)
-    net:   { dives: 5, k: 2,   min: 25, reach: 36, pull: 110 },   // Wide net: +36 px of catch reach on the way up (normal is ~11 px past the fish's edge), and fish within pull px drift into it
+    net:   { dives: 5, k: 2,   min: 25, reach: 28, pull: 95 },    // Wide net: +28 px of catch reach on the way up (normal is ~11 px past the fish's edge), and fish within pull px drift into it
     cap: 10,                // max dives of one boost you can stack
   },
   tutorialDives: 3,         // the "hold and move" slider shows during the first dives
@@ -968,9 +968,10 @@ function spawnDive() {
   const F = CONFIG.frenzy, n = S.st.d + 1, since = n - S.fz;
   frenzyPlan = null; frenzy = null;
   if (!boss && n >= F.fromDive && since > F.gap && (Math.random() < F.chance || since >= F.pity)) {
-    const lim = Math.max(expressPx(), 8 * PX), room = maxPx - 20 - lim;
+    // the glow keeps 60 px above the red max-depth line, so no dashed line runs through it
+    const lim = Math.max(expressPx(), 8 * PX), room = maxPx - 60 - lim;
     const H = Math.min(room, clamp(maxPx * .4, F.band[0] * PX, F.band[1] * PX));
-    if (H >= F.band[0] * PX * .75) { const bottom = rand(lim + H, maxPx - 20); frenzyPlan = { top: bottom - H, bottom, speed: Math.max(70, H / F.secs), done: false }; }
+    if (H >= F.band[0] * PX * .75) { const bottom = rand(lim + H, Math.max(lim + H, maxPx - 60)); frenzyPlan = { top: bottom - H, bottom, speed: Math.max(70, H / F.secs), done: false }; }
   }
   // a beaten boss sometimes swims back, deep in its zone, as a bonus fish
   const R = CONFIG.bossReturn;
@@ -1283,7 +1284,7 @@ function update(dt) {
     }
   } else {
     // at the surface the hook dangles from the rod
-    const r = rodTip(); hook.x = r.x; hook.y = -6 + Math.sin(clock * 2) * 2;
+    const r = rodTip(), a = hookSwing(), L = 78 + Math.sin(clock * 2) * 2; hook.x = r.x + Math.sin(a) * L; hook.y = r.y + Math.cos(a) * L;
   }
   if (zoneLabel && (zoneLabel.life -= dt) <= 0) zoneLabel = { z: zoneLabel.z, life: 0, done: true };
 
@@ -1381,7 +1382,16 @@ function waterAt(m) {
   return WATER[WATER.length - 1][1];
 }
 const rgb = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
-function rodTip() { const bob = Math.sin(clock * 1.6) * 3; return { x: VW * .66, y: -84 + bob }; }
+// idle sway of the boat on the swell: a slow bob plus a gentle roll (two sines each, so it never looks looped)
+function boatSway() { return { bob: Math.sin(clock * 1.6) * 3.5 + Math.sin(clock * .7) * 1.5, tilt: Math.sin(clock * 1.1) * .035 + Math.sin(clock * .45) * .012 }; }
+const BOAT_X = () => VW * .42, ROD = [() => VW * .24, -84];   // rod tip, in the boat's own frame
+// the rod tip rolls with the boat, so the line and the hook follow it
+function rodTip() {
+  const s = boatSway(), c = Math.cos(s.tilt), n = Math.sin(s.tilt), dx = ROD[0](), dy = ROD[1];
+  return { x: BOAT_X() + dx * c - dy * n, y: s.bob + dx * n + dy * c };
+}
+// at the surface the hook hangs like a pendulum: it lags behind the roll and swings a little sideways
+function hookSwing() { return Math.sin(clock * 1.1 - 1.2) * .11 + Math.sin(clock * 2.3) * .02; }
 
 function render() {
   g.setTransform(DPR * scale, 0, 0, DPR * scale, DPR * scale * offX, 0);
@@ -1573,8 +1583,11 @@ function drawSeaWorld() {
   for (let z = 0; z < CONFIG.zones.length - 1; z++) {
     const y = CONFIG.zones[z].floor * PX;
     if (y < v0 || y > v1 || y >= maxPx - 2) continue;
-    g.strokeStyle = 'rgba(255,255,255,.18)'; g.setLineDash([8, 10]); g.lineWidth = 2;
-    g.beginPath(); g.moveTo(0, y); g.lineTo(VW, y); g.stroke(); g.setLineDash([]);
+    const P = frenzyPlan, inBand = P && !P.done && y > P.top - 40 && y < P.bottom + 40;   // no dashes across the frenzy glow
+    if (!inBand) {
+      g.strokeStyle = 'rgba(255,255,255,.18)'; g.setLineDash([8, 10]); g.lineWidth = 2;
+      g.beginPath(); g.moveTo(0, y); g.lineTo(VW, y); g.stroke(); g.setLineDash([]);
+    }
     g.fillStyle = 'rgba(255,255,255,.55)'; g.font = '900 13px ui-rounded,system-ui,sans-serif'; g.textAlign = 'left';
     g.fillText(up(t('zones')[z + 1]) + ' ↓', 10, y + 18);
   }
@@ -1688,8 +1701,8 @@ function drawWaves() {
   g.lineTo(VW + offX + 10, 7); g.lineTo(X0(), 7); g.fill();
 }
 function drawBoat() {
-  const lvl = S.l[3], bob = Math.sin(clock * 1.6) * 3, tilt = Math.sin(clock * 1.2) * .025;
-  const bx = VW * .42;
+  const lvl = S.l[3], { bob, tilt } = boatSway();
+  const bx = BOAT_X();
   g.save(); g.translate(bx, bob); g.rotate(tilt);
   const W = [120, 150, 175, 205][lvl];
   // hull
@@ -1712,11 +1725,10 @@ function drawBoat() {
   if (lvl >= 2) { g.fillStyle = '#fbf6ea'; g.fillRect(-W * .28, -84, W * .24, 22); g.fillStyle = '#6cc3ef'; g.fillRect(-W * .25, -78, W * .18, 8); }
   if (lvl === 3) drawResearchDeck(W);
   drawFisherman(W * .12);
-  g.restore();
-  // rod
-  const r = rodTip();
+  // rod, in the boat's frame: it rolls with the hull and its tip is rodTip()
   g.strokeStyle = '#5a3a1e'; g.lineWidth = 3; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(bx + W * .12 + 6, -40 + bob); g.quadraticCurveTo(bx + W * .3, -76 + bob, r.x, r.y); g.stroke(); g.lineCap = 'butt';
+  g.beginPath(); g.moveTo(W * .12 + 6, -40); g.quadraticCurveTo(W * .3, -76, ROD[0](), ROD[1]); g.stroke(); g.lineCap = 'butt';
+  g.restore();
 }
 // boat 1: a Mediterranean gozzo, double-ended wooden boat with a raised stem post and painted bands
 function drawGozzo(W) {
@@ -1892,7 +1904,9 @@ function drawLineAndHook() {
     hookTrail.forEach(([x, y], i) => { const k = i / hookTrail.length; g.fillStyle = `rgba(166,246,255,${(k * .45).toFixed(3)})`; g.beginPath(); g.arc(x, y, 3 + k * 9, 0, 7); g.fill(); });
   } else hookTrail.length = 0;
   if (phase === 'down' || phase === 'up') drawBoostFX();
-  g.save(); g.translate(hook.x, hook.y); drawHook(g, tier, clock); g.restore();
+  g.save(); g.translate(hook.x, hook.y);
+  if (phase === 'surface') { const e = 14 * HOOK_LOOK[tier].s; g.translate(0, -e); g.rotate(-hookSwing()); g.translate(0, e); }   // hangs along the line from its eye
+  drawHook(g, tier, clock); g.restore();
   // capacity pill next to the hook
   if (phase === 'up') {
     const txt = `${Math.min(nCaught(), hookCap())}/${hookCap()}`;
