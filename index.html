@@ -266,6 +266,17 @@ const CONFIG = {
   wheel: { every: 10,                                  // a free spin every 10 dives, a second one with a rewarded video
     // [reward, weight]: coins are × the chest coins of the current zone; the weights are the real odds, the slices look equal
     slices: [['coins', .6, 22], ['bait', 0, 16], ['coins', 1, 18], ['upgrade', 0, 12], ['coins', .6, 14], ['coins', 2, 10], ['bait', 0, 4], ['coins', 5, 4]] },
+  frenzy: {                 // golden water on the way up: a school of fish, every catch ×3 for a few seconds
+    chance: 1 / 12, gap: 4, pity: 24, fromDive: 6,   // ~1 dive in 12, at least 4 dives between two, sure within 24
+    secs: 5, mult: 3, maxMult: 6, school: [10, 14],   // ×3 on top of the combo, capped at ×6 in all (sim: Kraken stays ~45 min)
+    minDepth: 18,           // m: starts only if the hook is at least this deep, so there is time to play it
+  },
+  boosts: {                 // timed items in the shop; price = the player's average haul × k (never below min)
+    armor: { dives: 3, k: 2.5, min: 30 },   // Armored hook: the first fish touched on the way down does not stop you
+    gbait: { dives: 3, k: 3,   min: 40 },   // Golden bait: the chest boost, now also for sale (S.gb)
+    net:   { dives: 5, k: 2,   min: 25, radius: 1.6 },   // Wide net: bigger catch radius on the way up
+    cap: 10,                // max dives of one boost you can stack
+  },
   tutorialDives: 3,         // the "hold and move" slider shows during the first dives
   firstGoldenDive: 1,       // from this dive on, 2 golden fish are guaranteed until the first one is caught
   onboarding: {             // the first minute: nobody should leave before seeing the real loop
@@ -341,6 +352,7 @@ const TXT = {
     lb: 'Classifica', lbEmpty: 'Ancora nessun punteggio: pesca e sarai il primo!', lbErr: 'Classifica non disponibile', lbYou: 'Tu', lbLogin: 'Accedi per mostrare il tuo nome', lbLoginFail: 'Accesso non riuscito',
     freeDown: "Scendi fino in fondo!", newRule: "Nuova regola!", rule1: "Scendendo, schiva i pesci", rule2: "Se ne tocchi uno, si risale", rule3: "Risalendo, prendili tutti!", gotIt: "Capito!", bumped: "Toccato! Si risale", q1: "Prendi {n} pesci", q2: "Compra un potenziamento", q3: "Scendi a {m} m", qDone: "Obiettivo completato!",
     bigHaul: "GRANDE BOTTINO!", epicHaul: "BOTTINO EPICO!", newRecord: "NUOVO RECORD!", newDepth: "PIÙ A FONDO!", depthRec: "Record di profondità: {m} m", bestHaul: "Il tuo bottino migliore di sempre", rainbow: "ARCOBALENO", wheel: "Ruota della fortuna!", wheelTap: "Un giro gratis: tocca e gira!", spin: "Gira!", spinAgain: "Gira ancora",
+    frenzy: "FRENESIA!", armorHit: "Amo corazzato!", boostsH: "Potenziamenti a tempo", boostLeft: "{n} tuffi", armor: "Amo corazzato", armorEff: "Per {n} tuffi: il primo pesce che tocchi scendendo non ti ferma", gbait: "Esca d'oro", gbaitEff: "Per {n} tuffi: pesci rari ×2 e più pesci dorati", net: "Rete larga", netEff: "Per {n} tuffi: in risalita prendi i pesci da più lontano",
   },
   en: {
     crew: 'Your crew', holdMove: 'Hold and move', tap: 'Tap to cast',
@@ -379,6 +391,7 @@ const TXT = {
     lb: 'Leaderboard', lbEmpty: 'No scores yet: go fishing and be the first!', lbErr: 'Leaderboard not available', lbYou: 'You', lbLogin: 'Log in to show your name', lbLoginFail: 'Login failed',
     freeDown: "Dive all the way down!", newRule: "New rule!", rule1: "Going down, dodge the fish", rule2: "Touch one and you head back up", rule3: "Coming up, grab them all!", gotIt: "Got it!", bumped: "Bumped! Heading up", q1: "Catch {n} fish", q2: "Buy an upgrade", q3: "Reach {m} m", qDone: "Goal complete!",
     bigHaul: "BIG CATCH!", epicHaul: "EPIC CATCH!", newRecord: "NEW RECORD!", newDepth: "DEEPER!", depthRec: "Depth record: {m} m", bestHaul: "Your best haul ever", rainbow: "RAINBOW", wheel: "Wheel of fortune!", wheelTap: "A free spin: tap and spin!", spin: "Spin!", spinAgain: "Spin again",
+    frenzy: "FRENZY!", armorHit: "Armored hook!", boostsH: "Timed boosts", boostLeft: "{n} dives", armor: "Armored hook", armorEff: "For {n} dives: the first fish you touch on the way down does not stop you", gbait: "Golden bait", gbaitEff: "For {n} dives: rare fish ×2 and more golden fish", net: "Wide net", netEff: "For {n} dives: on the way up you catch fish from further away",
   },
   ru: {
     crew: 'Твоя команда', holdMove: 'Удерживай и веди', tap: 'Нажми, чтобы забросить',
@@ -417,6 +430,7 @@ const TXT = {
     lb: 'Рейтинг', lbEmpty: 'Пока нет результатов: рыбачь и стань первым!', lbErr: 'Рейтинг недоступен', lbYou: 'Ты', lbLogin: 'Войди, чтобы показать своё имя', lbLoginFail: 'Не удалось войти',
     freeDown: "Спустись до самого дна!", newRule: "Новое правило!", rule1: "Вниз: уворачивайся от рыб", rule2: "Задел рыбу, и ты поднимаешься", rule3: "Вверх: хватай всех!", gotIt: "Понятно!", bumped: "Задел! Поднимаемся", q1: "Поймай рыб: {n}", q2: "Купи улучшение", q3: "Спустись на {m} м", qDone: "Цель выполнена!",
     bigHaul: "БОЛЬШОЙ УЛОВ!", epicHaul: "ЭПИЧЕСКИЙ УЛОВ!", newRecord: "НОВЫЙ РЕКОРД!", newDepth: "ГЛУБЖЕ!", depthRec: "Рекорд глубины: {m} м", bestHaul: "Твой лучший улов", rainbow: "РАДУЖНАЯ", wheel: "Колесо фортуны!", wheelTap: "Бесплатный спин: крути!", spin: "Крутить!", spinAgain: "Ещё раз",
+    frenzy: "БЕЗУМИЕ!", armorHit: "Бронекрючок!", boostsH: "Временные усиления", boostLeft: "погр.: {n}", armor: "Бронированный крючок", armorEff: "На {n} погружения: первая задетая рыба при спуске тебя не останавливает", gbait: "Золотая наживка", gbaitEff: "На {n} погружения: редкие ×2 и больше золотых рыб", net: "Широкая сеть", netEff: "На {n} погружений: при подъёме ловишь рыбу издалека",
   },
   tr: {
     crew: 'Tayfan', holdMove: 'Basılı tut ve kaydır', tap: 'Oltayı atmak için dokun',
@@ -455,6 +469,7 @@ const TXT = {
     lb: 'Sıralama', lbEmpty: 'Henüz skor yok: avlan ve ilk sen ol!', lbErr: 'Sıralama şu an yok', lbYou: 'Sen', lbLogin: 'Adını göstermek için giriş yap', lbLoginFail: 'Giriş başarısız',
     freeDown: "Sonuna kadar in!", newRule: "Yeni kural!", rule1: "İnerken balıklardan kaç", rule2: "Birine değersen yukarı çıkarsın", rule3: "Çıkarken hepsini yakala!", gotIt: "Anladım!", bumped: "Değdin! Yukarı çıkıyorsun", q1: "{n} balık yakala", q2: "Bir geliştirme satın al", q3: "{m} m'ye in", qDone: "Görev tamam!",
     bigHaul: "BÜYÜK AV!", epicHaul: "EFSANE AV!", newRecord: "YENİ REKOR!", newDepth: "DAHA DERİN!", depthRec: "Derinlik rekoru: {m} m", bestHaul: "Şimdiye kadarki en iyi avın", rainbow: "GÖKKUŞAĞI", wheel: "Şans çarkı!", wheelTap: "Bedava çevirme: dokun ve çevir!", spin: "Çevir!", spinAgain: "Tekrar çevir",
+    frenzy: "ÇILGINLIK!", armorHit: "Zırhlı iğne!", boostsH: "Süreli güçlendirmeler", boostLeft: "{n} dalış", armor: "Zırhlı iğne", armorEff: "{n} dalış boyunca: inerken değdiğin ilk balık seni durdurmaz", gbait: "Altın yem", gbaitEff: "{n} dalış boyunca: nadir balık ×2 ve daha çok altın balık", net: "Geniş ağ", netEff: "{n} dalış boyunca: çıkarken balıkları daha uzaktan yakalarsın",
   },
   es: {
     crew: 'Tu tripulación', holdMove: 'Mantén y mueve', tap: 'Toca para lanzar',
@@ -493,6 +508,7 @@ const TXT = {
     lb: 'Clasificación', lbEmpty: 'Aún no hay puntuaciones: ¡pesca y sé el primero!', lbErr: 'Clasificación no disponible', lbYou: 'Tú', lbLogin: 'Inicia sesión para mostrar tu nombre', lbLoginFail: 'No se pudo iniciar sesión',
     freeDown: "¡Baja hasta el fondo!", newRule: "¡Nueva regla!", rule1: "Al bajar, esquiva los peces", rule2: "Si tocas uno, empiezas a subir", rule3: "Al subir, ¡atrápalos todos!", gotIt: "¡Entendido!", bumped: "¡Tocado! A subir", q1: "Atrapa {n} peces", q2: "Compra una mejora", q3: "Baja a {m} m", qDone: "¡Objetivo cumplido!",
     bigHaul: "¡GRAN CAPTURA!", epicHaul: "¡CAPTURA ÉPICA!", newRecord: "¡NUEVO RÉCORD!", newDepth: "¡MÁS HONDO!", depthRec: "Récord de profundidad: {m} m", bestHaul: "Tu mejor captura de siempre", rainbow: "ARCOÍRIS", wheel: "¡Rueda de la fortuna!", wheelTap: "Un giro gratis: ¡toca y gira!", spin: "¡Girar!", spinAgain: "Girar otra vez",
+    frenzy: "¡FRENESÍ!", armorHit: "¡Anzuelo blindado!", boostsH: "Mejoras temporales", boostLeft: "{n} inmersiones", armor: "Anzuelo blindado", armorEff: "Durante {n} inmersiones: el primer pez que tocas al bajar no te detiene", gbait: "Cebo dorado", gbaitEff: "Durante {n} inmersiones: peces raros ×2 y más peces dorados", net: "Red ancha", netEff: "Durante {n} inmersiones: al subir atrapas peces desde más lejos",
   },
   pt: {
     crew: 'Sua tripulação', holdMove: 'Segure e mova', tap: 'Toque para lançar',
@@ -531,6 +547,7 @@ const TXT = {
     lb: 'Ranking', lbEmpty: 'Ainda sem pontuações: pesque e seja o primeiro!', lbErr: 'Ranking indisponível', lbYou: 'Você', lbLogin: 'Entre para mostrar seu nome', lbLoginFail: 'Não foi possível entrar',
     freeDown: "Desça até o fundo!", newRule: "Nova regra!", rule1: "Descendo, desvie dos peixes", rule2: "Tocou em um, você começa a subir", rule3: "Subindo, pegue todos!", gotIt: "Entendi!", bumped: "Tocou! Subindo", q1: "Pegue {n} peixes", q2: "Compre uma melhoria", q3: "Desça a {m} m", qDone: "Objetivo concluído!",
     bigHaul: "GRANDE PESCA!", epicHaul: "PESCA ÉPICA!", newRecord: "NOVO RECORDE!", newDepth: "MAIS FUNDO!", depthRec: "Recorde de profundidade: {m} m", bestHaul: "Sua melhor pesca de todas", rainbow: "ARCO-ÍRIS", wheel: "Roda da fortuna!", wheelTap: "Um giro grátis: toque e gire!", spin: "Girar!", spinAgain: "Girar de novo",
+    frenzy: "FRENESI!", armorHit: "Anzol blindado!", boostsH: "Melhorias temporárias", boostLeft: "{n} mergulhos", armor: "Anzol blindado", armorEff: "Por {n} mergulhos: o primeiro peixe que você toca ao descer não te para", gbait: "Isca dourada", gbaitEff: "Por {n} mergulhos: peixes raros ×2 e mais peixes dourados", net: "Rede larga", netEff: "Por {n} mergulhos: na subida você pega peixes de mais longe",
   },
   de: {
     crew: 'Deine Crew', holdMove: 'Halten und bewegen', tap: 'Tippen zum Auswerfen',
@@ -569,6 +586,7 @@ const TXT = {
     lb: 'Bestenliste', lbEmpty: 'Noch keine Punkte: geh angeln und sei der Erste!', lbErr: 'Bestenliste nicht verfügbar', lbYou: 'Du', lbLogin: 'Melde dich an, um deinen Namen zu zeigen', lbLoginFail: 'Anmeldung fehlgeschlagen',
     freeDown: "Tauch ganz nach unten!", newRule: "Neue Regel!", rule1: "Beim Abtauchen: weich den Fischen aus", rule2: "Berührst du einen, geht es nach oben", rule3: "Beim Auftauchen: schnapp sie dir alle!", gotIt: "Verstanden!", bumped: "Berührt! Es geht nach oben", q1: "Fang {n} Fische", q2: "Kauf ein Upgrade", q3: "Tauche auf {m} m", qDone: "Ziel erreicht!",
     bigHaul: "GROSSER FANG!", epicHaul: "EPISCHER FANG!", newRecord: "NEUER REKORD!", newDepth: "TIEFER!", depthRec: "Tiefenrekord: {m} m", bestHaul: "Dein bester Fang aller Zeiten", rainbow: "REGENBOGEN", wheel: "Glücksrad!", wheelTap: "Ein Gratis-Dreh: tippen und drehen!", spin: "Drehen!", spinAgain: "Nochmal drehen",
+    frenzy: "RAUSCH!", armorHit: "Panzerhaken!", boostsH: "Zeitboosts", boostLeft: "{n} Tauchgänge", armor: "Panzerhaken", armorEff: "{n} Tauchgänge lang: der erste Fisch beim Abtauchen stoppt dich nicht", gbait: "Goldköder", gbaitEff: "{n} Tauchgänge lang: seltene Fische ×2 und mehr goldene Fische", net: "Weites Netz", netEff: "{n} Tauchgänge lang: beim Auftauchen fängst du Fische aus größerer Entfernung",
   },
 };
 const NAMES = {   // it, en, ru, tr, es, pt, de (same order as LANGS)
@@ -746,7 +764,7 @@ const SAVE_VERSION = 1;
 function defaultState() {
   return { v: SAVE_VERSION, m: CONFIG.startMoney, te: 0, l: [0, 0, 0, 0], b: [0, 0, 0, 0],
     c: CONFIG.species.map(() => 0), n: CONFIG.species.map(() => 0), cr: 0, cw: 0, cu: [0, 0, 0], ls: Date.now(), tu: 0, gb: 0,
-    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0, bh: 0, rb: 0 }, win: 0, snd: 1, q: 0, rl: 0, lk: 0, hh: [], wd: 0 };
+    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0, bh: 0, rb: 0 }, win: 0, snd: 1, q: 0, rl: 0, lk: 0, hh: [], wd: 0, fz: 0, ar: 0, nt: 0 };
 }
 function migrate(o) {
   const d = defaultState();
@@ -833,6 +851,8 @@ const sfx = {
   fanfare() { [523, 659, 784, 1046, 1318, 1568].forEach((f, i) => { Snd.tone(f, .22, 'triangle', .18, 1, i * .07); Snd.tone(f * 2, .12, 'sine', .06, 1, i * .07 + .03); }); },
   rainbow() { for (let i = 0; i < 12; i++) Snd.tone(600 * Math.pow(2, i / 6), .1, 'sine', .12, 1, i * .04); [1046, 1318, 1568, 2093].forEach((f, i) => Snd.tone(f, .3, 'triangle', .12, 1, .5 + i * .08)); },
   tick(i) { Snd.tone(900 + i * 25, .04, 'square', .04); },
+  frenzy() { for (let i = 0; i < 8; i++) Snd.tone(220 * Math.pow(2, i / 4), .09, 'sawtooth', .07, 1, i * .045); [880, 1108, 1318].forEach((f, i) => Snd.tone(f, .3, 'triangle', .16, 1, .38 + i * .05)); },
+  shield() { Snd.tone(1200, .12, 'sine', .15, .6); Snd.tone(1800, .1, 'triangle', .08, .5, .03); },
 };
 
 /* ============================ canvas & camera ==================== */
@@ -940,6 +960,13 @@ function spawnDive() {
     chest = { x: rand(70, VW - 70), y: Math.max(8 * PX, maxPx * (firstChest ? .6 : rand(.4, .9))), ph: 0 };
   const z = S.l[3];
   if (floorHere && !S.b[z]) boss = makeBoss(z, maxPx);
+  // frenzy: decided at the cast, starts on the way up; never in boss dives, never too close to the last one
+  const F = CONFIG.frenzy, n = S.st.d + 1, since = n - S.fz;
+  frenzyPlan = !boss && n >= F.fromDive && since > F.gap && (Math.random() < F.chance || since >= F.pity) ? { atPx: maxPx * rand(.45, .8) } : null;
+  frenzy = null;
+  // timed boosts: one charge per dive
+  armorOn = S.ar > 0 && !freeDive(); if (armorOn) S.ar--;   // no charge spent while fish still pass through
+  netOn = S.nt > 0; if (netOn) S.nt--;
 }
 /* first launch: the camera starts on the sleeping first boss, then rises to the boat */
 /* unskippable intro: first launch (zone 0) and every new boat. The camera shows the zone's
@@ -985,20 +1012,41 @@ function cast() {
   setBottom(false); hideHint();
   if (S.tu === 0) { S.tu = 1; tutT = 3.2; }
 }
+function startFrenzy() {
+  const F = CONFIG.frenzy, plan = frenzyPlan; frenzyPlan = null;
+  // only with time to play it: deep enough, hook not already racing up full, no boss scene
+  if (hook.y < F.minDepth * PX || full || cine) return;
+  S.fz = S.st.d + 1; save();
+  const speed = clamp(hook.y / F.secs, 90, 320);   // the hook slows so the frenzy lasts about until the surface
+  frenzy = { t: 0, dur: F.secs, speed };
+  const n = Math.round(rand(F.school[0], F.school[1])), top = Math.max(30, hook.y - speed * F.secs * .95), gc = goldChance();
+  for (let i = 0; i < n; i++) {
+    const y = hook.y - 70 - (hook.y - 70 - top) * (i + rand(0, .6)) / n;
+    const f = makeFish(pickSpecies(Math.max(1, y / PX)), y, gc);
+    f.x = clamp(hook.x + rand(-150, 150), 30, VW - 30); f.v *= .45; f.frenzy = true; f.rainbow = false;
+    fishes.push(f);
+  }
+  flash = .45; shake = Math.max(shake, 6); sfx.frenzy();
+  bossBanner = { txt: t('frenzy'), life: 1.6, frenzy: true };
+}
+function endFrenzy() {
+  frenzy = null;
+  for (const f of fishes) f.frenzy = false;   // what is left of the school is ordinary fish again
+}
 function startAscent(first) {
   phase = 'up'; lastCatch = clock - 99;
   if (first) attach(first, true);
   shake = Math.max(shake, 4); sfx.bump();
 }
 function attach(f, isFirst) {
-  if (nCaught() >= hookCap() && !f.sp.boss) return;
+  if (nCaught() >= hookCap() && !f.sp.boss && !f.frenzy) return;
   f.gone = true;
   combo = (clock - lastCatch <= CONFIG.combo.window || isFirst) ? combo + 1 : 1;
   if (isFirst) combo = 1;
   lastCatch = clock; diveBest = Math.max(diveBest, combo);
-  const mult = f.sp.boss ? 1 : comboMult(combo);
+  const mult = f.sp.boss ? 1 : f.frenzy ? Math.min(CONFIG.frenzy.maxMult, comboMult(combo) * CONFIG.frenzy.mult) : comboMult(combo);
   const val = Math.round(f.sp.value * (f.rainbow ? CONFIG.rainbow.mult : f.golden ? CONFIG.goldenMult : 1) * mult * sellMult(f.sp.z));
-  caught.push({ sp: f.sp, lk: f.lk, golden: !!f.golden && !f.rainbow, rainbow: !!f.rainbow, val, mult, sw: rand(-.4, .4) });
+  caught.push({ sp: f.sp, lk: f.lk, golden: !!f.golden && !f.rainbow, rainbow: !!f.rainbow, frenzy: !!f.frenzy, val, mult, sw: rand(-.4, .4) });
   if (f.rainbow) {   // jackpot: slow motion, flash, its own sound
     S.st.rb++; rainbowSlow = .9; flash = .7; shake = Math.max(shake, 10); sfx.rainbow();
     toast(`🌈 ${nm(f.sp.id)} ${t('rainbow')} ×${CONFIG.rainbow.mult}!`, 'gold');
@@ -1024,7 +1072,7 @@ function grabChest() {
   floats.push({ x: chest.x, y: chest.y - 30, txt: t('chest'), col: '#ffd84d', life: 1.1, max: 1.1, size: 24, world: true });
   for (let i = 0; i < 26; i++) parts.push({ x: chest.x, y: chest.y, vx: rand(-170, 170), vy: rand(-170, 90), life: rand(.4, .8), max: .8, type: 'spark', r: rand(2, 4) });
 }
-function nCaught() { let n = 0; for (const c of caught) if (!c.boss) n++; return n; }
+function nCaught() { let n = 0; for (const c of caught) if (!c.boss && !c.frenzy) n++; return n; }   // frenzy fish are extra
 function hitTest(f, r) {
   const rx = f.w * .5 + r * .6, ry = f.hh * .5 + r * .6;
   const dx = (hook.x - f.x) / rx, dy = (hook.y - f.y) / ry;
@@ -1150,7 +1198,13 @@ function update(dt) {
         if (!freeDive()) for (const f of fishes) {
           if (f.gone || Math.abs(f.y - hook.y) > 80) continue;
           if (hitTest(f, CONFIG.hookRadius)) {
-            if (S.st.d < CONFIG.onboarding.freeDives + 3) floats.push({ x: hook.x, y: hook.y - 56, txt: t('bumped'), col: '#ffd84d', life: 1.5, max: 1.5, size: 20, world: true });
+            if (armorOn) {   // the armored hook shrugs off the first fish
+              armorOn = false; f.gone = true; shake = Math.max(shake, 5); sfx.shield();
+              floats.push({ x: clamp(hook.x, 110, VW - 110), y: hook.y - 56, txt: '🛡️ ' + t('armorHit'), col: '#9fe8ff', life: 1.3, max: 1.3, size: 20, world: true });
+              for (let i = 0; i < 16; i++) parts.push({ x: f.x, y: f.y, vx: rand(-160, 160), vy: rand(-160, 60), life: rand(.35, .7), max: .7, type: 'spark', r: rand(1.5, 3.5) });
+              break;
+            }
+            if (S.st.d < CONFIG.onboarding.freeDives + 3) floats.push({ x: clamp(hook.x, 110, VW - 110), y: hook.y - 56, txt: t('bumped'), col: '#ffd84d', life: 1.5, max: 1.5, size: 20, world: true });
             startAscent(f); break;
           }
         }
@@ -1165,15 +1219,15 @@ function update(dt) {
     } else {
       let sp = Math.min(CONFIG.ascent.max, CONFIG.ascent.base + hook.y * CONFIG.ascent.accel) * (full ? CONFIG.ascent.fullMult : 1);
       if (full && S.l[3] >= CONFIG.ascent.fullTurboZone) sp = Math.max(sp * .6, Math.min(CONFIG.ascent.fullTurbo, hook.y * CONFIG.descent.brake));
+      if (frenzyPlan && !frenzy && hook.y <= frenzyPlan.atPx) startFrenzy();
+      if (frenzy) { frenzy.t += dt; if (frenzy.t >= frenzy.dur) endFrenzy(); else sp = frenzy.speed; }
       hook.speed = sp; hook.y -= sp * dt;
-      if (!full) {
-        for (const f of fishes) {
-          if (f.gone || Math.abs(f.y - hook.y) > 80) continue;
-          if (hitTest(f, CONFIG.catchRadius)) attach(f, false);
-          if (full) break;
-        }
+      const cr = CONFIG.catchRadius * (netOn ? CONFIG.boosts.net.radius : 1);
+      for (const f of fishes) {
+        if (f.gone || Math.abs(f.y - hook.y) > 80 || (full && !f.frenzy)) continue;
+        if (hitTest(f, cr)) attach(f, false);
       }
-      if (hook.y <= 0) startSell();
+      if (hook.y <= 0) { if (frenzy) endFrenzy(); startSell(); }
     }
     const firstChest = S.st.ch === 0;   // the first chest is magnetic: nobody misses it
     if (chest && !chestGot && Math.abs(chest.y - hook.y) < (firstChest ? 170 : 60)) {
@@ -1762,6 +1816,11 @@ function drawLineAndHook() {
     hookTrail.push([hook.x, hook.y]); if (hookTrail.length > 16) hookTrail.shift();
     hookTrail.forEach(([x, y], i) => { const k = i / hookTrail.length; g.fillStyle = `rgba(166,246,255,${(k * .45).toFixed(3)})`; g.beginPath(); g.arc(x, y, 3 + k * 9, 0, 7); g.fill(); });
   } else hookTrail.length = 0;
+  if (frenzy) {   // time left, as a ring around the hook
+    const k = 1 - frenzy.t / frenzy.dur;
+    g.lineWidth = 5; g.lineCap = 'round'; g.strokeStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.arc(hook.x, hook.y, 30, 0, 7); g.stroke();
+    g.strokeStyle = '#ffd23f'; g.beginPath(); g.arc(hook.x, hook.y, 30, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); g.stroke(); g.lineCap = 'butt';
+  }
   g.save(); g.translate(hook.x, hook.y); drawHook(g, tier, clock); g.restore();
   // capacity pill next to the hook
   if (phase === 'up') {
@@ -1810,6 +1869,10 @@ function floatText(f) {
 
 function drawScreenFX() {
   g.setTransform(DPR * scale, 0, 0, DPR * scale, DPR * scale * offX, 0);
+  if (frenzy) {   // golden water, pulsing
+    const a = .2 + Math.sin(clock * 8) * .06;
+    g.fillStyle = `rgba(255,196,50,${a})`; g.fillRect(-offX - 10, 0, VW + offX * 2 + 20, VH);
+  }
   if (((phase === 'down' && turbo) || (phase === 'up' && full)) && hook.speed > 700) {
     const a = clamp((hook.speed - 700) / 1400, 0, 1) * .35, up = phase === 'up';
     g.strokeStyle = `rgba(230,250,255,${a})`; g.lineWidth = 2;
@@ -1898,9 +1961,9 @@ function drawScreenFX() {
     if (S.st.d < 3) drawTitle();
   }
   if (bossBanner) {
-    const a = clamp(bossBanner.life, 0, 1), sc = 1 + Math.max(0, bossBanner.life - 2.2) * 1.2;
-    g.save(); g.globalAlpha = a; g.translate(VW / 2, VH * .36); g.scale(sc, sc);
-    g.font = '900 28px ui-rounded,system-ui,sans-serif'; g.textAlign = 'center'; g.lineWidth = 8; g.strokeStyle = 'rgba(80,40,0,.7)';
+    const fz = bossBanner.frenzy, a = clamp(bossBanner.life, 0, 1), sc = 1 + Math.max(0, bossBanner.life - (fz ? 1.25 : 2.2)) * (fz ? 2.2 : 1.2);
+    g.save(); g.globalAlpha = a; g.translate(VW / 2, VH * (fz ? .3 : .36)); g.scale(sc, sc);
+    g.font = `900 ${fz ? 46 : 28}px ui-rounded,system-ui,sans-serif`; g.textAlign = 'center'; g.lineWidth = 8; g.strokeStyle = 'rgba(80,40,0,.7)';
     const lines = wrapText(bossBanner.txt, 300);
     lines.forEach((l, i) => { g.strokeText(l, 0, i * 34); g.fillStyle = '#ffd84d'; g.fillText(l, 0, i * 34); });
     g.restore(); g.globalAlpha = 1;
@@ -2451,6 +2514,39 @@ function renderShop() {
     btn.onclick = () => buy(it.k, btn);
     d.appendChild(btn); body.appendChild(d);
   }
+  // timed boosts: priced on the player's own average haul, so they always mean something
+  const h = document.createElement('h3'); h.className = 'upgH'; h.textContent = t('boostsH'); body.appendChild(h);
+  for (const b of boostItems()) {
+    const can = S.m >= b.cost && b.have < CONFIG.boosts.cap;
+    const d = document.createElement('div'); d.className = 'card';
+    d.innerHTML = `<div class="ic" style="background:${b.bg};font-size:26px">${b.icon}</div>
+      <div class="info"><div class="name">${t(b.key)}${b.have ? ` <span class="lvpill">${t('boostLeft', { n: b.have })}</span>` : ''}</div><div class="eff">${t(b.key + 'Eff', { n: CONFIG.boosts[b.id].dives })}</div></div>`;
+    const btn = document.createElement('button');
+    btn.className = 'btn buy ' + (can ? 'green' : 'gray');
+    btn.innerHTML = b.have >= CONFIG.boosts.cap ? t('max') : `${coinHTML()} ${fmt(b.cost)}`;
+    btn.disabled = b.have >= CONFIG.boosts.cap;
+    btn.onclick = () => buyBoost(b.id, btn);
+    d.appendChild(btn); body.appendChild(d);
+  }
+}
+function boostItems() {
+  const B = CONFIG.boosts, avg = S.hh.length ? S.hh.reduce((a, v) => a + v, 0) / S.hh.length : 0;
+  const cost = id => Math.max(B[id].min, Math.round(avg * B[id].k));
+  return [
+    { id: 'armor', key: 'armor', icon: '🛡️', bg: '#e3f6ff', cost: cost('armor'), have: S.ar },
+    { id: 'gbait', key: 'gbait', icon: '✨', bg: '#fff3cc', cost: cost('gbait'), have: S.gb },
+    { id: 'net', key: 'net', icon: '🥅', bg: '#e9f7ea', cost: cost('net'), have: S.nt },
+  ];
+}
+function buyBoost(id, btn) {
+  const b = boostItems().find(x => x.id === id), B = CONFIG.boosts;
+  if (!b || b.have >= B.cap) return;
+  if (S.m < b.cost) { sfx.deny(); btn.classList.remove('flash'); void btn.offsetWidth; btn.classList.add('flash'); return; }
+  S.m -= b.cost; displayMoney = Math.min(displayMoney, S.m + b.cost);
+  const add = v => Math.min(B.cap, v + B[id].dives);
+  if (id === 'armor') S.ar = add(S.ar); else if (id === 'gbait') S.gb = add(S.gb); else S.nt = add(S.nt);
+  if (S.tu < 2) S.tu = 2;   // counts as a first purchase for the shop hint
+  sfx.buy(); save(); renderShop(); refreshHUD(true);
 }
 function buy(k, btn) {
   const it = shopItems().find(i => i.k === k);
@@ -2536,13 +2632,15 @@ function refreshHUD(force) {
   if (crewEl.classList.contains('open')) updateCrewLive();
   const surf = phase === 'surface';
   const n = surf ? affordableCount() : 0;
-  const key = [phase, n, S.st.d, S.tu, S.q, S.q < QUESTS().length ? questProg(S.q) : 0, albumCount(), albumSeen, S.l.join(), S.b.join(), LANG, anyPanelOpen(), !!intro, S.gb, modalOpen()].join('|');
+  const key = [phase, n, S.st.d, S.tu, S.ar, S.nt, S.q, S.q < QUESTS().length ? questProg(S.q) : 0, albumCount(), albumSeen, S.l.join(), S.b.join(), LANG, anyPanelOpen(), !!intro, S.gb, modalOpen()].join('|');
   if (!force && key === lastHUD) return; lastHUD = key;
   const b = $('shopBadge'); b.textContent = n; b.classList.toggle('show', n > 0);
   $('albumBadge').classList.toggle('show', albumCount() > albumSeen && S.st.d > 0);
   $('albumBadge').textContent = '!';
   const gl = $('goal'); gl.innerHTML = goalText(); gl.classList.toggle('show', surf && S.st.d > 0 && !intro);
-  const bo = $('boost'); bo.textContent = t('boost', { n: S.gb }); bo.classList.toggle('show', surf && S.gb > 0 && !intro);
+  const bo = $('boost'), act = [S.gb > 0 ? `✦ ${S.gb}` : '', S.ar > 0 ? `🛡️ ${S.ar}` : '', S.nt > 0 ? `🥅 ${S.nt}` : ''].filter(Boolean);
+  bo.textContent = act.length === 1 && S.gb > 0 ? t('boost', { n: S.gb }) : act.join('   ');
+  bo.classList.toggle('show', surf && act.length > 0 && !intro);
   setBottom(surf && !intro);
   const ha = $('hintArrow');
   if (surf && S.tu < 2 && n > 0 && !anyPanelOpen() && !modalOpen()) { ha.textContent = t('firstBuy'); ha.classList.add('show'); } else ha.classList.remove('show');
@@ -2628,7 +2726,7 @@ function showChestModal() {
     btn.onclick = open; c.onclick = () => { if (!opened) open(); };
   });
 }
-let doubledNow = false, haulCele = null;
+let doubledNow = false, haulCele = null, frenzyPlan = null, frenzy = null, armorOn = false, netOn = false;
 /* wheel of fortune: a free spin every CONFIG.wheel.every dives, one more with a rewarded video */
 const wheelDue = () => S.st.d > 0 && S.st.d % CONFIG.wheel.every === 0 && S.wd !== S.st.d;
 function wheelReward(sl) {
