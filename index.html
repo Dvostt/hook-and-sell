@@ -34,6 +34,18 @@ button{font:inherit;cursor:pointer}
 .iconbtn{width:44px;height:44px;border-radius:14px;border:0;background:rgba(6,26,48,.78);color:#fff;display:grid;place-items:center;box-shadow:0 3px 0 rgba(0,0,0,.28)}
 .iconbtn svg{width:24px;height:24px}
 .topR{display:flex;gap:8px}
+.hi.rainbow{background:linear-gradient(120deg,#ffd1e8,#fff3b0,#c8ffd4,#c9e6ff,#e7d1ff)}
+.cele{position:absolute;z-index:81;pointer-events:none;text-align:center;font-weight:900;white-space:nowrap;transform:translate(-50%,-50%);animation:multPop 2.4s cubic-bezier(.2,.9,.3,1.3) forwards}
+.cele b{position:relative;display:block;font-size:40px;line-height:1.05;background:linear-gradient(#fff8d2,#ffd23f 45%,#f08a24);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:2px #7a3d00;filter:drop-shadow(0 3px 0 rgba(0,0,0,.25)) drop-shadow(0 0 14px rgba(255,210,63,.8))}
+.cele.epic b{font-size:48px;background:linear-gradient(90deg,#ff5f6d,#ffc371,#fff36b,#6bffb8,#5fc9ff,#b98bff);-webkit-background-clip:text;background-clip:text}
+.cele span{position:relative;display:inline-block;margin-top:6px;padding:4px 12px;border-radius:999px;background:rgba(6,26,48,.88);color:#fff;font-size:15px}
+.cele i{position:absolute;left:50%;top:40%;width:320px;height:320px;margin:-160px 0 0 -160px;border-radius:50%;background:repeating-conic-gradient(rgba(255,215,90,.45) 0 9deg,transparent 9deg 24deg);-webkit-mask:radial-gradient(circle,#000 25%,transparent 68%);mask:radial-gradient(circle,#000 25%,transparent 68%);animation:multRays 2.4s linear forwards}
+.confetti{position:absolute;z-index:82;width:9px;height:14px;border-radius:2px;pointer-events:none;animation:conf 1.6s cubic-bezier(.2,.7,.4,1) forwards}
+@keyframes conf{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--r))}}
+.wheelBox{position:relative;width:260px;height:260px;margin:4px auto 8px}
+.wheelBox canvas{width:260px;height:260px}
+.wheelPtr{position:absolute;left:50%;top:-6px;margin-left:-14px;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:26px solid #e2463b;filter:drop-shadow(0 2px 0 rgba(0,0,0,.3))}
+#wheelTxt{min-height:44px}
 .rules{display:grid;gap:8px;margin:8px 0 14px;text-align:left}
 .rules div{background:rgba(6,26,48,.06);border-radius:14px;padding:10px 12px;font-weight:800;font-size:17px;line-height:1.25;color:var(--ink)}
 .mult{position:absolute;z-index:80;pointer-events:none;text-align:center;font-weight:900;white-space:nowrap;transform:translate(-50%,-50%);animation:multPop 1.6s cubic-bezier(.2,.9,.3,1.3) forwards}
@@ -249,6 +261,11 @@ const CONFIG = {
     weights: [55, 25, 20],  // coins / free upgrade / golden bait
     baitDives: 3, baitRare: 2, baitGold: 0.05,
   },
+  celebrate: { minHistory: 3, big: 1.6, epic: 2.5 },   // haul vs the average of the last 8: ×1.6 big, ×2.5 epic
+  rainbow: { chance: 0.004, mult: 50, fromDive: 4 },   // jackpot fish: 1 fish in 250 from the 5th dive on, worth ×50
+  wheel: { every: 10,                                  // a free spin every 10 dives, a second one with a rewarded video
+    // [reward, weight]: coins are × the chest coins of the current zone; the weights are the real odds, the slices look equal
+    slices: [['coins', .6, 22], ['bait', 0, 16], ['coins', 1, 18], ['upgrade', 0, 12], ['coins', .6, 14], ['coins', 2, 10], ['bait', 0, 4], ['coins', 5, 4]] },
   tutorialDives: 3,         // the "hold and move" slider shows during the first dives
   firstGoldenDive: 1,       // from this dive on, 2 golden fish are guaranteed until the first one is caught
   onboarding: {             // the first minute: nobody should leave before seeing the real loop
@@ -323,6 +340,7 @@ const TXT = {
     reach: 'Raggiungi {m} m', lvl: 'Lv',
     lb: 'Classifica', lbEmpty: 'Ancora nessun punteggio: pesca e sarai il primo!', lbErr: 'Classifica non disponibile', lbYou: 'Tu', lbLogin: 'Accedi per mostrare il tuo nome', lbLoginFail: 'Accesso non riuscito',
     freeDown: "Scendi fino in fondo!", newRule: "Nuova regola!", rule1: "Scendendo, schiva i pesci", rule2: "Se ne tocchi uno, si risale", rule3: "Risalendo, prendili tutti!", gotIt: "Capito!", bumped: "Toccato! Si risale", q1: "Prendi {n} pesci", q2: "Compra un potenziamento", q3: "Scendi a {m} m", qDone: "Obiettivo completato!",
+    bigHaul: "GRANDE BOTTINO!", epicHaul: "BOTTINO EPICO!", newRecord: "NUOVO RECORD!", newDepth: "PIÙ A FONDO!", depthRec: "Record di profondità: {m} m", bestHaul: "Il tuo bottino migliore di sempre", rainbow: "ARCOBALENO", wheel: "Ruota della fortuna!", wheelTap: "Un giro gratis: tocca e gira!", spin: "Gira!", spinAgain: "Gira ancora",
   },
   en: {
     crew: 'Your crew', holdMove: 'Hold and move', tap: 'Tap to cast',
@@ -360,6 +378,7 @@ const TXT = {
     reach: 'Reach {m} m', lvl: 'Lv',
     lb: 'Leaderboard', lbEmpty: 'No scores yet: go fishing and be the first!', lbErr: 'Leaderboard not available', lbYou: 'You', lbLogin: 'Log in to show your name', lbLoginFail: 'Login failed',
     freeDown: "Dive all the way down!", newRule: "New rule!", rule1: "Going down, dodge the fish", rule2: "Touch one and you head back up", rule3: "Coming up, grab them all!", gotIt: "Got it!", bumped: "Bumped! Heading up", q1: "Catch {n} fish", q2: "Buy an upgrade", q3: "Reach {m} m", qDone: "Goal complete!",
+    bigHaul: "BIG CATCH!", epicHaul: "EPIC CATCH!", newRecord: "NEW RECORD!", newDepth: "DEEPER!", depthRec: "Depth record: {m} m", bestHaul: "Your best haul ever", rainbow: "RAINBOW", wheel: "Wheel of fortune!", wheelTap: "A free spin: tap and spin!", spin: "Spin!", spinAgain: "Spin again",
   },
   ru: {
     crew: 'Твоя команда', holdMove: 'Удерживай и веди', tap: 'Нажми, чтобы забросить',
@@ -397,6 +416,7 @@ const TXT = {
     reach: 'Достигни {m} м', lvl: 'ур.',
     lb: 'Рейтинг', lbEmpty: 'Пока нет результатов: рыбачь и стань первым!', lbErr: 'Рейтинг недоступен', lbYou: 'Ты', lbLogin: 'Войди, чтобы показать своё имя', lbLoginFail: 'Не удалось войти',
     freeDown: "Спустись до самого дна!", newRule: "Новое правило!", rule1: "Вниз: уворачивайся от рыб", rule2: "Задел рыбу, и ты поднимаешься", rule3: "Вверх: хватай всех!", gotIt: "Понятно!", bumped: "Задел! Поднимаемся", q1: "Поймай рыб: {n}", q2: "Купи улучшение", q3: "Спустись на {m} м", qDone: "Цель выполнена!",
+    bigHaul: "БОЛЬШОЙ УЛОВ!", epicHaul: "ЭПИЧЕСКИЙ УЛОВ!", newRecord: "НОВЫЙ РЕКОРД!", newDepth: "ГЛУБЖЕ!", depthRec: "Рекорд глубины: {m} м", bestHaul: "Твой лучший улов", rainbow: "РАДУЖНАЯ", wheel: "Колесо фортуны!", wheelTap: "Бесплатный спин: крути!", spin: "Крутить!", spinAgain: "Ещё раз",
   },
   tr: {
     crew: 'Tayfan', holdMove: 'Basılı tut ve kaydır', tap: 'Oltayı atmak için dokun',
@@ -434,6 +454,7 @@ const TXT = {
     reach: '{m} m\'ye ulaş', lvl: 'Sv',
     lb: 'Sıralama', lbEmpty: 'Henüz skor yok: avlan ve ilk sen ol!', lbErr: 'Sıralama şu an yok', lbYou: 'Sen', lbLogin: 'Adını göstermek için giriş yap', lbLoginFail: 'Giriş başarısız',
     freeDown: "Sonuna kadar in!", newRule: "Yeni kural!", rule1: "İnerken balıklardan kaç", rule2: "Birine değersen yukarı çıkarsın", rule3: "Çıkarken hepsini yakala!", gotIt: "Anladım!", bumped: "Değdin! Yukarı çıkıyorsun", q1: "{n} balık yakala", q2: "Bir geliştirme satın al", q3: "{m} m'ye in", qDone: "Görev tamam!",
+    bigHaul: "BÜYÜK AV!", epicHaul: "EFSANE AV!", newRecord: "YENİ REKOR!", newDepth: "DAHA DERİN!", depthRec: "Derinlik rekoru: {m} m", bestHaul: "Şimdiye kadarki en iyi avın", rainbow: "GÖKKUŞAĞI", wheel: "Şans çarkı!", wheelTap: "Bedava çevirme: dokun ve çevir!", spin: "Çevir!", spinAgain: "Tekrar çevir",
   },
   es: {
     crew: 'Tu tripulación', holdMove: 'Mantén y mueve', tap: 'Toca para lanzar',
@@ -471,6 +492,7 @@ const TXT = {
     reach: 'Llega a {m} m', lvl: 'Nv',
     lb: 'Clasificación', lbEmpty: 'Aún no hay puntuaciones: ¡pesca y sé el primero!', lbErr: 'Clasificación no disponible', lbYou: 'Tú', lbLogin: 'Inicia sesión para mostrar tu nombre', lbLoginFail: 'No se pudo iniciar sesión',
     freeDown: "¡Baja hasta el fondo!", newRule: "¡Nueva regla!", rule1: "Al bajar, esquiva los peces", rule2: "Si tocas uno, empiezas a subir", rule3: "Al subir, ¡atrápalos todos!", gotIt: "¡Entendido!", bumped: "¡Tocado! A subir", q1: "Atrapa {n} peces", q2: "Compra una mejora", q3: "Baja a {m} m", qDone: "¡Objetivo cumplido!",
+    bigHaul: "¡GRAN CAPTURA!", epicHaul: "¡CAPTURA ÉPICA!", newRecord: "¡NUEVO RÉCORD!", newDepth: "¡MÁS HONDO!", depthRec: "Récord de profundidad: {m} m", bestHaul: "Tu mejor captura de siempre", rainbow: "ARCOÍRIS", wheel: "¡Rueda de la fortuna!", wheelTap: "Un giro gratis: ¡toca y gira!", spin: "¡Girar!", spinAgain: "Girar otra vez",
   },
   pt: {
     crew: 'Sua tripulação', holdMove: 'Segure e mova', tap: 'Toque para lançar',
@@ -508,6 +530,7 @@ const TXT = {
     reach: 'Alcance {m} m', lvl: 'Nv',
     lb: 'Ranking', lbEmpty: 'Ainda sem pontuações: pesque e seja o primeiro!', lbErr: 'Ranking indisponível', lbYou: 'Você', lbLogin: 'Entre para mostrar seu nome', lbLoginFail: 'Não foi possível entrar',
     freeDown: "Desça até o fundo!", newRule: "Nova regra!", rule1: "Descendo, desvie dos peixes", rule2: "Tocou em um, você começa a subir", rule3: "Subindo, pegue todos!", gotIt: "Entendi!", bumped: "Tocou! Subindo", q1: "Pegue {n} peixes", q2: "Compre uma melhoria", q3: "Desça a {m} m", qDone: "Objetivo concluído!",
+    bigHaul: "GRANDE PESCA!", epicHaul: "PESCA ÉPICA!", newRecord: "NOVO RECORDE!", newDepth: "MAIS FUNDO!", depthRec: "Recorde de profundidade: {m} m", bestHaul: "Sua melhor pesca de todas", rainbow: "ARCO-ÍRIS", wheel: "Roda da fortuna!", wheelTap: "Um giro grátis: toque e gire!", spin: "Girar!", spinAgain: "Girar de novo",
   },
   de: {
     crew: 'Deine Crew', holdMove: 'Halten und bewegen', tap: 'Tippen zum Auswerfen',
@@ -545,6 +568,7 @@ const TXT = {
     reach: 'Erreiche {m} m', lvl: 'Lv',
     lb: 'Bestenliste', lbEmpty: 'Noch keine Punkte: geh angeln und sei der Erste!', lbErr: 'Bestenliste nicht verfügbar', lbYou: 'Du', lbLogin: 'Melde dich an, um deinen Namen zu zeigen', lbLoginFail: 'Anmeldung fehlgeschlagen',
     freeDown: "Tauch ganz nach unten!", newRule: "Neue Regel!", rule1: "Beim Abtauchen: weich den Fischen aus", rule2: "Berührst du einen, geht es nach oben", rule3: "Beim Auftauchen: schnapp sie dir alle!", gotIt: "Verstanden!", bumped: "Berührt! Es geht nach oben", q1: "Fang {n} Fische", q2: "Kauf ein Upgrade", q3: "Tauche auf {m} m", qDone: "Ziel erreicht!",
+    bigHaul: "GROSSER FANG!", epicHaul: "EPISCHER FANG!", newRecord: "NEUER REKORD!", newDepth: "TIEFER!", depthRec: "Tiefenrekord: {m} m", bestHaul: "Dein bester Fang aller Zeiten", rainbow: "REGENBOGEN", wheel: "Glücksrad!", wheelTap: "Ein Gratis-Dreh: tippen und drehen!", spin: "Drehen!", spinAgain: "Nochmal drehen",
   },
 };
 const NAMES = {   // it, en, ru, tr, es, pt, de (same order as LANGS)
@@ -722,7 +746,7 @@ const SAVE_VERSION = 1;
 function defaultState() {
   return { v: SAVE_VERSION, m: CONFIG.startMoney, te: 0, l: [0, 0, 0, 0], b: [0, 0, 0, 0],
     c: CONFIG.species.map(() => 0), n: CONFIG.species.map(() => 0), cr: 0, cw: 0, cu: [0, 0, 0], ls: Date.now(), tu: 0, gb: 0,
-    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0 }, win: 0, snd: 1, q: 0, rl: 0, lk: 0 };
+    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0, bh: 0, rb: 0 }, win: 0, snd: 1, q: 0, rl: 0, lk: 0, hh: [], wd: 0 };
 }
 function migrate(o) {
   const d = defaultState();
@@ -806,6 +830,9 @@ const sfx = {
   boss() { Snd.tone(70, .6, 'sine', .4, .5); Snd.noise(.5, .25, 400); [392, 494, 587, 784].forEach((f, i) => Snd.tone(f, .35, 'triangle', .18, 1, .15 + i * .1)); },
   full() { Snd.tone(880, .1, 'square', .07); Snd.tone(1320, .12, 'square', .06, 1, .08); },
   reel() { Snd.tone(1600, .03, 'square', .025); },
+  fanfare() { [523, 659, 784, 1046, 1318, 1568].forEach((f, i) => { Snd.tone(f, .22, 'triangle', .18, 1, i * .07); Snd.tone(f * 2, .12, 'sine', .06, 1, i * .07 + .03); }); },
+  rainbow() { for (let i = 0; i < 12; i++) Snd.tone(600 * Math.pow(2, i / 6), .1, 'sine', .12, 1, i * .04); [1046, 1318, 1568, 2093].forEach((f, i) => Snd.tone(f, .3, 'triangle', .12, 1, .5 + i * .08)); },
+  tick(i) { Snd.tone(900 + i * 25, .04, 'square', .04); },
 };
 
 /* ============================ canvas & camera ==================== */
@@ -877,7 +904,8 @@ function pickSpecies(m) {
 function makeFish(sp, y, gc) {
   const lk = LOOK[sp.id], w = sp.size * rand(.9, 1.12);
   return { sp, lk, w, hh: w * Math.max(.3, lk.h), x: rand(30, VW - 30), y: y + rand(-12, 12),
-    dir: Math.random() < .5 ? -1 : 1, v: sp.speed * rand(.75, 1.25), ph: rand(0, 9), golden: Math.random() < gc, gone: false };
+    dir: Math.random() < .5 ? -1 : 1, v: sp.speed * rand(.75, 1.25), ph: rand(0, 9), golden: Math.random() < gc, gone: false,
+    rainbow: S.st.d >= CONFIG.rainbow.fromDive && Math.random() < CONFIG.rainbow.chance };
 }
 function makeBoss(z, floorPx) {
   const bs = SP[CONFIG.zones[z].boss];
@@ -969,21 +997,25 @@ function attach(f, isFirst) {
   if (isFirst) combo = 1;
   lastCatch = clock; diveBest = Math.max(diveBest, combo);
   const mult = f.sp.boss ? 1 : comboMult(combo);
-  const val = Math.round(f.sp.value * (f.golden ? CONFIG.goldenMult : 1) * mult * sellMult(f.sp.z));
-  caught.push({ sp: f.sp, lk: f.lk, golden: !!f.golden, val, mult, sw: rand(-.4, .4) });
+  const val = Math.round(f.sp.value * (f.rainbow ? CONFIG.rainbow.mult : f.golden ? CONFIG.goldenMult : 1) * mult * sellMult(f.sp.z));
+  caught.push({ sp: f.sp, lk: f.lk, golden: !!f.golden && !f.rainbow, rainbow: !!f.rainbow, val, mult, sw: rand(-.4, .4) });
+  if (f.rainbow) {   // jackpot: slow motion, flash, its own sound
+    S.st.rb++; rainbowSlow = .9; flash = .7; shake = Math.max(shake, 10); sfx.rainbow();
+    toast(`🌈 ${nm(f.sp.id)} ${t('rainbow')} ×${CONFIG.rainbow.mult}!`, 'gold');
+  }
   // album
   if (!f.sp.boss) {
     const i = f.sp.idx, wasZone = zoneComplete(f.sp.z);
     if (!(S.c[i] & 1)) { toast(`<span class="tag">${t('newSp')}</span> ${nm(f.sp.id)}`, 'new'); sfx.fresh(); }
     S.c[i] |= 1; S.n[i] = Math.min(99999, S.n[i] + 1);
-    if (f.golden) { if (!(S.c[i] & 2)) S.c[i] |= 2; S.st.g++; toast(`✦ ${nm(f.sp.id)} ${t('golden')} ×${CONFIG.goldenMult}`, 'gold'); sfx.gold(); }
+    if (f.golden && !f.rainbow) { if (!(S.c[i] & 2)) S.c[i] |= 2; S.st.g++; toast(`✦ ${nm(f.sp.id)} ${t('golden')} ×${CONFIG.goldenMult}`, 'gold'); sfx.gold(); }
     if (!wasZone && zoneComplete(f.sp.z)) { toast(t('zoneDone', { zone: t('zones')[f.sp.z] }), 'gold'); }
   }
   // feedback
   sfx.catch(combo);
-  floats.push({ x: f.x, y: f.y - 14, txt: '+' + fmt(val), col: f.golden ? '#ffd84d' : '#ffffff', life: .9, max: .9, size: f.golden ? 22 : 17, world: true });
+  floats.push({ x: f.x, y: f.y - 14, txt: '+' + fmt(val), col: f.rainbow ? `hsl(${(clock * 300) % 360},95%,70%)` : f.golden ? '#ffd84d' : '#ffffff', life: f.rainbow ? 1.6 : .9, max: f.rainbow ? 1.6 : .9, size: f.rainbow ? 30 : f.golden ? 22 : 17, world: true });
   if (mult > 1) floats.push({ x: f.x + 26, y: f.y - 34, txt: '×' + mult, col: '#ffcf33', life: .8, max: .8, size: 24, world: true });
-  for (let i = 0; i < (f.golden ? 22 : 8); i++) parts.push({ x: f.x, y: f.y, vx: rand(-120, 120), vy: rand(-120, 60), life: rand(.35, .7), max: .7, type: f.golden ? 'spark' : 'bub', r: rand(1.5, 3.5) });
+  for (let i = 0; i < (f.rainbow ? 60 : f.golden ? 22 : 8); i++) parts.push({ x: f.x, y: f.y, vx: rand(-120, 120), vy: rand(-120, 60), life: rand(.35, .7), max: .7, type: f.golden ? 'spark' : 'bub', r: rand(1.5, 3.5) });
   if (nCaught() >= hookCap() && !full && !f.sp.boss) { full = true; sfx.full(); floats.push({ x: hook.x, y: hook.y - 40, txt: t('full'), col: '#7dffb3', life: 1.1, max: 1.1, size: 22, world: true }); }
 }
 function grabChest() {
@@ -1016,9 +1048,16 @@ function bossEncounter() {
 }
 function startSell() {
   phase = 'sell'; hook.y = -6;
+  const prevMd = S.st.md;
   S.st.d++; S.st.md = Math.max(S.st.md, Math.round(diveDepthM)); S.st.bc = Math.max(S.st.bc, diveBest);
   haulChest = chestGot; chestGot = false; chest = null;
   haulItems = caught.slice(); haulBest = diveBest; haulTotal = haulItems.reduce((a, c) => a + c.val, 0);
+  // celebration: a haul well above the recent average, a best-ever haul, a new depth record
+  const C = CONFIG.celebrate, hist = S.hh, avg = hist.length ? hist.reduce((a, b) => a + b, 0) / hist.length : 0;
+  const tier = hist.length >= C.minHistory && haulTotal > 0 ? (haulTotal >= avg * C.epic ? 2 : haulTotal >= avg * C.big ? 1 : 0) : 0;
+  const veteran = S.st.d > CONFIG.onboarding.freeDives + 1;
+  haulCele = { tier, record: veteran && S.st.bh > 0 && haulTotal > S.st.bh, depth: veteran && prevMd > 0 && Math.round(diveDepthM) > prevMd ? Math.round(diveDepthM) : 0 };
+  S.st.bh = Math.max(S.st.bh, haulTotal); S.hh = hist.concat(haulTotal).slice(-8);
   sellQ = haulItems.filter(c => !c.boss); sellFly = []; sellTimer = .25; sellFast = false; sellDoneT = 0;
   const bi = haulItems.find(c => c.boss);
   if (bi) { cine = { type: 'haul', t: 0, it: bi }; sellTimer = 99; }
@@ -1470,7 +1509,7 @@ function drawSeaWorld() {
       if (f.gone || f.y < v0 || f.y > v1) continue;
       const ghost = phase === 'down' && f.y < turboPx;
       if (ghost) g.globalAlpha = .45;
-      drawFishAt(f.lk, f.x, f.y, f.w, f.dir, f.ph, f.golden ? 1 : 0);
+      drawFishAt(f.lk, f.x, f.y, f.w, f.dir, f.ph, fishMode(f));
       if (ghost) g.globalAlpha = 1;
       if (intro && f.label) pill(clamp(f.x, 70, VW - 70), f.y - f.hh * .5 - 14, nm(f.sp.id), RARITY_COL[f.sp.i], true);
     }
@@ -1497,7 +1536,7 @@ function drawSeaWorld() {
   for (const s of sellFly) {
     const k = s.t / s.burst, sc = 1 + k * .25;
     g.save(); g.translate(s.x, s.y); g.rotate(-.6 + k * 1.4); g.scale(sc, sc);
-    drawFishAt(s.it.lk, 0, 0, s.it.boss ? Math.min(130, s.it.sp.size * .6) : Math.max(34, s.it.sp.size * .9), 1, clock, s.it.golden ? 1 : 0);
+    drawFishAt(s.it.lk, 0, 0, s.it.boss ? Math.min(130, s.it.sp.size * .6) : Math.max(34, s.it.sp.size * .9), 1, clock, fishMode(s.it));
     g.restore();
   }
   // particles (world)
@@ -1700,7 +1739,7 @@ function drawLineAndHook() {
       const ang = Math.sin(clock * 6 + i) * .15 + c.sw;
       const ox = ((i % 3) - 1) * 10, oy = 16 + Math.floor(i / 3) * 12;
       g.save(); g.translate(hook.x + ox, hook.y + oy); g.rotate(-Math.PI / 2 + ang);   // hooked by the mouth: head up
-      drawFishAt(c.lk, 0, 0, Math.min(46, c.sp.size * .8), 1, clock * 2 + i, c.golden ? 1 : 0);
+      drawFishAt(c.lk, 0, 0, Math.min(46, c.sp.size * .8), 1, clock * 2 + i, fishMode(c));
       g.restore();
     }
     if (chestGot) drawChest(g, hook.x - 26, hook.y + 10, .6, false, Math.sin(clock * 4) * .15);
@@ -1933,16 +1972,24 @@ const GOLD = { back: '#c98a12', body: '#f5c542', belly: '#fff1a8', fin: '#ffd76a
 const SIL = '#0f2334';
 function drawFishAt(lk, x, y, w, dir, ph, mode, ctx = g) {
   ctx.save(); ctx.translate(x, y); if (dir < 0) ctx.scale(-1, 1);
+  if (mode === 3) {
+    const gg = ctx.createRadialGradient(0, 0, 2, 0, 0, w * .95), h = (clock * 140) % 360;
+    gg.addColorStop(0, `hsla(${h},100%,75%,.6)`); gg.addColorStop(.5, `hsla(${h + 120},100%,70%,.3)`); gg.addColorStop(1, `hsla(${h + 240},100%,70%,0)`);
+    ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, w * .95, 0, 7); ctx.fill();
+  }
   if (mode === 1) {
     const gg = ctx.createRadialGradient(0, 0, 2, 0, 0, w * .8);
     gg.addColorStop(0, 'rgba(255,230,120,.55)'); gg.addColorStop(1, 'rgba(255,230,120,0)');
     ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(0, 0, w * .8, 0, 7); ctx.fill();
   }
   drawShape(ctx, lk, w, ph, mode);
-  if (mode === 1) for (let i = 0; i < 3; i++) { const a = ph * 2 + i * 2.1; star(Math.cos(a) * w * .5, Math.sin(a) * w * .3, 3 + Math.sin(ph * 5 + i) * 1.5, 'rgba(255,255,255,.95)', ctx); }
+  if (mode === 1 || mode === 3) for (let i = 0; i < (mode === 3 ? 5 : 3); i++) { const a = ph * 2 + i * 2.1; star(Math.cos(a) * w * .5, Math.sin(a) * w * .3, 3 + Math.sin(ph * 5 + i) * 1.5, 'rgba(255,255,255,.95)', ctx); }
   ctx.restore();
 }
+const fishMode = f => f.rainbow ? 3 : f.golden ? 1 : 0;   // 0 normal, 1 golden, 2 silhouette, 3 rainbow
+let rainbowSlow = 0;
 function pal(lk, mode) {
+  if (mode === 3) { const h = (clock * 140) % 360; return { back: `hsl(${h},85%,45%)`, body: `hsl(${h + 70},90%,62%)`, belly: `hsl(${h + 140},90%,86%)`, fin: `hsl(${h + 210},85%,58%)`, pc: `hsl(${h + 280},95%,75%)`, out: `hsl(${h},60%,22%)` }; }
   if (mode === 2) return { back: SIL, body: SIL, belly: SIL, fin: SIL, pc: SIL, out: SIL };
   if (mode === 1) return GOLD;
   return { back: lk.back, body: lk.body, belly: lk.belly, fin: lk.fin, pc: lk.pc || lk.fin, out: lk.rim || shade(lk.back, -.35) };
@@ -2581,14 +2628,92 @@ function showChestModal() {
     btn.onclick = open; c.onclick = () => { if (!opened) open(); };
   });
 }
-let doubledNow = false;
+let doubledNow = false, haulCele = null;
+/* wheel of fortune: a free spin every CONFIG.wheel.every dives, one more with a rewarded video */
+const wheelDue = () => S.st.d > 0 && S.st.d % CONFIG.wheel.every === 0 && S.wd !== S.st.d;
+function wheelReward(sl) {
+  const [type, k] = sl, base = CONFIG.chest.coinBase[S.l[3]];
+  if (type === 'coins') return { type, n: Math.round(base * k) };
+  if (type === 'upgrade') { const rw = rollChestUpgrade(); if (rw) return rw; return { type: 'coins', n: Math.round(base) }; }
+  return { type: 'bait' };
+}
+function rollChestUpgrade() {
+  const U = CONFIG.upgrades, opts = [];
+  if (S.l[0] < U.line.values.length - 1 && U.line.values[S.l[0]] < boatFloor()) opts.push(0);
+  if (S.l[1] < U.hook.values.length - 1) opts.push(1);
+  if (S.l[2] < U.bait.levels - 1) opts.push(2);
+  return opts.length ? { type: 'upgrade', k: opts[Math.floor(Math.random() * opts.length)] } : null;
+}
+function wheelLabel(sl) {
+  const [type, k] = sl;
+  if (type === 'coins') return fmt(Math.round(CONFIG.chest.coinBase[S.l[3]] * k));
+  return type === 'upgrade' ? '⬆️' : '✦';
+}
+function showWheel() {
+  S.wd = S.st.d; save();
+  const SL = CONFIG.wheel.slices, N = SL.length, cols = ['#ffd23f', '#5fc9ff', '#ff8a5f', '#6bdc8f', '#ffd23f', '#b98bff', '#5fc9ff', '#ff5f6d'];
+  showModal(`<h2>🎡 ${t('wheel')}</h2><div class="wheelBox"><canvas id="wheelCv" width="520" height="520"></canvas><div class="wheelPtr"></div></div><p id="wheelTxt">${t('wheelTap')}</p>
+    <div class="row" id="wheelBtns"><button class="btn gold" style="width:100%" id="spinB">${t('spin')}</button></div>`, root => {
+    const c = root.querySelector('#wheelCv'), x = c.getContext('2d'); x.scale(2, 2);
+    let ang = 0, spinning = false, extraUsed = false;
+    const draw = () => {
+      x.clearRect(0, 0, 260, 260); x.save(); x.translate(130, 130); x.rotate(ang);
+      for (let i = 0; i < N; i++) {
+        const a0 = i * 2 * Math.PI / N - Math.PI / 2 - Math.PI / N, a1 = a0 + 2 * Math.PI / N;
+        x.fillStyle = cols[i % cols.length]; x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, 124, a0, a1); x.closePath(); x.fill();
+        x.strokeStyle = 'rgba(255,255,255,.9)'; x.lineWidth = 3; x.stroke();
+        x.save(); x.rotate((a0 + a1) / 2); x.translate(84, 0); x.rotate(Math.PI / 2);
+        const [type] = SL[i];
+        if (type === 'upgrade') {   // green arrow
+          x.fillStyle = '#1f9d55'; x.strokeStyle = '#fff'; x.lineWidth = 2.5; x.beginPath(); x.moveTo(0, -15); x.lineTo(13, 0); x.lineTo(5, 0); x.lineTo(5, 13); x.lineTo(-5, 13); x.lineTo(-5, 0); x.lineTo(-13, 0); x.closePath(); x.stroke(); x.fill();
+        } else if (type === 'bait') star(0, 0, 14, '#ffcc2e', x);   // golden bait
+        else { x.fillStyle = '#1b2a3a'; x.font = '900 18px ui-rounded,system-ui,sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(wheelLabel(SL[i]), 0, 0); }
+        x.restore();
+      }
+      x.restore();
+      x.fillStyle = '#fff'; x.beginPath(); x.arc(130, 130, 20, 0, 7); x.fill(); x.strokeStyle = '#1b2a3a'; x.lineWidth = 4; x.stroke();
+      x.strokeStyle = '#1b2a3a'; x.lineWidth = 6; x.beginPath(); x.arc(130, 130, 126, 0, 7); x.stroke();
+    };
+    draw();
+    const spin = () => {
+      if (spinning) return; spinning = true;
+      // the result is drawn by weight first, then the wheel is aimed at it
+      let r = Math.random() * SL.reduce((a, sl) => a + sl[2], 0), idx = 0;
+      for (; idx < N - 1; idx++) if ((r -= SL[idx][2]) < 0) break;
+      const target = -idx * 2 * Math.PI / N + rand(-.35, .35) * 2 * Math.PI / N;
+      const from = ang;
+      const end = from + ((target - from) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) + 5 * 2 * Math.PI;
+      const t0 = performance.now(), dur = 3600; let lastSlice = -1;
+      root.querySelector('#wheelBtns').innerHTML = ''; root.querySelector('#wheelTxt').textContent = '…';
+      const step = now => {
+        if (!c.isConnected) return;
+        const k = Math.min(1, (now - t0) / dur); ang = from + (end - from) * (1 - Math.pow(1 - k, 4)); draw();
+        const sl = Math.floor(((-ang % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / (2 * Math.PI / N) + .5) % N;
+        if (sl !== lastSlice) { lastSlice = sl; sfx.tick(sl); }
+        if (k < 1) { animFrame(step); return; }
+        const rw = wheelReward(SL[idx]); applyChest(rw); spinning = false;
+        root.querySelector('#wheelTxt').innerHTML = chestText(rw);
+        const cr = c.getBoundingClientRect(); confetti(cr.left + cr.width / 2, cr.top + cr.height / 2, SL[idx][1] >= 2 ? 60 : 34);
+        (SL[idx][1] >= 2 ? sfx.fanfare : sfx.gold)();
+        if (rw.type === 'coins') for (let i = 0; i < 26; i++) uparts.push({ x: (cr.left + cr.width / 2) / scale, y: (cr.top + cr.height / 2) / scale, vx: rand(-260, 260), vy: rand(-320, 40), t: 0, delay: rand(.15, .4) });
+        const btns = root.querySelector('#wheelBtns');
+        btns.innerHTML = (!extraUsed && PF.rewardedSupported() ? `<button class="btn gold" id="againB">📺 ${t('spinAgain')}</button>` : '') + `<button class="btn" id="wOkB"${extraUsed || !PF.rewardedSupported() ? ' style="width:100%"' : ''}>${t('cont')}</button>`;
+        root.querySelector('#wOkB').onclick = closeModal;
+        const ag = root.querySelector('#againB');
+        if (ag) ag.onclick = async () => { ag.disabled = true; if (await showRewardedAd()) { extraUsed = true; spin(); } else { toast(t('adFail'), 'bad'); ag.disabled = false; } };
+      };
+      animFrame(step);
+    };
+    root.querySelector('#spinB').onclick = spin; c.onclick = () => { if (!spinning && root.querySelector('#spinB')) spin(); };
+  });
+}
 function showSummary() {
   doubledNow = false;
   if (haulChest) { haulChest = false; showChestModal(); }
   // group the haul by species/golden
   const groups = [];
   for (const it of haulItems) {
-    const key = it.sp.id + (it.golden ? '*' : '');
+    const key = it.sp.id + (it.rainbow ? '~' : it.golden ? '*' : '');
     let gr = groups.find(x => x.key === key);
     if (!gr) groups.push(gr = { key, it, n: 0, val: 0 }); gr.n++; gr.val += it.val;
   }
@@ -2601,14 +2726,25 @@ function showSummary() {
   showModal(html, root => {
     const list = root.querySelector('#haulList');
     groups.slice(0, 12).forEach(gr => {
-      const d = document.createElement('div'); d.className = 'hi' + (gr.it.golden ? ' gold' : '') + (gr.it.boss ? ' boss' : '');
-      d.appendChild(thumb(gr.it.lk, gr.it.boss ? 56 : Math.min(48, Math.max(28, gr.it.sp.size * .8)), gr.it.golden ? 1 : 0));
+      const d = document.createElement('div'); d.className = 'hi' + (gr.it.rainbow ? ' rainbow' : gr.it.golden ? ' gold' : '') + (gr.it.boss ? ' boss' : '');
+      d.appendChild(thumb(gr.it.lk, gr.it.boss ? 56 : Math.min(48, Math.max(28, gr.it.sp.size * .8)), fishMode(gr.it)));
       d.insertAdjacentHTML('beforeend', `<span>${gr.n > 1 ? '×' + gr.n + ' · ' : ''}${fmt(gr.val)}</span>`);
       list.appendChild(d);
     });
     // count-up
-    const v = root.querySelector('#sumV'); let k = 0;
-    const tick = () => { k = Math.min(1, k + .08); v.textContent = fmt(haulTotal * (1 - Math.pow(1 - k, 3))); if (k < 1 && modalOpen()) animFrame(tick); };
+    const v = root.querySelector('#sumV'); let k = 0, ticks = 0;
+    const cel = haulCele; haulCele = null;
+    const big = cel && (cel.tier || cel.record);
+    const done = () => {   // after the count-up: the celebration, above the window
+      if (!cel || !(cel.tier || cel.record || cel.depth)) return;
+      const vr = v.getBoundingClientRect(), mr = $('modal').getBoundingClientRect(), cx = vr.left + vr.width / 2, cy = Math.max(70, mr.top - 50);
+      if (cel.record) celebrate(t('newRecord'), cel.depth ? t('depthRec', { m: cel.depth }) : t('bestHaul'), true, cx, cy);
+      else if (cel.tier) celebrate(t(cel.tier === 2 ? 'epicHaul' : 'bigHaul'), cel.depth ? t('depthRec', { m: cel.depth }) : '', cel.tier === 2, cx, cy);
+      else celebrate(t('newDepth'), t('depthRec', { m: cel.depth }), false, cx, cy);
+      v.classList.remove('sumPulse'); void v.offsetWidth; v.classList.add('sumPulse');
+    };
+    // a big haul counts up slower, ticking higher and higher
+    const tick = () => { k = Math.min(1, k + (big ? .025 : .08)); v.textContent = fmt(haulTotal * (1 - Math.pow(1 - k, 3))); if (big && ++ticks % 3 === 0) sfx.tick(ticks / 3); if (k < 1 && modalOpen()) animFrame(tick); else if (k >= 1) done(); };
     tick();
     const dbl = root.querySelector('#dblBtn');
     if (haulTotal <= 0) dbl.disabled = true;
@@ -2630,7 +2766,11 @@ function showSummary() {
         dbl.textContent = '✓ ×2'; doubledNow = true;
       } else { toast(t('adFail'), 'bad'); dbl.disabled = false; }
     };
-    root.querySelector('#contBtn').onclick = () => { closeModal(); if (!doubledNow) PF.interstitial('dive_end'); };
+    root.querySelector('#contBtn').onclick = () => {
+      closeModal();
+      if (wheelDue()) showWheel();   // the wheel takes the place of this dive's interstitial
+      else if (!doubledNow) PF.interstitial('dive_end');
+    };
   });
   save(); sendScore();
   // boss follow-ups queue after the summary
@@ -2735,6 +2875,28 @@ function multStamp(m, x, y, sub) {
 }
 // seconds until a collection can be lucky again (saved as a timestamp, so reloading does not reset it)
 const luckLeft = () => Math.max(0, CONFIG.crew.luckCooldown - (Date.now() - (S.lk || 0)) / 1000);
+// a burst of confetti from (x, y) in screen pixels
+function confetti(x, y, n = 36) {
+  const ui = $('ui').getBoundingClientRect(), cols = ['#ffd23f', '#ff5f6d', '#5fc9ff', '#6bffb8', '#b98bff', '#ffffff'];
+  for (let i = 0; i < n; i++) {
+    const d = document.createElement('div'); d.className = 'confetti';
+    d.style.left = (x - ui.left) + 'px'; d.style.top = (y - ui.top) + 'px'; d.style.background = cols[i % cols.length];
+    d.style.setProperty('--dx', rand(-170, 170) + 'px'); d.style.setProperty('--dy', rand(-220, 120) + 'px'); d.style.setProperty('--r', rand(-540, 540) + 'deg');
+    d.style.animationDelay = rand(0, .15) + 's';
+    $('ui').appendChild(d); setTimeout(() => d.remove(), 1900);
+  }
+}
+// a big word banner with rays (and confetti), e.g. BIG CATCH / NEW RECORD
+function celebrate(word, sub, epic, x, y) {
+  const d = document.createElement('div'), ui = $('ui').getBoundingClientRect(); d.className = 'cele' + (epic ? ' epic' : '');
+  d.style.left = (ui.width / 2) + 'px'; d.style.top = (y - ui.top) + 'px';   // always centred on the column: the words are wide
+  d.innerHTML = `<i></i><b>${word}</b>${sub ? `<span>${sub}</span>` : ''}`;
+  $('ui').appendChild(d); setTimeout(() => d.remove(), 2500);
+  // long words (EPISCHER FANG!, ЭПИЧЕСКИЙ УЛОВ!) shrink to fit the column
+  const bw = d.querySelector('b'), maxW = ui.width * .84, w = bw.scrollWidth;
+  if (w > maxW) bw.style.fontSize = (parseFloat(getComputedStyle(bw).fontSize) * maxW / w) + 'px';
+  confetti(x, y, epic ? 60 : 34); (epic ? sfx.fanfare : sfx.gold)();
+}
 function claimCrew(btn) {
   let n = Math.floor(S.cw); if (n < 1) return;
   S.cw -= n;
@@ -2884,7 +3046,7 @@ function updatePayouts(dt) {
 function updateCine(dt) {
   if (flash > 0) flash = Math.max(0, flash - dt * 2.4);   // real time, also during slow motion
   zoomK += (zoomTo - zoomK) * Math.min(1, dt * 5);
-  if (!cine) { timeScale = 1; return; }
+  if (!cine) { rainbowSlow = Math.max(0, rainbowSlow - dt); timeScale = rainbowSlow > 0 ? .3 : 1; return; }
   cine.t += dt;
   if (cine.type === 'catch') {
     // close-up on the hook while the boss bites, in slow motion
