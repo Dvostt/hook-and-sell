@@ -29,7 +29,14 @@ button{font:inherit;cursor:pointer}
   box-shadow:inset 0 -2px 0 rgba(0,0,0,.18),0 0 0 2px #b27500}
 .coin.sm{width:17px;height:17px;box-shadow:inset 0 -1px 0 rgba(0,0,0,.18),0 0 0 1.5px #b27500}
 .goal{margin-top:8px;display:none;align-items:center;gap:6px;max-width:250px;background:rgba(255,248,236,.94);color:var(--ink);font-weight:800;font-size:13px;line-height:1.25;padding:6px 11px;border-radius:12px;box-shadow:0 2px 0 rgba(0,0,0,.18)}
-.goal.show{display:inline-flex}
+.goal.show{display:inline-flex;flex-wrap:wrap}
+.gbar{position:relative;display:block;width:100%;min-width:170px;height:16px;margin-top:4px;border-radius:999px;background:rgba(6,26,48,.14);overflow:hidden}
+.gbar i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,#2f8cff,#22c46b)}
+.gbar b{position:relative;display:block;text-align:center;font-size:11px;line-height:16px;color:var(--ink)}
+#shopBtn.ready{animation:shopGlow 1.4s ease-in-out infinite}
+@keyframes shopGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,216,77,0)}50%{box-shadow:0 0 0 5px rgba(255,216,77,.85),0 0 18px 4px rgba(255,216,77,.6)}}
+.nextBuy{margin:6px 0 10px;font-weight:800;font-size:15px}
+.nextBuy.can{color:#1c9c55}
 .goal.boost{background:linear-gradient(#fff3b8,#ffd24d);color:#5a3500;margin-top:6px}
 .iconbtn{width:44px;height:44px;border-radius:14px;border:0;background:rgba(6,26,48,.78);color:#fff;display:grid;place-items:center;box-shadow:0 3px 0 rgba(0,0,0,.28)}
 .iconbtn svg{width:24px;height:24px}
@@ -249,12 +256,12 @@ const CONFIG = {
   ],
   upgrades: {
     line: { values: [24, 30, 38, 50, 60, 75, 95, 120, 150, 180, 215, 255, 300, 380, 470, 600],
-            costs:  [8, 28, 95, 280, 1200, 2300, 5000, 10000, 22000, 44000, 86000, 180000, 450000, 3100000, 6800000] },
+            costs:  [8, 28, 95, 280, 1500, 2900, 6300, 12000, 28000, 55000, 110000, 220000, 560000, 3900000, 8500000] },
     hook: { values: [2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 17, 20],
-            costs:  [12, 45, 170, 800, 2100, 5200, 13000, 34000, 120000, 1000000, 1900000] },
+            costs:  [12, 45, 170, 1000, 2600, 6500, 16000, 42000, 150000, 1200000, 2400000] },
     bait: { levels: 10, rarePer: 0.3, goldBase: 0.01, goldPer: 0.0045,
-            costs:  [70, 240, 800, 3700, 10000, 29000, 86000, 280000, 1100000] },
-    boat: { costs: [1300, 44000, 670000] },   // buy boat 2, 3, 4 (needs previous boss)
+            costs:  [70, 240, 1000, 4600, 12000, 36000, 110000, 350000, 1400000] },
+    boat: { costs: [1600, 55000, 840000] },   // buy boat 2, 3, 4 (needs previous boss)
   },
   boatSellBonus: 0.25,      // +25% sell price per boat level
   zoneCompleteBonus: 0.25,  // +25% on a zone's fish when its 5 species are in the album
@@ -265,8 +272,9 @@ const CONFIG = {
     baitDives: 3, baitRare: 2, baitGold: 0.05,
   },
   celebrate: { minHistory: 3, big: 1.6, epic: 2.5 },   // haul vs the average of the last 8: ×1.6 big, ×2.5 epic
-  rainbow: { chance: 0.004, mult: 50, fromDive: 4 },   // jackpot fish: 1 fish in 250 from the 5th dive on, worth ×50
-  wheel: { every: 10,                                  // a free spin every 10 dives, a second one with a rewarded video
+  rainbow: { chance: 0.004, mult: 50, fromDive: 4,     // jackpot fish: 1 fish in 250 from the 5th dive on, worth ×50
+    first: [10, 13], until: 16 },   // the first one is placed on one of these dives; missed, it comes back each dive up to `until`
+  wheel: { first: 4, every: 10,                        // a free spin after dive 4, then every 10 dives; a second one with a rewarded video
     // [reward, weight]: coins are × the chest coins of the current zone; the weights are the real odds, the slices look equal
     slices: [['coins', .6, 22], ['bait', 0, 16], ['coins', 1, 18], ['upgrade', 0, 12], ['coins', .6, 14], ['coins', 2, 10], ['bait', 0, 4], ['coins', 5, 4]] },
   frenzy: {                 // golden water on the way up: a school of fish, every catch ×3 for a few seconds
@@ -331,7 +339,8 @@ const TXT = {
     max: 'MAX', haul: 'Bottino!', double: 'Guarda video ×2', cont: 'Continua', best: 'Combo migliore',
     fishN: '{n} pesci', fish1: '1 pesce', newSp: 'NUOVO', zoneDone: '{zone} completata! +25% sul valore',
     needBoat: 'Serve una barca più grande', needBoss: 'Cattura il boss: {boss}',
-    bossLock: 'Serve Amo Lv. {n}', goalReach: 'Scendi a {m} m: lì vive {boss}',
+    bossLock: 'Serve Amo Lv. {n}', canBuy: 'Puoi comprare: {item}!', needMore: 'Ti mancano {n} per: {item}',
+    goalReach: 'Scendi a {m} m: lì vive {boss}',
     goalHook: '{boss}: serve Amo Lv. {n}', goalCatch: 'Cattura {boss} a {m} m!',
     goalBoat: 'Compra la barca: {boat}', goalDone: 'Il mare è tuo! Completa la collezione',
     away: 'Mentre eri via il tuo equipaggio ha pescato per te', crewUnlocked: 'Equipaggio sbloccato!',
@@ -370,7 +379,8 @@ const TXT = {
     max: 'MAX', haul: 'Your catch!', double: 'Watch ad ×2', cont: 'Continue', best: 'Best combo',
     fishN: '{n} fish', fish1: '1 fish', newSp: 'NEW', zoneDone: '{zone} complete! +25% value',
     needBoat: 'You need a bigger boat', needBoss: 'Catch the boss: {boss}',
-    bossLock: 'Needs Hook Lv. {n}', goalReach: 'Reach {m} m: the {boss} lives there',
+    bossLock: 'Needs Hook Lv. {n}', canBuy: 'You can buy: {item}!', needMore: '{n} more for: {item}',
+    goalReach: 'Reach {m} m: the {boss} lives there',
     goalHook: '{boss}: needs Hook Lv. {n}', goalCatch: 'Catch the {boss} at {m} m!',
     goalBoat: 'Buy the boat: {boat}', goalDone: 'The sea is yours! Complete the collection',
     away: 'While you were away your crew kept fishing', crewUnlocked: 'Crew unlocked!',
@@ -409,7 +419,8 @@ const TXT = {
     max: 'МАКС', haul: 'Улов!', double: 'Реклама ×2', cont: 'Дальше', best: 'Лучшее комбо',
     fishN: 'Рыб: {n}', fish1: '1 рыба', newSp: 'НОВАЯ', zoneDone: '{zone}: собрано! +25% к цене',
     needBoat: 'Нужна лодка побольше', needBoss: 'Поймай босса: {boss}',
-    bossLock: 'Нужен крючок ур. {n}', goalReach: 'Спустись на {m} м: там живёт {boss}',
+    bossLock: 'Нужен крючок ур. {n}', canBuy: 'Можно купить: {item}!', needMore: 'Ещё {n} до: {item}',
+    goalReach: 'Спустись на {m} м: там живёт {boss}',
     goalHook: '{boss}: нужен крючок ур. {n}', goalCatch: 'Поймай: {boss}, {m} м!',
     goalBoat: 'Купи лодку: {boat}', goalDone: 'Море твоё! Собери всю коллекцию',
     away: 'Пока тебя не было, команда рыбачила за тебя', crewUnlocked: 'Команда открыта!',
@@ -448,7 +459,8 @@ const TXT = {
     max: 'MAKS', haul: 'Av!', double: 'Reklam izle ×2', cont: 'Devam', best: 'En iyi kombo',
     fishN: '{n} balık', fish1: '1 balık', newSp: 'YENİ', zoneDone: '{zone} tamamlandı! Değer +%25',
     needBoat: 'Daha büyük bir tekne lazım', needBoss: 'Boss\'u yakala: {boss}',
-    bossLock: 'İğne Sv. {n} gerekli', goalReach: '{m} m\'ye in: {boss} orada yaşıyor',
+    bossLock: 'İğne Sv. {n} gerekli', canBuy: 'Satın alabilirsin: {item}!', needMore: '{item} için {n} daha',
+    goalReach: '{m} m\'ye in: {boss} orada yaşıyor',
     goalHook: '{boss}: İğne Sv. {n} gerekli', goalCatch: '{boss} için {m} m\'ye in!',
     goalBoat: 'Tekneyi satın al: {boat}', goalDone: 'Deniz senin! Koleksiyonu tamamla',
     away: 'Sen yokken tayfan senin için balık tuttu', crewUnlocked: 'Tayfa açıldı!',
@@ -487,7 +499,8 @@ const TXT = {
     max: 'MÁX', haul: '¡Tu captura!', double: 'Ver anuncio ×2', cont: 'Continuar', best: 'Mejor combo',
     fishN: '{n} peces', fish1: '1 pez', newSp: 'NUEVO', zoneDone: '¡{zone} completada! +25% de valor',
     needBoat: 'Necesitas un barco más grande', needBoss: 'Atrapa al jefe: {boss}',
-    bossLock: 'Requiere Anzuelo Nv. {n}', goalReach: 'Baja a {m} m: ahí vive {boss}',
+    bossLock: 'Requiere Anzuelo Nv. {n}', canBuy: '¡Puedes comprar: {item}!', needMore: 'Te faltan {n} para: {item}',
+    goalReach: 'Baja a {m} m: ahí vive {boss}',
     goalHook: '{boss}: requiere Anzuelo Nv. {n}', goalCatch: '¡Atrapa a {boss} a {m} m!',
     goalBoat: 'Compra el barco: {boat}', goalDone: '¡El mar es tuyo! Completa la colección',
     away: 'Mientras no estabas, tu tripulación pescó por ti', crewUnlocked: '¡Tripulación desbloqueada!',
@@ -526,7 +539,8 @@ const TXT = {
     max: 'MÁX', haul: 'Sua pesca!', double: 'Ver anúncio ×2', cont: 'Continuar', best: 'Melhor combo',
     fishN: '{n} peixes', fish1: '1 peixe', newSp: 'NOVO', zoneDone: '{zone} completa! +25% de valor',
     needBoat: 'Você precisa de um barco maior', needBoss: 'Pegue o chefe: {boss}',
-    bossLock: 'Requer Anzol Nv. {n}', goalReach: 'Desça a {m} m: lá vive {boss}',
+    bossLock: 'Requer Anzol Nv. {n}', canBuy: 'Você pode comprar: {item}!', needMore: 'Faltam {n} para: {item}',
+    goalReach: 'Desça a {m} m: lá vive {boss}',
     goalHook: '{boss}: requer Anzol Nv. {n}', goalCatch: 'Pegue {boss} a {m} m!',
     goalBoat: 'Compre o barco: {boat}', goalDone: 'O mar é seu! Complete a coleção',
     away: 'Enquanto você estava fora, sua tripulação pescou por você', crewUnlocked: 'Tripulação desbloqueada!',
@@ -565,7 +579,8 @@ const TXT = {
     max: 'MAX', haul: 'Dein Fang!', double: 'Werbung ×2', cont: 'Weiter', best: 'Beste Kombo',
     fishN: '{n} Fische', fish1: '1 Fisch', newSp: 'NEU', zoneDone: '{zone} komplett! +25% Wert',
     needBoat: 'Du brauchst ein größeres Boot', needBoss: 'Fang den Boss: {boss}',
-    bossLock: 'Braucht Haken Lv. {n}', goalReach: 'Tauche auf {m} m: dort lebt {boss}',
+    bossLock: 'Braucht Haken Lv. {n}', canBuy: 'Du kannst kaufen: {item}!', needMore: 'Noch {n} für: {item}',
+    goalReach: 'Tauche auf {m} m: dort lebt {boss}',
     goalHook: '{boss}: braucht Haken Lv. {n}', goalCatch: 'Fang {boss} in {m} m!',
     goalBoat: 'Kauf das Boot: {boat}', goalDone: 'Das Meer gehört dir! Vervollständige die Sammlung',
     away: 'Während du weg warst, hat deine Crew für dich geangelt', crewUnlocked: 'Crew freigeschaltet!',
@@ -952,6 +967,13 @@ function spawnDive() {
       for (const f of fishes) { const d = Math.abs(f.y - maxPx * k); if (f.y < maxPx && d < bd) { bd = d; best = f; } }
       if (best) best.golden = true;
     }
+  }
+  // the first rainbow fish is placed too: the jackpot every new player should see (1/4, 1/3, 1/2, then sure)
+  const RB = CONFIG.rainbow, nd = S.st.d + 1;
+  if (!S.st.rb && nd >= RB.first[0] && nd <= RB.until && Math.random() < 1 / Math.max(1, RB.first[1] - nd + 1)) {
+    const k = rand(.45, .75); let best = null, bd = 1e9;
+    for (const f of fishes) { const d = Math.abs(f.y - maxPx * k); if (f.y < maxPx - 20 && d < bd) { bd = d; best = f; } }
+    if (best) { best.rainbow = true; best.golden = false; }
   }
   // teasers: dark silhouettes of the next species just below the end of the line
   if (!floorHere) {
@@ -2590,6 +2612,16 @@ function shopItems() {
       eff: mx ? t('maxed') : t('effBoat', { zone: t('zones')[lv + 1], m: CONFIG.zones[lv + 1].floor }) }); }
   return items;
 }
+// the next thing to buy, for the end of a dive: what you can buy now, or how much is missing for the cheapest one
+function nextBuyHTML() {
+  const items = shopItems().filter(i => !i.mx && !i.locked).sort((a, b) => a.cost - b.cost);
+  if (!items.length) return '';
+  const name = i => i.k === 'boat' ? i.name : `${t(i.k)} ${t('lvl')} ${i.lv + 2}`;
+  const can = items.filter(i => S.m >= i.cost).pop();   // the best one you can afford
+  if (can) return `<p class="nextBuy can" id="nextBuy">🛒 ${t('canBuy', { item: name(can) })}</p>`;
+  const i = items[0];
+  return `<p class="nextBuy" id="nextBuy">${t('needMore', { n: fmt(i.cost - S.m) + ' ' + coinHTML(), item: name(i) })}</p>`;
+}
 function affordableCount() { return shopItems().filter(i => !i.mx && !i.locked && S.m >= i.cost).length; }
 function renderShop() {
   $('shopTitle').textContent = t('shop');
@@ -2701,7 +2733,10 @@ function goalText() {
   }
   const z = S.l[3], Z = CONFIG.zones[z], boss = nm(Z.boss);
   if (!S.b[z]) {
-    if (maxDepthM() < Z.floor) return '🎯 ' + t('goalReach', { m: Z.floor, boss });
+    if (maxDepthM() < Z.floor) {   // with a bar: how far the line goes towards the boss
+      const top = z ? CONFIG.zones[z - 1].floor : 0, k = clamp((maxDepthM() - top) / (Z.floor - top), 0, 1);
+      return `🎯 ${boss}<span class="gbar"><i style="width:${Math.round(k * 100)}%"></i><b>${maxDepthM()}/${Z.floor} m</b></span>`;
+    }
     if (S.l[1] + 1 < Z.bossHook) return '🎯 ' + t('goalHook', { boss, n: Z.bossHook });
     return '🎯 ' + t('goalCatch', { boss, m: Z.floor });
   }
@@ -2730,6 +2765,7 @@ function refreshHUD(force) {
   const key = [phase, n, S.st.d, S.tu, S.ar, S.nt, S.q, S.q < QUESTS().length ? questProg(S.q) : 0, albumCount(), albumSeen, S.l.join(), S.b.join(), LANG, anyPanelOpen(), !!intro, S.gb, modalOpen()].join('|');
   if (!force && key === lastHUD) return; lastHUD = key;
   const b = $('shopBadge'); b.textContent = n; b.classList.toggle('show', n > 0);
+  $('shopBtn').classList.toggle('ready', n > 0 && !anyPanelOpen());   // glows while something can be bought
   $('albumBadge').classList.toggle('show', albumCount() > albumSeen && S.st.d > 0);
   $('albumBadge').textContent = '!';
   const gl = $('goal'); gl.innerHTML = goalText(); gl.classList.toggle('show', surf && S.st.d > 0 && !intro);
@@ -2823,7 +2859,7 @@ function showChestModal() {
 }
 let doubledNow = false, haulCele = null, frenzyPlan = null, frenzy = null, armorOn = false, netOn = false;
 /* wheel of fortune: a free spin every CONFIG.wheel.every dives, one more with a rewarded video */
-const wheelDue = () => S.st.d > 0 && S.st.d % CONFIG.wheel.every === 0 && S.wd !== S.st.d;
+const wheelDue = () => S.st.d > 0 && (S.st.d === CONFIG.wheel.first || S.st.d % CONFIG.wheel.every === 0) && S.wd !== S.st.d;
 function wheelReward(sl) {
   const [type, k] = sl, base = CONFIG.chest.coinBase[S.l[3]];
   if (type === 'coins') return { type, n: Math.round(base * k) };
@@ -2915,6 +2951,7 @@ function showSummary() {
     <div class="bigsum">${coinHTML('')}<span id="sumV">0</span></div>
     <div class="haul" id="haulList"></div>
     <p>${haulItems.length === 1 ? t('fish1') : t('fishN', { n: haulItems.length })}${haulBest > 1 ? ` · ${t('best')}: ${haulBest}` : ''}</p>
+    ${nextBuyHTML()}
     <div class="row"><button class="btn gold" id="dblBtn">📺 ${t('double')}</button><button class="btn" id="contBtn">${t('cont')}</button></div>`;
   showModal(html, root => {
     const list = root.querySelector('#haulList');
@@ -2924,6 +2961,9 @@ function showSummary() {
       d.insertAdjacentHTML('beforeend', `<span>${gr.n > 1 ? '×' + gr.n + ' · ' : ''}${fmt(gr.val)}</span>`);
       list.appendChild(d);
     });
+    // the next-purchase line follows the money while the window is open (a boss's coins or the ×2 can land after it opened)
+    let nbLast = nextBuyHTML();
+    const nbT = setInterval(() => { const nb = root.querySelector('#nextBuy'); if (!nb || !nb.isConnected) return clearInterval(nbT); const h = nextBuyHTML(); if (h !== nbLast) { nbLast = h; nb.outerHTML = h; } }, 400);
     // count-up
     const v = root.querySelector('#sumV'); let k = 0, ticks = 0;
     const cel = haulCele; haulCele = null;
