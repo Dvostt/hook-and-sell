@@ -271,6 +271,7 @@ const CONFIG = {
     slices: [['coins', .6, 22], ['bait', 0, 16], ['coins', 1, 18], ['upgrade', 0, 12], ['coins', .6, 14], ['coins', 2, 10], ['bait', 0, 4], ['coins', 5, 4]] },
   frenzy: {                 // golden water on the way up: a school of fish, every catch ×3 for a few seconds
     chance: 1 / 12, gap: 4, pity: 24, fromDive: 6,   // ~1 dive in 12, at least 4 dives between two, sure within 24
+    first: [5, 7],          // every new player gets a first frenzy on one of these dives (evenly spread, next free dive if a boss is in the way)
     secs: 5, mult: 3, maxMult: 6, school: [9, 12],    // ×3 on top of the combo, capped at ×6 in all (sim: Kraken stays ~45 min)
     band: [12, 40],         // m: height of the golden band, shown faintly on the way down; crossing it on the way up takes ~secs
   },
@@ -281,7 +282,7 @@ const CONFIG = {
     net:   { dives: 5, k: 2,   min: 25, reach: 28, pull: 80, pullK: 2 }, // Wide net: +28 px of catch reach on the way up (normal is ~11 px past the fish's edge), and fish within pull px drift into it
     cap: 10,                // max dives of one boost you can stack
   },
-  tutorialDives: 3,         // the "hold and move" slider shows during the first dives
+  tutorialDives: 4,         // the "hold and move" slider shows during the first dives (1 to 4)
   firstGoldenDive: 1,       // from this dive on, 2 golden fish are guaranteed until the first one is caught
   onboarding: {             // the first minute: nobody should leave before seeing the real loop
     freeDives: 2,           // in the first dives fish pass through the hook: everyone reaches the end of the line
@@ -967,7 +968,8 @@ function spawnDive() {
   // frenzy: decided at the cast, starts on the way up; never in boss dives, never too close to the last one
   const F = CONFIG.frenzy, n = S.st.d + 1, since = n - S.fz;
   frenzyPlan = null; frenzy = null;
-  if (!boss && n >= F.fromDive && since > F.gap && (Math.random() < F.chance || since >= F.pity)) {
+  const [f0, f1] = F.first, firstDue = !S.fz && n >= f0 && Math.random() < 1 / Math.max(1, f1 - n + 1);   // 1/3, 1/2, then sure
+  if (!boss && (firstDue || (n >= F.fromDive && since > F.gap && (Math.random() < F.chance || since >= F.pity)))) {
     // the glow keeps 60 px above the red max-depth line, so no dashed line runs through it
     const lim = Math.max(expressPx(), 8 * PX), room = maxPx - 60 - lim;
     const H = Math.min(room, clamp(maxPx * .4, F.band[0] * PX, F.band[1] * PX));
@@ -1074,8 +1076,10 @@ function startAscent(first) {
   if (first) attach(first, true);
   shake = Math.max(shake, 4); sfx.bump();
 }
+// a full hook still takes the frenzy school, anything caught inside the golden band, rainbow fish and returning bosses
+const bonusCatch = f => !!(f.frenzy || f.rainbow || f.ret || frenzy);
 function attach(f, isFirst) {
-  if (nCaught() >= hookCap() && (!f.sp.boss || f.ret) && !f.frenzy) return;
+  if (nCaught() >= hookCap() && (!f.sp.boss || f.ret) && !bonusCatch(f)) return;
   f.gone = true;
   combo = (clock - lastCatch <= CONFIG.combo.window || isFirst) ? combo + 1 : 1;
   if (isFirst) combo = 1;
@@ -1271,7 +1275,7 @@ function update(dt) {
         if (dy > -20 && dy < 140 && Math.abs(dx) < CONFIG.boosts.net.pull + f.w * .5) { f.x += dx * Math.min(1, dt * CONFIG.boosts.net.pullK); f.y += Math.sign(dy) * Math.min(Math.abs(dy), 25 * dt); }
       }
       for (const f of fishes) {
-        if (f.gone || Math.abs(f.y - hook.y) > 80 || (full && !f.frenzy)) continue;
+        if (f.gone || Math.abs(f.y - hook.y) > 80 || (full && !bonusCatch(f))) continue;
         if (hitTest(f, cr, reach)) attach(f, false);
       }
       if (hook.y <= 0) { if (frenzy) endFrenzy(); startSell(); }
