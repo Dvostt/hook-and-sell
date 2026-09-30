@@ -276,7 +276,7 @@ const CONFIG = {
   },
   bossReturn: { chance: 1 / 10, size: 1.2, goldMult: 2 },   // a beaten boss swims back now and then: 2× the zone's best golden fish
   boosts: {                 // timed items in the shop; price = the player's average haul × k (never below min)
-    armor: { dives: 3, k: 2.5, min: 30 },   // Armored hook: the first COMMON fish touched on the way down does not stop you (valuable fish still do, so none is lost)
+    armor: { dives: 3, k: 2.5, min: 30 },   // Armored hook: on the way down you pass through the first fish you already own; golden, special and new fish still stop you
     gbait: { dives: 3, k: 3,   min: 40 },   // Golden bait: the chest boost, now also for sale (S.gb)
     net:   { dives: 5, k: 2,   min: 25, radius: 1.6 },   // Wide net: bigger catch radius on the way up
     cap: 10,                // max dives of one boost you can stack
@@ -356,7 +356,7 @@ const TXT = {
     lb: 'Classifica', lbEmpty: 'Ancora nessun punteggio: pesca e sarai il primo!', lbErr: 'Classifica non disponibile', lbYou: 'Tu', lbLogin: 'Accedi per mostrare il tuo nome', lbLoginFail: 'Accesso non riuscito',
     freeDown: "Scendi fino in fondo!", newRule: "Nuova regola!", rule1: "Scendendo, schiva i pesci", rule2: "Se ne tocchi uno, si risale", rule3: "Risalendo, prendili tutti!", gotIt: "Capito!", bumped: "Toccato! Si risale", q1: "Prendi {n} pesci", q2: "Compra un potenziamento", q3: "Scendi a {m} m", qDone: "Obiettivo completato!",
     bigHaul: "GRANDE BOTTINO!", epicHaul: "BOTTINO EPICO!", newRecord: "NUOVO RECORD!", newDepth: "PIÙ A FONDO!", depthRec: "Record di profondità: {m} m", bestHaul: "Il tuo bottino migliore di sempre", rainbow: "ARCOBALENO", wheel: "Ruota della fortuna!", wheelTap: "Un giro gratis: tocca e gira!", spin: "Gira!", spinAgain: "Gira ancora",
-    frenzy: "FRENESIA!", armorHit: "Amo corazzato!", boostsH: "Potenziamenti a tempo", boostLeft: "{n} tuffi", armor: "Amo corazzato", armorEff: "Per {n} tuffi: scendendo, il primo pesce comune che tocchi non ti fa risalire", gbait: "Esca d'oro", gbaitEff: "Per {n} tuffi: pesci rari ×2 e più pesci dorati", net: "Rete larga", netEff: "Per {n} tuffi: in risalita prendi i pesci da più lontano",
+    frenzy: "FRENESIA!", armorHit: "Amo corazzato!", boostsH: "Potenziamenti a tempo", boostLeft: "{n} tuffi", armor: "Amo corazzato", armorEff: "Per {n} tuffi: scendendo attraversi il primo pesce che hai già. Pesci d'oro, speciali e nuovi ti fermano come sempre", gbait: "Esca d'oro", gbaitEff: "Per {n} tuffi: pesci rari ×2 e più pesci dorati", net: "Rete larga", netEff: "Per {n} tuffi: in risalita prendi i pesci da più lontano",
   },
   en: {
     crew: 'Your crew', holdMove: 'Hold and move', tap: 'Tap to cast',
@@ -395,7 +395,7 @@ const TXT = {
     lb: 'Leaderboard', lbEmpty: 'No scores yet: go fishing and be the first!', lbErr: 'Leaderboard not available', lbYou: 'You', lbLogin: 'Log in to show your name', lbLoginFail: 'Login failed',
     freeDown: "Dive all the way down!", newRule: "New rule!", rule1: "Going down, dodge the fish", rule2: "Touch one and you head back up", rule3: "Coming up, grab them all!", gotIt: "Got it!", bumped: "Bumped! Heading up", q1: "Catch {n} fish", q2: "Buy an upgrade", q3: "Reach {m} m", qDone: "Goal complete!",
     bigHaul: "BIG CATCH!", epicHaul: "EPIC CATCH!", newRecord: "NEW RECORD!", newDepth: "DEEPER!", depthRec: "Depth record: {m} m", bestHaul: "Your best haul ever", rainbow: "RAINBOW", wheel: "Wheel of fortune!", wheelTap: "A free spin: tap and spin!", spin: "Spin!", spinAgain: "Spin again",
-    frenzy: "FRENZY!", armorHit: "Armored hook!", boostsH: "Timed boosts", boostLeft: "{n} dives", armor: "Armored hook", armorEff: "For {n} dives: on the way down, the first common fish you touch does not send you back up", gbait: "Golden bait", gbaitEff: "For {n} dives: rare fish ×2 and more golden fish", net: "Wide net", netEff: "For {n} dives: on the way up you catch fish from further away",
+    frenzy: "FRENZY!", armorHit: "Armored hook!", boostsH: "Timed boosts", boostLeft: "{n} dives", armor: "Armored hook", armorEff: "For {n} dives: on the way down you pass through the first fish you already have. Golden, special and new fish still stop you", gbait: "Golden bait", gbaitEff: "For {n} dives: rare fish ×2 and more golden fish", net: "Wide net", netEff: "For {n} dives: on the way up you catch fish from further away",
   },
   ru: {
     crew: 'Твоя команда', holdMove: 'Удерживай и веди', tap: 'Нажми, чтобы забросить',
@@ -434,7 +434,7 @@ const TXT = {
     lb: 'Рейтинг', lbEmpty: 'Пока нет результатов: рыбачь и стань первым!', lbErr: 'Рейтинг недоступен', lbYou: 'Ты', lbLogin: 'Войди, чтобы показать своё имя', lbLoginFail: 'Не удалось войти',
     freeDown: "Спустись до самого дна!", newRule: "Новое правило!", rule1: "Вниз: уворачивайся от рыб", rule2: "Задел рыбу, и ты поднимаешься", rule3: "Вверх: хватай всех!", gotIt: "Понятно!", bumped: "Задел! Поднимаемся", q1: "Поймай рыб: {n}", q2: "Купи улучшение", q3: "Спустись на {m} м", qDone: "Цель выполнена!",
     bigHaul: "БОЛЬШОЙ УЛОВ!", epicHaul: "ЭПИЧЕСКИЙ УЛОВ!", newRecord: "НОВЫЙ РЕКОРД!", newDepth: "ГЛУБЖЕ!", depthRec: "Рекорд глубины: {m} м", bestHaul: "Твой лучший улов", rainbow: "РАДУЖНАЯ", wheel: "Колесо фортуны!", wheelTap: "Бесплатный спин: крути!", spin: "Крутить!", spinAgain: "Ещё раз",
-    frenzy: "БЕЗУМИЕ!", armorHit: "Бронекрючок!", boostsH: "Временные усиления", boostLeft: "погр.: {n}", armor: "Бронированный крючок", armorEff: "На {n} погружения: при спуске первая задетая обычная рыба не поднимает тебя наверх", gbait: "Золотая наживка", gbaitEff: "На {n} погружения: редкие ×2 и больше золотых рыб", net: "Широкая сеть", netEff: "На {n} погружений: при подъёме ловишь рыбу издалека",
+    frenzy: "БЕЗУМИЕ!", armorHit: "Бронекрючок!", boostsH: "Временные усиления", boostLeft: "погр.: {n}", armor: "Бронированный крючок", armorEff: "На {n} погружения: при спуске проходишь сквозь первую рыбу, которая у тебя уже есть. Золотые, особые и новые рыбы останавливают как обычно", gbait: "Золотая наживка", gbaitEff: "На {n} погружения: редкие ×2 и больше золотых рыб", net: "Широкая сеть", netEff: "На {n} погружений: при подъёме ловишь рыбу издалека",
   },
   tr: {
     crew: 'Tayfan', holdMove: 'Basılı tut ve kaydır', tap: 'Oltayı atmak için dokun',
@@ -473,7 +473,7 @@ const TXT = {
     lb: 'Sıralama', lbEmpty: 'Henüz skor yok: avlan ve ilk sen ol!', lbErr: 'Sıralama şu an yok', lbYou: 'Sen', lbLogin: 'Adını göstermek için giriş yap', lbLoginFail: 'Giriş başarısız',
     freeDown: "Sonuna kadar in!", newRule: "Yeni kural!", rule1: "İnerken balıklardan kaç", rule2: "Birine değersen yukarı çıkarsın", rule3: "Çıkarken hepsini yakala!", gotIt: "Anladım!", bumped: "Değdin! Yukarı çıkıyorsun", q1: "{n} balık yakala", q2: "Bir geliştirme satın al", q3: "{m} m'ye in", qDone: "Görev tamam!",
     bigHaul: "BÜYÜK AV!", epicHaul: "EFSANE AV!", newRecord: "YENİ REKOR!", newDepth: "DAHA DERİN!", depthRec: "Derinlik rekoru: {m} m", bestHaul: "Şimdiye kadarki en iyi avın", rainbow: "GÖKKUŞAĞI", wheel: "Şans çarkı!", wheelTap: "Bedava çevirme: dokun ve çevir!", spin: "Çevir!", spinAgain: "Tekrar çevir",
-    frenzy: "ÇILGINLIK!", armorHit: "Zırhlı iğne!", boostsH: "Süreli güçlendirmeler", boostLeft: "{n} dalış", armor: "Zırhlı iğne", armorEff: "{n} dalış boyunca: inerken değdiğin ilk yaygın balık seni yukarı göndermez", gbait: "Altın yem", gbaitEff: "{n} dalış boyunca: nadir balık ×2 ve daha çok altın balık", net: "Geniş ağ", netEff: "{n} dalış boyunca: çıkarken balıkları daha uzaktan yakalarsın",
+    frenzy: "ÇILGINLIK!", armorHit: "Zırhlı iğne!", boostsH: "Süreli güçlendirmeler", boostLeft: "{n} dalış", armor: "Zırhlı iğne", armorEff: "{n} dalış boyunca: inerken zaten sahip olduğun ilk balığın içinden geçersin. Altın, özel ve yeni balıklar seni yine durdurur", gbait: "Altın yem", gbaitEff: "{n} dalış boyunca: nadir balık ×2 ve daha çok altın balık", net: "Geniş ağ", netEff: "{n} dalış boyunca: çıkarken balıkları daha uzaktan yakalarsın",
   },
   es: {
     crew: 'Tu tripulación', holdMove: 'Mantén y mueve', tap: 'Toca para lanzar',
@@ -512,7 +512,7 @@ const TXT = {
     lb: 'Clasificación', lbEmpty: 'Aún no hay puntuaciones: ¡pesca y sé el primero!', lbErr: 'Clasificación no disponible', lbYou: 'Tú', lbLogin: 'Inicia sesión para mostrar tu nombre', lbLoginFail: 'No se pudo iniciar sesión',
     freeDown: "¡Baja hasta el fondo!", newRule: "¡Nueva regla!", rule1: "Al bajar, esquiva los peces", rule2: "Si tocas uno, empiezas a subir", rule3: "Al subir, ¡atrápalos todos!", gotIt: "¡Entendido!", bumped: "¡Tocado! A subir", q1: "Atrapa {n} peces", q2: "Compra una mejora", q3: "Baja a {m} m", qDone: "¡Objetivo cumplido!",
     bigHaul: "¡GRAN CAPTURA!", epicHaul: "¡CAPTURA ÉPICA!", newRecord: "¡NUEVO RÉCORD!", newDepth: "¡MÁS HONDO!", depthRec: "Récord de profundidad: {m} m", bestHaul: "Tu mejor captura de siempre", rainbow: "ARCOÍRIS", wheel: "¡Rueda de la fortuna!", wheelTap: "Un giro gratis: ¡toca y gira!", spin: "¡Girar!", spinAgain: "Girar otra vez",
-    frenzy: "¡FRENESÍ!", armorHit: "¡Anzuelo blindado!", boostsH: "Mejoras temporales", boostLeft: "{n} inmersiones", armor: "Anzuelo blindado", armorEff: "Durante {n} inmersiones: al bajar, el primer pez común que tocas no te hace subir", gbait: "Cebo dorado", gbaitEff: "Durante {n} inmersiones: peces raros ×2 y más peces dorados", net: "Red ancha", netEff: "Durante {n} inmersiones: al subir atrapas peces desde más lejos",
+    frenzy: "¡FRENESÍ!", armorHit: "¡Anzuelo blindado!", boostsH: "Mejoras temporales", boostLeft: "{n} inmersiones", armor: "Anzuelo blindado", armorEff: "Durante {n} inmersiones: al bajar atraviesas el primer pez que ya tienes. Los peces dorados, especiales y nuevos te detienen como siempre", gbait: "Cebo dorado", gbaitEff: "Durante {n} inmersiones: peces raros ×2 y más peces dorados", net: "Red ancha", netEff: "Durante {n} inmersiones: al subir atrapas peces desde más lejos",
   },
   pt: {
     crew: 'Sua tripulação', holdMove: 'Segure e mova', tap: 'Toque para lançar',
@@ -551,7 +551,7 @@ const TXT = {
     lb: 'Ranking', lbEmpty: 'Ainda sem pontuações: pesque e seja o primeiro!', lbErr: 'Ranking indisponível', lbYou: 'Você', lbLogin: 'Entre para mostrar seu nome', lbLoginFail: 'Não foi possível entrar',
     freeDown: "Desça até o fundo!", newRule: "Nova regra!", rule1: "Descendo, desvie dos peixes", rule2: "Tocou em um, você começa a subir", rule3: "Subindo, pegue todos!", gotIt: "Entendi!", bumped: "Tocou! Subindo", q1: "Pegue {n} peixes", q2: "Compre uma melhoria", q3: "Desça a {m} m", qDone: "Objetivo concluído!",
     bigHaul: "GRANDE PESCA!", epicHaul: "PESCA ÉPICA!", newRecord: "NOVO RECORDE!", newDepth: "MAIS FUNDO!", depthRec: "Recorde de profundidade: {m} m", bestHaul: "Sua melhor pesca de todas", rainbow: "ARCO-ÍRIS", wheel: "Roda da fortuna!", wheelTap: "Um giro grátis: toque e gire!", spin: "Girar!", spinAgain: "Girar de novo",
-    frenzy: "FRENESI!", armorHit: "Anzol blindado!", boostsH: "Melhorias temporárias", boostLeft: "{n} mergulhos", armor: "Anzol blindado", armorEff: "Por {n} mergulhos: descendo, o primeiro peixe comum que você toca não te faz subir", gbait: "Isca dourada", gbaitEff: "Por {n} mergulhos: peixes raros ×2 e mais peixes dourados", net: "Rede larga", netEff: "Por {n} mergulhos: na subida você pega peixes de mais longe",
+    frenzy: "FRENESI!", armorHit: "Anzol blindado!", boostsH: "Melhorias temporárias", boostLeft: "{n} mergulhos", armor: "Anzol blindado", armorEff: "Por {n} mergulhos: descendo, você atravessa o primeiro peixe que já tem. Peixes dourados, especiais e novos te param como sempre", gbait: "Isca dourada", gbaitEff: "Por {n} mergulhos: peixes raros ×2 e mais peixes dourados", net: "Rede larga", netEff: "Por {n} mergulhos: na subida você pega peixes de mais longe",
   },
   de: {
     crew: 'Deine Crew', holdMove: 'Halten und bewegen', tap: 'Tippen zum Auswerfen',
@@ -590,7 +590,7 @@ const TXT = {
     lb: 'Bestenliste', lbEmpty: 'Noch keine Punkte: geh angeln und sei der Erste!', lbErr: 'Bestenliste nicht verfügbar', lbYou: 'Du', lbLogin: 'Melde dich an, um deinen Namen zu zeigen', lbLoginFail: 'Anmeldung fehlgeschlagen',
     freeDown: "Tauch ganz nach unten!", newRule: "Neue Regel!", rule1: "Beim Abtauchen: weich den Fischen aus", rule2: "Berührst du einen, geht es nach oben", rule3: "Beim Auftauchen: schnapp sie dir alle!", gotIt: "Verstanden!", bumped: "Berührt! Es geht nach oben", q1: "Fang {n} Fische", q2: "Kauf ein Upgrade", q3: "Tauche auf {m} m", qDone: "Ziel erreicht!",
     bigHaul: "GROSSER FANG!", epicHaul: "EPISCHER FANG!", newRecord: "NEUER REKORD!", newDepth: "TIEFER!", depthRec: "Tiefenrekord: {m} m", bestHaul: "Dein bester Fang aller Zeiten", rainbow: "REGENBOGEN", wheel: "Glücksrad!", wheelTap: "Ein Gratis-Dreh: tippen und drehen!", spin: "Drehen!", spinAgain: "Nochmal drehen",
-    frenzy: "RAUSCH!", armorHit: "Panzerhaken!", boostsH: "Zeitboosts", boostLeft: "{n} Tauchgänge", armor: "Panzerhaken", armorEff: "{n} Tauchgänge lang: der erste häufige Fisch beim Abtauchen schickt dich nicht nach oben", gbait: "Goldköder", gbaitEff: "{n} Tauchgänge lang: seltene Fische ×2 und mehr goldene Fische", net: "Weites Netz", netEff: "{n} Tauchgänge lang: beim Auftauchen fängst du Fische aus größerer Entfernung",
+    frenzy: "RAUSCH!", armorHit: "Panzerhaken!", boostsH: "Zeitboosts", boostLeft: "{n} Tauchgänge", armor: "Panzerhaken", armorEff: "{n} Tauchgänge lang: beim Abtauchen gleitest du durch den ersten Fisch, den du schon hast. Goldene, besondere und neue Fische stoppen dich wie immer", gbait: "Goldköder", gbaitEff: "{n} Tauchgänge lang: seltene Fische ×2 und mehr goldene Fische", net: "Weites Netz", netEff: "{n} Tauchgänge lang: beim Auftauchen fängst du Fische aus größerer Entfernung",
   },
 };
 const NAMES = {   // it, en, ru, tr, es, pt, de (same order as LANGS)
@@ -1045,7 +1045,7 @@ function drawFrenzyBand(P) {
     if (Math.random() < (on ? .6 : .35)) parts.push({ x: rand(10, VW - 10), y: rand(P.top, P.bottom), vx: 0, vy: -25, life: .7, max: .7, type: 'spark', r: rand(1.5, 3) });
   }
 }
-const isCommon = f => !f.sp.boss && !f.ret && !f.golden && !f.rainbow && !f.frenzy && f.sp.i <= 1;   // rarity: 0-1 common
+const shieldable = f => !f.sp.boss && !f.ret && !f.golden && !f.rainbow && !f.frenzy && !!(S.c[f.sp.idx] & 1);   // already in the collection, nothing special
 function startFrenzy() {
   const F = CONFIG.frenzy, P = frenzyPlan;
   if (cine) { P.done = true; return; }
@@ -1235,10 +1235,10 @@ function update(dt) {
       if (Math.random() < dt * 8) Snd.ok() && sfx.reel();
       if (grace <= 0 && !turbo) {
         if (!freeDive()) for (const f of fishes) {
-          if (f.gone || Math.abs(f.y - hook.y) > 80) continue;
+          if (f.gone || f.passed || Math.abs(f.y - hook.y) > 80) continue;
           if (hitTest(f, CONFIG.hookRadius)) {
-            if (armorOn && isCommon(f)) {   // the armored hook shrugs off the first common fish; anything valuable is caught as usual
-              armorOn = false; f.gone = true; shake = Math.max(shake, 5); sfx.shield();
+            if (armorOn && shieldable(f)) {   // the armored hook passes through the first fish you already own; it stays in the water for the way up
+              armorOn = false; f.passed = true; shake = Math.max(shake, 5); sfx.shield();
               floats.push({ x: clamp(hook.x, 110, VW - 110), y: hook.y - 56, txt: '🛡️ ' + t('armorHit'), col: '#9fe8ff', life: 1.3, max: 1.3, size: 20, world: true });
               for (let i = 0; i < 16; i++) parts.push({ x: f.x, y: f.y, vx: rand(-160, 160), vy: rand(-160, 60), life: rand(.35, .7), max: .7, type: 'spark', r: rand(1.5, 3.5) });
               break;
