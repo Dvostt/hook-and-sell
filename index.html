@@ -278,7 +278,7 @@ const CONFIG = {
   boosts: {                 // timed items in the shop; price = the player's average haul × k (never below min)
     armor: { dives: 3, k: 2.5, min: 30 },   // Armored hook: on the way down you pass through the first fish you already own; golden, special and new fish still stop you
     gbait: { dives: 3, k: 3,   min: 40 },   // Golden bait: the chest boost, now also for sale (S.gb)
-    net:   { dives: 5, k: 2,   min: 25, reach: 28, pull: 95 },    // Wide net: +28 px of catch reach on the way up (normal is ~11 px past the fish's edge), and fish within pull px drift into it
+    net:   { dives: 5, k: 2,   min: 25, reach: 28, pull: 80, pullK: 2 }, // Wide net: +28 px of catch reach on the way up (normal is ~11 px past the fish's edge), and fish within pull px drift into it
     cap: 10,                // max dives of one boost you can stack
   },
   tutorialDives: 3,         // the "hold and move" slider shows during the first dives
@@ -1268,7 +1268,7 @@ function update(dt) {
       if (netOn) for (const f of fishes) {   // the net pulls nearby fish in: you can see it working
         if (f.gone || f.passed) continue;
         const dy = hook.y - f.y, dx = hook.x - f.x;
-        if (dy > -20 && dy < 140 && Math.abs(dx) < CONFIG.boosts.net.pull + f.w * .5) { f.x += dx * Math.min(1, dt * 3.2); f.y += Math.sign(dy) * Math.min(Math.abs(dy), 40 * dt); }
+        if (dy > -20 && dy < 140 && Math.abs(dx) < CONFIG.boosts.net.pull + f.w * .5) { f.x += dx * Math.min(1, dt * CONFIG.boosts.net.pullK); f.y += Math.sign(dy) * Math.min(Math.abs(dy), 25 * dt); }
       }
       for (const f of fishes) {
         if (f.gone || Math.abs(f.y - hook.y) > 80 || (full && !f.frenzy)) continue;
