@@ -1044,7 +1044,8 @@ function attach(f, isFirst) {
   combo = (clock - lastCatch <= CONFIG.combo.window || isFirst) ? combo + 1 : 1;
   if (isFirst) combo = 1;
   lastCatch = clock; diveBest = Math.max(diveBest, combo);
-  const mult = f.sp.boss ? 1 : f.frenzy ? Math.min(CONFIG.frenzy.maxMult, comboMult(combo) * CONFIG.frenzy.mult) : comboMult(combo);
+  const cm = comboMult(combo);   // a frenzy fish is ×3 on top of the combo, capped, but never worth less than the combo alone
+  const mult = f.sp.boss ? 1 : f.frenzy ? Math.max(cm, Math.min(CONFIG.frenzy.maxMult, cm * CONFIG.frenzy.mult)) : cm;
   const val = Math.round(f.sp.value * (f.rainbow ? CONFIG.rainbow.mult : f.golden ? CONFIG.goldenMult : 1) * mult * sellMult(f.sp.z));
   caught.push({ sp: f.sp, lk: f.lk, golden: !!f.golden && !f.rainbow, rainbow: !!f.rainbow, frenzy: !!f.frenzy, val, mult, sw: rand(-.4, .4) });
   if (f.rainbow) {   // jackpot: slow motion, flash, its own sound
@@ -1106,9 +1107,9 @@ function startSell() {
   const veteran = S.st.d > CONFIG.onboarding.freeDives + 1;
   haulCele = { tier, record: veteran && S.st.bh > 0 && haulTotal > S.st.bh, depth: veteran && prevMd > 0 && Math.round(diveDepthM) > prevMd ? Math.round(diveDepthM) : 0 };
   S.st.bh = Math.max(S.st.bh, haulTotal); S.hh = hist.concat(haulTotal).slice(-8);
-  sellQ = haulItems.filter(c => !c.boss); sellFly = []; sellTimer = .25; sellFast = false; sellDoneT = 0;
-  const bi = haulItems.find(c => c.boss);
-  if (bi) { cine = { type: 'haul', t: 0, it: bi }; sellTimer = 99; }
+  const hero = haulItems.find(c => c.boss) || haulItems.find(c => c.rainbow);   // the boss, else a rainbow fish, lands on deck on its own
+  sellQ = haulItems.filter(c => !c.boss && c !== hero); sellFly = []; sellTimer = .25; sellFast = false; sellDoneT = 0;
+  if (hero) { cine = { type: 'haul', t: 0, it: hero }; sellTimer = 99; }
   sfx.splash();
 }
 let diveDepthM = 0;
@@ -1575,16 +1576,18 @@ function drawSeaWorld() {
   drawLineAndHook();
   // boss haul: out of the water on the line, then onto the deck
   if (cine && cine.type === 'haul') {
-    const it = cine.it, k = cine.t, r = rodTip(), w = Math.min(170, it.sp.size * .75);
+    const it = cine.it, k = cine.t, r = rodTip(), w = it.rainbow ? clamp(it.sp.size * 1.8, 80, 150) : Math.min(170, it.sp.size * .75);
     let x, y, rot, a = 1;
     if (k < 1.2) { const e = 1 - Math.pow(1 - k / 1.2, 3); x = r.x - 6; y = lerp(90, -150, e); rot = -Math.PI / 2 + Math.sin(k * 7) * .25; }
     else if (k < 1.55) { const e = (k - 1.2) / .35; x = lerp(r.x - 6, VW * .44, e); y = lerp(-150, -70, e * e); rot = lerp(-Math.PI / 2, 0, e); }
     else { x = VW * .44; y = -70 + Math.sin(Math.min(1, (k - 1.55) * 4) * Math.PI) * -6; rot = Math.sin((k - 1.55) * 16) * .06 * Math.max(0, 1 - (k - 1.55)); a = k > 3.4 ? Math.max(0, 1 - (k - 3.4) * 2) : 1; }
     if (k < 1.3) { g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(r.x, r.y); g.lineTo(x + Math.sin(rot + Math.PI / 2) * w * .5, y - Math.cos(rot + Math.PI / 2) * w * .5); g.stroke(); }
     if (k < 1.2 && Math.random() < .5) parts.push({ x: x + rand(-20, 20), y: Math.max(y, -4), vx: rand(-60, 60), vy: rand(-200, -80), life: .5, max: .5, type: 'drop', r: rand(2, 4) });
-    const gl = g.createRadialGradient(x, y, 10, x, y, w * .9); gl.addColorStop(0, `rgba(255,220,90,${.45 * a})`); gl.addColorStop(1, 'rgba(255,220,90,0)');
+    const hu = (clock * 140) % 360, gl = g.createRadialGradient(x, y, 10, x, y, w * .9);
+    if (it.rainbow) { gl.addColorStop(0, `hsla(${hu},100%,75%,${.6 * a})`); gl.addColorStop(.5, `hsla(${hu + 120},100%,70%,${.3 * a})`); gl.addColorStop(1, `hsla(${hu + 240},100%,70%,0)`); }
+    else { gl.addColorStop(0, `rgba(255,220,90,${.45 * a})`); gl.addColorStop(1, 'rgba(255,220,90,0)'); }
     g.fillStyle = gl; g.beginPath(); g.arc(x, y, w * .9, 0, 7); g.fill();
-    g.save(); g.globalAlpha = a; g.translate(x, y); g.rotate(rot); drawFishAt(it.lk, 0, 0, w, 1, clock, 0); g.restore(); g.globalAlpha = 1;
+    g.save(); g.globalAlpha = a; g.translate(x, y); g.rotate(rot); drawFishAt(it.lk, 0, 0, w, 1, clock, fishMode(it)); g.restore(); g.globalAlpha = 1;
   }
   // sale: fish flying out of the water
   for (const s of sellFly) {
@@ -1973,10 +1976,16 @@ function drawScreenFX() {
     const val = cine.it.val * (1 - Math.pow(1 - Math.min(1, k / 1.5), 3)), pop = 1 + Math.max(0, .25 - k) * 2;
     g.save(); g.globalAlpha = a; g.translate(VW / 2, VH * .24); g.scale(pop, pop); g.textAlign = 'center';
     g.font = '900 20px ui-rounded,system-ui,sans-serif'; g.lineWidth = 6; g.strokeStyle = 'rgba(80,40,0,.75)';
-    const nmU = up(nm(cine.it.sp.id)); g.strokeText(nmU, 0, -46); g.fillStyle = '#fff'; g.fillText(nmU, 0, -46);
+    const nmU = up(nm(cine.it.sp.id)) + (cine.it.rainbow ? ' ' + t('rainbow') : ''); g.strokeText(nmU, 0, -46); g.fillStyle = '#fff'; g.fillText(nmU, 0, -46);
     g.font = '900 54px ui-rounded,system-ui,sans-serif'; g.lineWidth = 10;
     const txt = '+' + fmt(val); const tw = g.measureText(txt).width;
-    g.strokeText(txt, 16, 8); const tg = g.createLinearGradient(0, -36, 0, 8); tg.addColorStop(0, '#fff6c2'); tg.addColorStop(1, '#ffb300'); g.fillStyle = tg; g.fillText(txt, 16, 8);
+    g.strokeText(txt, 16, 8);
+    let tg;
+    if (cine.it.rainbow) {   // rainbow money, the colours sliding along the number
+      tg = g.createLinearGradient(16 - tw / 2, 0, 16 + tw / 2, 0); const h0 = (clock * 160) % 360;
+      for (let i = 0; i <= 6; i++) tg.addColorStop(i / 6, `hsl(${h0 + i * 60},95%,66%)`);
+    } else { tg = g.createLinearGradient(0, -36, 0, 8); tg.addColorStop(0, '#fff6c2'); tg.addColorStop(1, '#ffb300'); }
+    g.fillStyle = tg; g.fillText(txt, 16, 8);
     const cx = -tw / 2 - 12; g.fillStyle = '#ffd84d'; g.strokeStyle = '#b27500'; g.lineWidth = 3; g.beginPath(); g.arc(cx, -10, 17, 0, 7); g.fill(); g.stroke();
     g.fillStyle = 'rgba(255,255,255,.8)'; g.beginPath(); g.arc(cx - 5, -15, 4, 0, 7); g.fill();
     g.restore(); g.globalAlpha = 1;
@@ -3158,7 +3167,7 @@ function updateCine(dt) {
     zoomTo = cine.t < 3.4 ? 1.65 : 1;
     const it = cine.it;
     if (!cine.landed && cine.t >= 1.55) {
-      cine.landed = true; shake = 14; sfx.boss(); Snd.noise(.4, .35, 300);
+      cine.landed = true; shake = 14; (it.rainbow ? sfx.rainbow : sfx.boss)(); Snd.noise(.4, .35, 300);
       for (let i = 0; i < 26; i++) parts.push({ x: VW * .42 + rand(-60, 60), y: -30, vx: rand(-160, 160), vy: rand(-320, -120), life: rand(.5, .9), max: .9, type: 'drop', r: rand(2, 4.5) });
       for (let i = 0; i < 60; i++) parts.push({ x: VW * .42 + rand(-40, 40), y: -90, vx: rand(-220, 220), vy: rand(-420, -140), life: rand(1.2, 2), max: 2, type: 'conf', r: rand(3, 5), c: ['#ffd84d', '#ff5a6e', '#22c46b', '#2f8cff', '#ffffff'][i % 5], rot: rand(0, 6) });
       S.m += it.val; S.te += it.val;
