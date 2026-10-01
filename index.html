@@ -37,6 +37,7 @@ button{font:inherit;cursor:pointer}
 @keyframes shopGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,216,77,0)}50%{box-shadow:0 0 0 5px rgba(255,216,77,.85),0 0 18px 4px rgba(255,216,77,.6)}}
 .nextBuy{margin:6px 0 10px;font-weight:800;font-size:15px}
 .nextBuy.can{color:#1c9c55}
+.newsPic{display:flex;justify-content:center;margin:4px 0 2px}
 .goal.boost{background:linear-gradient(#fff3b8,#ffd24d);color:#5a3500;margin-top:6px}
 .iconbtn{width:44px;height:44px;border-radius:14px;border:0;background:rgba(6,26,48,.78);color:#fff;display:grid;place-items:center;box-shadow:0 3px 0 rgba(0,0,0,.28)}
 .iconbtn svg{width:24px;height:24px}
@@ -222,6 +223,7 @@ const CONFIG = {
     { floor: 150, boss: 'murena_regina',  bossHook: 6 },
     { floor: 300, boss: 'pesce_spada_re', bossHook: 9 },
     { floor: 600, boss: 'kraken',         bossHook: 11 },
+    { floor: 1000, boss: 'megalodonte',   bossHook: 14 },   // Bermuda Triangle: opens after the Kraken
   ],
   // species index i (0..4) inside a zone starts appearing at top + band[i] * zoneHeight
   speciesBand: [0, 0.1, 0.25, 0.45, 0.65],
@@ -247,27 +249,37 @@ const CONFIG = {
     { id: 'vipera',      z: 3, value: 2900, size: 84,  speed: 60 },
     { id: 'calamaro',    z: 3, value: 4500, size: 148, speed: 45 },
     { id: 'pesce_oro',   z: 3, value: 8000, size: 68,  speed: 115 },
+    { id: 'celacanto',     z: 4, value: 8500,  size: 74,  speed: 50 },
+    { id: 'anomalocaris',  z: 4, value: 12500, size: 82,  speed: 60 },
+    { id: 'dunkleosteo',   z: 4, value: 19000, size: 100, speed: 55 },
+    { id: 'elicoprione',   z: 4, value: 29000, size: 132, speed: 80 },
+    { id: 'sentinella',    z: 4, value: 52000, size: 88,  speed: 65 },
   ],
   bosses: [
     { id: 'cernia_gigante', z: 0, value: 1500,   size: 190, speed: 26 },
     { id: 'murena_regina',  z: 1, value: 48000,  size: 230, speed: 30 },
     { id: 'pesce_spada_re', z: 2, value: 770000, size: 250, speed: 34 },
     { id: 'kraken',         z: 3, value: 5000000, size: 300, speed: 20 },
+    { id: 'megalodonte',    z: 4, value: 40000000, size: 310, speed: 22 },
   ],
   upgrades: {
-    line: { values: [24, 30, 38, 50, 60, 75, 95, 120, 150, 180, 215, 255, 300, 380, 470, 600],
-            costs:  [8, 28, 95, 280, 1500, 2900, 6300, 12000, 28000, 55000, 110000, 220000, 560000, 3900000, 8500000] },
-    hook: { values: [2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 17, 20],
-            costs:  [12, 45, 170, 1000, 2600, 6500, 16000, 42000, 150000, 1200000, 2400000] },
-    bait: { levels: 10, rarePer: 0.3, goldBase: 0.01, goldPer: 0.0045,
-            costs:  [70, 240, 1000, 4600, 12000, 36000, 110000, 350000, 1400000] },
-    boat: { costs: [1600, 55000, 840000] },   // buy boat 2, 3, 4 (needs previous boss)
+    line: { values: [24, 30, 38, 50, 60, 75, 95, 120, 150, 180, 215, 255, 300, 380, 470, 600, 680, 760, 840, 920, 1000],
+            costs:  [8, 28, 95, 280, 1500, 2900, 6300, 12000, 28000, 55000, 110000, 220000, 560000, 3900000, 8500000, 3000000, 12000000, 26000000, 42000000, 62000000],
+            // Bermuda Triangle: money is not enough, the line grows only after you have caught the creatures of the depth you reach
+            // (level you are on -> [species, how many]); keeps players with piles of coins fishing their way down
+            need: { 16: ['celacanto', 15], 17: ['anomalocaris', 15], 18: ['dunkleosteo', 12], 19: ['elicoprione', 8] } },
+    // `deep`: from this level on (0-based) the upgrade needs the last boat, so the game up to the Kraken plays exactly as before
+    hook: { values: [2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 17, 20, 23, 26, 30], deep: 11,
+            costs:  [12, 45, 170, 1000, 2600, 6500, 16000, 42000, 150000, 1200000, 2400000, 9000000, 24000000, 48000000] },
+    bait: { levels: 12, rarePer: 0.3, goldBase: 0.01, goldPer: 0.0045, deep: 9,
+            costs:  [70, 240, 1000, 4600, 12000, 36000, 110000, 350000, 1400000, 6000000, 18000000] },
+    boat: { costs: [1600, 55000, 840000, 8000000] },   // buy boat 2, 3, 4, 5 (needs previous boss)
   },
   boatSellBonus: 0.25,      // +25% sell price per boat level
   zoneCompleteBonus: 0.25,  // +25% on a zone's fish when its 5 species are in the album
   chest: {                  // surprise treasure chests floating in the water
     chance: 0.15,           // per dive from the 3rd dive on (the 2nd dive always has one)
-    coinBase: [45, 1200, 13000, 130000],   // coins by boat zone, then ×0.7–1.5
+    coinBase: [45, 1200, 13000, 130000, 900000],   // coins by boat zone, then ×0.7–1.5
     weights: [55, 25, 20],  // coins / free upgrade / golden bait
     baitDives: 3, baitRare: 2, baitGold: 0.05,
   },
@@ -298,7 +310,7 @@ const CONFIG = {
     quests: [['q1', 5, 25], ['q2', 1, 50], ['q3', 30, 100]],   // [text, target, reward]: catch fish, buy an upgrade, reach a depth
   },
   intro: { hold: 2.4, zoneHold: 3.2, rise: 1.3 },   // unskippable intro (first launch and every new boat): seabed view, then a fast rise (s)
-  hookTiers: [1, 4, 7, 10],  // Hook levels where the hook gets a new look
+  hookTiers: [1, 4, 7, 10, 13],  // Hook levels where the hook gets a new look
   goldenMult: 10,
   combo: { window: 1.2, steps: [[3, 2], [6, 3], [10, 5], [15, 8]] },
   descent: { base: 170, accel: 0.045, max: 460,     // px/s; speed restarts at the top of the zone you dodge in
@@ -309,7 +321,7 @@ const CONFIG = {
   spacingPerSize: 0.25,     // + this × fish size: big fish get more room to dodge
   grace: 0.35,              // s of immunity right after the splash
   crew: {                   // the automatic crew boat, unlocked by the first boss
-    perMin: [24, 400, 5500, 42000],          // coins per minute by boat zone before Sailors (~5% of active fishing)
+    perMin: [24, 400, 5500, 42000, 300000],  // coins per minute by boat zone before Sailors (~5% of active fishing)
     ratePer: 0.35,                           // Sailors: +35% per level
     holdHours: [0.5, 1, 2, 4, 8, 12, 24],    // Hold: hours of fishing that fit before the crew stops
     luckPer: 0.05, luckMult: 5,              // Luck: chance per level that a collection is worth ×5
@@ -334,7 +346,7 @@ const TXT = {
     chestUp: '{up} Lv {lv} gratis!', chestBait: 'Esca d\'oro per {n} tuffi: rari ×{r}, oro +{g}%', chestCoins: 'Un bel gruzzolo!',
     boost: '✦ Esca d\'oro: {n} tuffi', introBoss: 'Un giorno sarà tua…', introSub: 'La Cernia Gigante ti aspetta a {m} m',
     introZoneSub: '5 pesci nuovi fino a {m} m · {boss} ti aspetta sul fondo', newHook: 'Nuovo amo!', newHookText: 'Da adesso peschi con: {name}',
-    hooks: ['Amo di ferro', 'Amo di bronzo', 'Amo d\'oro doppio', 'Tridente leggendario'], drag: 'Trascina per schivare i pesci', grab: 'Ora prendili tutti!',
+    hooks: ['Amo di ferro', 'Amo di bronzo', 'Amo d\'oro doppio', 'Tridente leggendario', "Amo di meteorite"], drag: 'Trascina per schivare i pesci', grab: 'Ora prendili tutti!',
     shop: 'Negozio', album: 'Collezione', line: 'Lenza', hook: 'Amo', bait: 'Esca', boat: 'Barca',
     max: 'MAX', haul: 'Bottino!', double: 'Guarda video ×2', cont: 'Continua', best: 'Combo migliore',
     fishN: '{n} pesci', fish1: '1 pesce', newSp: 'NUOVO', zoneDone: '{zone} completata! +25% sul valore',
@@ -352,11 +364,12 @@ const TXT = {
     fullShort: 'PIENA', nothing: 'Stiva vuota', perMinU: '/min',
     newBoat: 'Nuova barca in negozio!', newBoatText: 'Il {boat} ti porta nella zona {zone}, fino a {m} m.',
     bossCaught: 'CATTURA LEGGENDARIA: {boss}!', victory: 'Hai catturato il Kraken!',
-    victoryText: 'Il Mediterraneo è tuo. Continua a pescare per completare la collezione e trovare tutti i dorati.',
+    victoryText: "Il Mediterraneo è tuo… ma la bussola è impazzita: qualcosa ti chiama dal Triangolo delle Bermuda.",
     sDives: 'Tuffi', sDepth: 'Profondità record', sCombo: 'Combo record', sEarn: 'Guadagno totale', sTime: 'Tempo', sGold: 'Dorati',
     ok: 'Grande!', collect: 'Incassa', rarity: ['Comune', 'Comune', 'Non comune', 'Raro', 'Leggendario'], bossR: 'Boss',
-    zones: ['Costa', 'Scogliera', 'Mare aperto', 'Abisso'],
-    boats: ['Gozzo', 'Peschereccio', 'Motopesca', 'Nave oceanografica'],
+    zones: ['Costa', 'Scogliera', 'Mare aperto', 'Abisso', "Triangolo delle Bermuda"],
+    victory2: "Hai catturato il Megalodonte!", victory2Text: "Hai svelato il mistero del Triangolo. Continua a pescare per completare la collezione e trovare tutti i dorati e gli arcobaleno.", newsT: "Novità: Triangolo delle Bermuda!", newsText: "Sotto l'Abisso si è aperta una zona nuova, fino a {m} m: creature estinte, una sentinella di Atlantide e il Megalodonte Spettrale. Ti serve il Sottomarino: lo trovi in negozio.", needCatch: "Cattura {n} × {fish}", needBoatX: "Serve: {boat}",
+    boats: ['Gozzo', 'Peschereccio', 'Motopesca', 'Nave oceanografica', "Sottomarino"],
     effLine: '{a} m → <b>{b} m</b>', effHook: '{a} → <b>{b}</b> pesci per tuffo',
     effBait: 'Rari ×{a} → <b>×{b}</b> · Oro {c}% → <b>{d}%</b>', effBoat: '{zone} fino a {m} m · <b>vendita +25%</b>',
     maxed: 'Al massimo', adFail: 'Video non disponibile, riprova più tardi', firstBuy: 'Compra il tuo primo upgrade!',
@@ -374,7 +387,7 @@ const TXT = {
     chestUp: 'Free {up} Lv {lv}!', chestBait: 'Golden bait for {n} dives: rare ×{r}, gold +{g}%', chestCoins: 'A nice stash!',
     boost: '✦ Golden bait: {n} dives', introBoss: 'One day it will be yours…', introSub: 'The Giant Grouper waits at {m} m',
     introZoneSub: '5 new fish down to {m} m · the {boss} waits on the seabed', newHook: 'New hook!', newHookText: 'From now on you fish with: {name}',
-    hooks: ['Iron hook', 'Bronze hook', 'Golden double hook', 'Legendary trident'], drag: 'Drag to dodge the fish', grab: 'Now grab them all!',
+    hooks: ['Iron hook', 'Bronze hook', 'Golden double hook', 'Legendary trident', "Meteorite hook"], drag: 'Drag to dodge the fish', grab: 'Now grab them all!',
     shop: 'Shop', album: 'Collection', line: 'Line', hook: 'Hook', bait: 'Bait', boat: 'Boat',
     max: 'MAX', haul: 'Your catch!', double: 'Watch ad ×2', cont: 'Continue', best: 'Best combo',
     fishN: '{n} fish', fish1: '1 fish', newSp: 'NEW', zoneDone: '{zone} complete! +25% value',
@@ -392,11 +405,12 @@ const TXT = {
     fullShort: 'FULL', nothing: 'Hold empty', perMinU: '/min',
     newBoat: 'New boat in the shop!', newBoatText: 'The {boat} takes you to the {zone}, down to {m} m.',
     bossCaught: 'LEGENDARY CATCH: {boss}!', victory: 'You caught the Kraken!',
-    victoryText: 'The Mediterranean is yours. Keep fishing to complete the collection and find every golden fish.',
+    victoryText: "The Mediterranean is yours… but your compass has gone mad: something is calling from the Bermuda Triangle.",
     sDives: 'Dives', sDepth: 'Deepest dive', sCombo: 'Best combo', sEarn: 'Total earned', sTime: 'Time', sGold: 'Golden',
     ok: 'Awesome!', collect: 'Collect', rarity: ['Common', 'Common', 'Uncommon', 'Rare', 'Legendary'], bossR: 'Boss',
-    zones: ['Coast', 'Reef', 'Open sea', 'Abyss'],
-    boats: ['Gozzo', 'Fishing boat', 'Trawler', 'Research ship'],
+    zones: ['Coast', 'Reef', 'Open sea', 'Abyss', "Bermuda Triangle"],
+    victory2: "You caught the Megalodon!", victory2Text: "You solved the mystery of the Triangle. Keep fishing to complete the collection and find every golden and rainbow fish.", newsT: "New: the Bermuda Triangle!", newsText: "A new zone has opened below the Abyss, down to {m} m: extinct creatures, a sentinel of Atlantis and the Ghost Megalodon. You need the Submarine: it is in the shop.", needCatch: "Catch {n} × {fish}", needBoatX: "Needs: {boat}",
+    boats: ['Gozzo', 'Fishing boat', 'Trawler', 'Research ship', "Submarine"],
     effLine: '{a} m → <b>{b} m</b>', effHook: '{a} → <b>{b}</b> fish per dive',
     effBait: 'Rare ×{a} → <b>×{b}</b> · Gold {c}% → <b>{d}%</b>', effBoat: '{zone} down to {m} m · <b>+25% sell price</b>',
     maxed: 'Maxed out', adFail: 'Video not available, try again later', firstBuy: 'Buy your first upgrade!',
@@ -414,7 +428,7 @@ const TXT = {
     chestUp: '{up} ур. {lv} бесплатно!', chestBait: 'Золотая наживка на {n} погружений: редкие ×{r}, золото +{g}%', chestCoins: 'Отличный клад!',
     boost: '✦ Золотая наживка: {n} погр.', introBoss: 'Однажды он станет твоим…', introSub: 'Гигантский групер ждёт на {m} м',
     introZoneSub: '5 новых рыб до {m} м · {boss} ждёт на дне', newHook: 'Новый крючок!', newHookText: 'Теперь ты ловишь на: {name}',
-    hooks: ['Железный крючок', 'Бронзовый крючок', 'Двойной золотой крючок', 'Легендарный трезубец'], drag: 'Веди, чтобы уворачиваться от рыб', grab: 'А теперь хватай их всех!',
+    hooks: ['Железный крючок', 'Бронзовый крючок', 'Двойной золотой крючок', 'Легендарный трезубец', "Метеоритный крючок"], drag: 'Веди, чтобы уворачиваться от рыб', grab: 'А теперь хватай их всех!',
     shop: 'Магазин', album: 'Коллекция', line: 'Леска', hook: 'Крючок', bait: 'Наживка', boat: 'Лодка',
     max: 'МАКС', haul: 'Улов!', double: 'Реклама ×2', cont: 'Дальше', best: 'Лучшее комбо',
     fishN: 'Рыб: {n}', fish1: '1 рыба', newSp: 'НОВАЯ', zoneDone: '{zone}: собрано! +25% к цене',
@@ -432,11 +446,12 @@ const TXT = {
     fullShort: 'ПОЛОН', nothing: 'Трюм пуст', perMinU: '/мин',
     newBoat: 'Новая лодка в магазине!', newBoatText: '{boat}: зона «{zone}», до {m} м.',
     bossCaught: 'ЛЕГЕНДАРНЫЙ УЛОВ: {boss}!', victory: 'Ты поймал Кракена!',
-    victoryText: 'Средиземное море твоё. Рыбачь дальше, чтобы собрать коллекцию и найти всех золотых рыб.',
+    victoryText: "Средиземное море твоё… но компас сошёл с ума: что-то зовёт из Бермудского треугольника.",
     sDives: 'Погружения', sDepth: 'Рекорд глубины', sCombo: 'Рекорд комбо', sEarn: 'Всего заработано', sTime: 'Время', sGold: 'Золотые',
     ok: 'Отлично!', collect: 'Забрать', rarity: ['Обычная', 'Обычная', 'Необычная', 'Редкая', 'Легендарная'], bossR: 'Босс',
-    zones: ['Побережье', 'Риф', 'Открытое море', 'Бездна'],
-    boats: ['Гоццо', 'Рыбацкая лодка', 'Траулер', 'Научное судно'],
+    zones: ['Побережье', 'Риф', 'Открытое море', 'Бездна', "Бермудский треугольник"],
+    victory2: "Ты поймал Мегалодона!", victory2Text: "Ты раскрыл тайну Треугольника. Рыбачь дальше, чтобы собрать коллекцию и найти всех золотых и радужных рыб.", newsT: "Новинка: Бермудский треугольник!", newsText: "Под Бездной открылась новая зона, до {m} м: вымершие существа, страж Атлантиды и Призрачный мегалодон. Нужна Подлодка: она в магазине.", needCatch: "Поймай {n} × {fish}", needBoatX: "Нужно: {boat}",
+    boats: ['Гоццо', 'Рыбацкая лодка', 'Траулер', 'Научное судно', "Подлодка"],
     effLine: '{a} м → <b>{b} м</b>', effHook: '{a} → <b>{b}</b> рыб за погружение',
     effBait: 'Редкие ×{a} → <b>×{b}</b> · Золото {c}% → <b>{d}%</b>', effBoat: '{zone} до {m} м · <b>продажа +25%</b>',
     maxed: 'Максимум', adFail: 'Видео недоступно, попробуй позже', firstBuy: 'Купи первое улучшение!',
@@ -454,7 +469,7 @@ const TXT = {
     chestUp: 'Bedava {up} Sv {lv}!', chestBait: '{n} dalış için altın yem: nadir ×{r}, altın +%{g}', chestCoins: 'Güzel bir hazine!',
     boost: '✦ Altın yem: {n} dalış', introBoss: 'Bir gün senin olacak…', introSub: 'Dev Orfoz {m} m\'de seni bekliyor',
     introZoneSub: '{m} m\'ye kadar 5 yeni balık · {boss} dipte bekliyor', newHook: 'Yeni iğne!', newHookText: 'Artık bununla avlanıyorsun: {name}',
-    hooks: ['Demir iğne', 'Bronz iğne', 'Çift altın iğne', 'Efsanevi zıpkın'], drag: 'Balıklardan kaçmak için kaydır', grab: 'Şimdi hepsini yakala!',
+    hooks: ['Demir iğne', 'Bronz iğne', 'Çift altın iğne', 'Efsanevi zıpkın', "Göktaşı iğnesi"], drag: 'Balıklardan kaçmak için kaydır', grab: 'Şimdi hepsini yakala!',
     shop: 'Mağaza', album: 'Koleksiyon', line: 'Misina', hook: 'İğne', bait: 'Yem', boat: 'Tekne',
     max: 'MAKS', haul: 'Av!', double: 'Reklam izle ×2', cont: 'Devam', best: 'En iyi kombo',
     fishN: '{n} balık', fish1: '1 balık', newSp: 'YENİ', zoneDone: '{zone} tamamlandı! Değer +%25',
@@ -472,11 +487,12 @@ const TXT = {
     fullShort: 'DOLU', nothing: 'Ambar boş', perMinU: '/dk',
     newBoat: 'Mağazada yeni tekne!', newBoatText: '{boat} seni {zone} bölgesine, {m} m\'ye kadar götürür.',
     bossCaught: 'EFSANEVİ AV: {boss}!', victory: 'Kraken\'i yakaladın!',
-    victoryText: 'Akdeniz artık senin. Koleksiyonu tamamlamak ve tüm altın balıkları bulmak için avlanmaya devam et.',
+    victoryText: "Akdeniz artık senin… ama pusulan çıldırdı: Bermuda Şeytan Üçgeni seni çağırıyor.",
     sDives: 'Dalışlar', sDepth: 'Derinlik rekoru', sCombo: 'Kombo rekoru', sEarn: 'Toplam kazanç', sTime: 'Süre', sGold: 'Altın',
     ok: 'Harika!', collect: 'Topla', rarity: ['Yaygın', 'Yaygın', 'Seyrek', 'Nadir', 'Efsanevi'], bossR: 'Boss',
-    zones: ['Kıyı', 'Resif', 'Açık deniz', 'Derinlik'],
-    boats: ['Gozzo', 'Balıkçı teknesi', 'Trol teknesi', 'Araştırma gemisi'],
+    zones: ['Kıyı', 'Resif', 'Açık deniz', 'Derinlik', "Bermuda Şeytan Üçgeni"],
+    victory2: "Megalodon'u yakaladın!", victory2Text: "Üçgenin sırrını çözdün. Koleksiyonu tamamlamak ve tüm altın ve gökkuşağı balıkları bulmak için avlanmaya devam et.", newsT: "Yeni: Bermuda Şeytan Üçgeni!", newsText: "Derinliğin altında {m} m'ye inen yeni bir bölge açıldı: soyu tükenmiş canlılar, bir Atlantis nöbetçisi ve Hayalet Megalodon. Denizaltı gerekiyor: mağazada seni bekliyor.", needCatch: "{n} × {fish} yakala", needBoatX: "Gerekli: {boat}",
+    boats: ['Gozzo', 'Balıkçı teknesi', 'Trol teknesi', 'Araştırma gemisi', "Denizaltı"],
     effLine: '{a} m → <b>{b} m</b>', effHook: '{a} → <b>{b}</b> balık/dalış',
     effBait: 'Nadir ×{a} → <b>×{b}</b> · Altın %{c} → <b>%{d}</b>', effBoat: '{zone}, {m} m\'ye kadar · <b>satış +%25</b>',
     maxed: 'Maksimum', adFail: 'Video şu an yok, sonra tekrar dene', firstBuy: 'İlk geliştirmeni satın al!',
@@ -494,7 +510,7 @@ const TXT = {
     chestUp: '¡{up} Nv {lv} gratis!', chestBait: 'Cebo dorado para {n} inmersiones: raros ×{r}, oro +{g}%', chestCoins: '¡Un buen botín!',
     boost: '✦ Cebo dorado: {n} inmersiones', introBoss: 'Algún día será tuyo…', introSub: 'El Mero Gigante te espera a {m} m',
     introZoneSub: '5 peces nuevos hasta {m} m · {boss} te espera en el fondo', newHook: '¡Anzuelo nuevo!', newHookText: 'Desde ahora pescas con: {name}',
-    hooks: ['Anzuelo de hierro', 'Anzuelo de bronce', 'Anzuelo doble de oro', 'Tridente legendario'], drag: 'Arrastra para esquivar los peces', grab: '¡Ahora atrápalos todos!',
+    hooks: ['Anzuelo de hierro', 'Anzuelo de bronce', 'Anzuelo doble de oro', 'Tridente legendario', "Anzuelo de meteorito"], drag: 'Arrastra para esquivar los peces', grab: '¡Ahora atrápalos todos!',
     shop: 'Tienda', album: 'Colección', line: 'Sedal', hook: 'Anzuelo', bait: 'Cebo', boat: 'Barco',
     max: 'MÁX', haul: '¡Tu captura!', double: 'Ver anuncio ×2', cont: 'Continuar', best: 'Mejor combo',
     fishN: '{n} peces', fish1: '1 pez', newSp: 'NUEVO', zoneDone: '¡{zone} completada! +25% de valor',
@@ -512,11 +528,12 @@ const TXT = {
     fullShort: 'LLENA', nothing: 'Bodega vacía', perMinU: '/min',
     newBoat: '¡Barco nuevo en la tienda!', newBoatText: 'El {boat} te lleva a la zona {zone}, hasta {m} m.',
     bossCaught: 'CAPTURA LEGENDARIA: {boss}!', victory: '¡Atrapaste al Kraken!',
-    victoryText: 'El Mediterráneo es tuyo. Sigue pescando para completar la colección y encontrar todos los peces dorados.',
+    victoryText: "El Mediterráneo es tuyo… pero la brújula se ha vuelto loca: algo te llama desde el Triángulo de las Bermudas.",
     sDives: 'Inmersiones', sDepth: 'Récord de profundidad', sCombo: 'Récord de combo', sEarn: 'Ganancia total', sTime: 'Tiempo', sGold: 'Dorados',
     ok: '¡Genial!', collect: 'Cobrar', rarity: ['Común', 'Común', 'Poco común', 'Raro', 'Legendario'], bossR: 'Jefe',
-    zones: ['Costa', 'Arrecife', 'Mar abierto', 'Abismo'],
-    boats: ['Gozzo', 'Barco pesquero', 'Arrastrero', 'Buque oceanográfico'],
+    zones: ['Costa', 'Arrecife', 'Mar abierto', 'Abismo', "Triángulo de las Bermudas"],
+    victory2: "¡Has capturado al Megalodón!", victory2Text: "Has resuelto el misterio del Triángulo. Sigue pescando para completar la colección y encontrar todos los dorados y arcoíris.", newsT: "Novedad: ¡el Triángulo de las Bermudas!", newsText: "Bajo el Abismo se ha abierto una zona nueva, hasta {m} m: criaturas extintas, un centinela de la Atlántida y el Megalodón espectral. Necesitas el Submarino: está en la tienda.", needCatch: "Captura {n} × {fish}", needBoatX: "Necesitas: {boat}",
+    boats: ['Gozzo', 'Barco pesquero', 'Arrastrero', 'Buque oceanográfico', "Submarino"],
     effLine: '{a} m → <b>{b} m</b>', effHook: '{a} → <b>{b}</b> peces por inmersión',
     effBait: 'Raros ×{a} → <b>×{b}</b> · Oro {c}% → <b>{d}%</b>', effBoat: '{zone} hasta {m} m · <b>venta +25%</b>',
     maxed: 'Al máximo', adFail: 'Vídeo no disponible, inténtalo más tarde', firstBuy: '¡Compra tu primera mejora!',
@@ -534,7 +551,7 @@ const TXT = {
     chestUp: '{up} Nv {lv} grátis!', chestBait: 'Isca dourada por {n} mergulhos: raros ×{r}, ouro +{g}%', chestCoins: 'Um belo tesouro!',
     boost: '✦ Isca dourada: {n} mergulhos', introBoss: 'Um dia ele será seu…', introSub: 'O Mero Gigante espera a {m} m',
     introZoneSub: '5 peixes novos até {m} m · {boss} espera no fundo', newHook: 'Anzol novo!', newHookText: 'Agora você pesca com: {name}',
-    hooks: ['Anzol de ferro', 'Anzol de bronze', 'Anzol duplo de ouro', 'Tridente lendário'], drag: 'Arraste para desviar dos peixes', grab: 'Agora pegue todos!',
+    hooks: ['Anzol de ferro', 'Anzol de bronze', 'Anzol duplo de ouro', 'Tridente lendário', "Anzol de meteorito"], drag: 'Arraste para desviar dos peixes', grab: 'Agora pegue todos!',
     shop: 'Loja', album: 'Coleção', line: 'Linha', hook: 'Anzol', bait: 'Isca', boat: 'Barco',
     max: 'MÁX', haul: 'Sua pesca!', double: 'Ver anúncio ×2', cont: 'Continuar', best: 'Melhor combo',
     fishN: '{n} peixes', fish1: '1 peixe', newSp: 'NOVO', zoneDone: '{zone} completa! +25% de valor',
@@ -552,11 +569,12 @@ const TXT = {
     fullShort: 'CHEIO', nothing: 'Porão vazio', perMinU: '/min',
     newBoat: 'Barco novo na loja!', newBoatText: 'O {boat} leva você à zona {zone}, até {m} m.',
     bossCaught: 'PESCA LENDÁRIA: {boss}!', victory: 'Você pegou o Kraken!',
-    victoryText: 'O Mediterrâneo é seu. Continue pescando para completar a coleção e encontrar todos os peixes dourados.',
+    victoryText: "O Mediterrâneo é seu… mas a bússola enlouqueceu: algo chama do Triângulo das Bermudas.",
     sDives: 'Mergulhos', sDepth: 'Recorde de profundidade', sCombo: 'Recorde de combo', sEarn: 'Ganho total', sTime: 'Tempo', sGold: 'Dourados',
     ok: 'Demais!', collect: 'Recolher', rarity: ['Comum', 'Comum', 'Incomum', 'Raro', 'Lendário'], bossR: 'Chefe',
-    zones: ['Costa', 'Recife', 'Mar aberto', 'Abismo'],
-    boats: ['Gozzo', 'Barco de pesca', 'Traineira', 'Navio oceanográfico'],
+    zones: ['Costa', 'Recife', 'Mar aberto', 'Abismo', "Triângulo das Bermudas"],
+    victory2: "Você capturou o Megalodonte!", victory2Text: "Você desvendou o mistério do Triângulo. Continue pescando para completar a coleção e achar todos os dourados e arco-íris.", newsT: "Novidade: o Triângulo das Bermudas!", newsText: "Abaixo do Abismo abriu uma zona nova, até {m} m: criaturas extintas, uma sentinela da Atlântida e o Megalodonte espectral. Você precisa do Submarino: ele está na loja.", needCatch: "Capture {n} × {fish}", needBoatX: "Precisa de: {boat}",
+    boats: ['Gozzo', 'Barco de pesca', 'Traineira', 'Navio oceanográfico', "Submarino"],
     effLine: '{a} m → <b>{b} m</b>', effHook: '{a} → <b>{b}</b> peixes por mergulho',
     effBait: 'Raros ×{a} → <b>×{b}</b> · Ouro {c}% → <b>{d}%</b>', effBoat: '{zone} até {m} m · <b>venda +25%</b>',
     maxed: 'No máximo', adFail: 'Vídeo indisponível, tente mais tarde', firstBuy: 'Compre sua primeira melhoria!',
@@ -574,7 +592,7 @@ const TXT = {
     chestUp: '{up} Lv {lv} gratis!', chestBait: 'Goldköder für {n} Tauchgänge: selten ×{r}, Gold +{g}%', chestCoins: 'Ein schöner Schatz!',
     boost: '✦ Goldköder: {n} Tauchgänge', introBoss: 'Eines Tages gehört er dir…', introSub: 'Der Riesenzackenbarsch wartet in {m} m',
     introZoneSub: '5 neue Fische bis {m} m · {boss} wartet am Grund', newHook: 'Neuer Haken!', newHookText: 'Ab jetzt angelst du mit: {name}',
-    hooks: ['Eisenhaken', 'Bronzehaken', 'Goldener Doppelhaken', 'Legendärer Dreizack'], drag: 'Ziehen, um den Fischen auszuweichen', grab: 'Jetzt schnapp sie dir alle!',
+    hooks: ['Eisenhaken', 'Bronzehaken', 'Goldener Doppelhaken', 'Legendärer Dreizack', "Meteoritenhaken"], drag: 'Ziehen, um den Fischen auszuweichen', grab: 'Jetzt schnapp sie dir alle!',
     shop: 'Laden', album: 'Sammlung', line: 'Schnur', hook: 'Haken', bait: 'Köder', boat: 'Boot',
     max: 'MAX', haul: 'Dein Fang!', double: 'Werbung ×2', cont: 'Weiter', best: 'Beste Kombo',
     fishN: '{n} Fische', fish1: '1 Fisch', newSp: 'NEU', zoneDone: '{zone} komplett! +25% Wert',
@@ -592,11 +610,12 @@ const TXT = {
     fullShort: 'VOLL', nothing: 'Laderaum leer', perMinU: '/Min',
     newBoat: 'Neues Boot im Laden!', newBoatText: 'Das {boat} bringt dich in die Zone {zone}, bis {m} m.',
     bossCaught: 'LEGENDÄRER FANG: {boss}!', victory: 'Du hast den Kraken gefangen!',
-    victoryText: 'Das Mittelmeer gehört dir. Angle weiter, um die Sammlung zu vervollständigen und alle goldenen Fische zu finden.',
+    victoryText: "Das Mittelmeer gehört dir … aber dein Kompass spielt verrückt: Etwas ruft aus dem Bermudadreieck.",
     sDives: 'Tauchgänge', sDepth: 'Tiefenrekord', sCombo: 'Kombo-Rekord', sEarn: 'Gesamtverdienst', sTime: 'Zeit', sGold: 'Goldene',
     ok: 'Super!', collect: 'Kassieren', rarity: ['Häufig', 'Häufig', 'Ungewöhnlich', 'Selten', 'Legendär'], bossR: 'Boss',
-    zones: ['Küste', 'Riff', 'Offenes Meer', 'Tiefsee'],
-    boats: ['Gozzo', 'Fischerboot', 'Trawler', 'Forschungsschiff'],
+    zones: ['Küste', 'Riff', 'Offenes Meer', 'Tiefsee', "Bermudadreieck"],
+    victory2: "Du hast den Megalodon gefangen!", victory2Text: "Du hast das Rätsel des Dreiecks gelöst. Angle weiter, um die Sammlung zu füllen und alle goldenen und Regenbogenfische zu finden.", newsT: "Neu: das Bermudadreieck!", newsText: "Unter der Tiefsee gibt es eine neue Zone bis {m} m: ausgestorbene Wesen, einen Wächter von Atlantis und den Geister-Megalodon. Du brauchst das U-Boot: Es wartet im Laden.", needCatch: "Fang {n} × {fish}", needBoatX: "Benötigt: {boat}",
+    boats: ['Gozzo', 'Fischerboot', 'Trawler', 'Forschungsschiff', "U-Boot"],
     effLine: '{a} m → <b>{b} m</b>', effHook: '{a} → <b>{b}</b> Fische pro Tauchgang',
     effBait: 'Selten ×{a} → <b>×{b}</b> · Gold {c}% → <b>{d}%</b>', effBoat: '{zone} bis {m} m · <b>Verkauf +25%</b>',
     maxed: 'Maximal', adFail: 'Video nicht verfügbar, versuch es später', firstBuy: 'Kauf dein erstes Upgrade!',
@@ -634,6 +653,12 @@ const NAMES = {   // it, en, ru, tr, es, pt, de (same order as LANGS)
   murena_regina: ["Murena Regina", "Moray Queen", "Королева мурен", "Müren Kraliçesi", "Reina Morena", "Rainha Moreia", "Muränenkönigin"],
   pesce_spada_re: ["Pesce Spada Re", "Swordfish King", "Король меч-рыб", "Kılıç Balığı Kralı", "Rey Pez Espada", "Rei Espadarte", "Schwertfischkönig"],
   kraken: ["Kraken", "Kraken", "Кракен", "Kraken", "Kraken", "Kraken", "Kraken"],
+  celacanto: ["Celacanto", "Coelacanth", "Целакант", "Kölakant", "Celacanto", "Celacanto", "Quastenflosser"],
+  anomalocaris: ["Anomalocaris", "Anomalocaris", "Аномалокарис", "Anomalokaris", "Anomalocaris", "Anomalocaris", "Anomalocaris"],
+  dunkleosteo: ["Dunkleosteo", "Dunkleosteus", "Дунклеостей", "Dunkleosteus", "Dunkleosteus", "Dunkleosteus", "Dunkleosteus"],
+  elicoprione: ["Elicoprione", "Helicoprion", "Геликоприон", "Helikoprion", "Helicoprion", "Helicoprion", "Helicoprion"],
+  sentinella: ["Sentinella di Atlantide", "Sentinel of Atlantis", "Страж Атлантиды", "Atlantis Nöbetçisi", "Centinela de la Atlántida", "Sentinela da Atlântida", "Wächter von Atlantis"],
+  megalodonte: ["Megalodonte Spettrale", "Ghost Megalodon", "Призрачный мегалодон", "Hayalet Megalodon", "Megalodón espectral", "Megalodonte espectral", "Geister-Megalodon"],
 };
 let LANG = 'it';
 const t = (k, vars) => {
@@ -673,6 +698,13 @@ const LOOK = {
   murena_regina: { shape: 'eel', h: .22, back: '#2e1f12', body: '#4a3219', belly: '#7a5a2e', fin: '#3a2715', pat: 'spots', pc: '#f0d060', crown: true, pearls: true },
   pesce_spada_re: { shape: 'sword', h: .27, back: '#1f2c4d', body: '#465a86', belly: '#d4dcea', fin: '#1a2542', pat: 'none', tail: 'crescent', dorsal: 2.1, crown: true, goldBill: true, moustache: true },
   kraken:   { shape: 'kraken', h: .75, back: '#6e1f22', body: '#9c2d2f', belly: '#d86a5f', fin: '#7d2427', pat: 'spots', pc: '#e59a8c' },
+  // Bermuda Triangle: animals that died out long ago, and a machine that outlived its city
+  celacanto: { shape: 'coel', h: .44, back: '#122a66', body: '#2a55ad', belly: '#8fb2ea', fin: '#3a69c0', pc: '#eef4ff', rim: '#0a1638', glow: '#cfe8ff' },
+  anomalocaris: { shape: 'anomalo', h: .5, back: '#7d2632', body: '#cf5546', belly: '#ffc7a4', fin: '#ef8a5c', pc: '#ffe7ad', rim: '#3d0f15', glow: '#ff6a5a' },
+  dunkleosteo: { shape: 'dunk', h: .46, back: '#22334a', body: '#3d5876', belly: '#93aabd', fin: '#2a425c', pc: '#a8926c', rim: '#0e1a28', glow: '#ffb84a' },
+  elicoprione: { shape: 'helico', h: .34, back: '#2e3352', body: '#5a6690', belly: '#d9dff0', fin: '#3a4268', pc: '#8f9bc4', rim: '#11142a', glow: '#ffd36a' },
+  sentinella: { shape: 'automa', h: .44, back: '#182c30', body: '#3c6767', belly: '#9ed3c6', fin: '#c9a646', pc: '#7fe9ff', rim: '#081315', glow: '#7fe9ff', move: 'blink' },
+  megalodonte: { shape: 'megalo', h: .32, back: '#49cdbd', body: '#8ff0e3', belly: '#eafffb', fin: '#3bb7a8', pc: '#ffffff', rim: '#d6fff8' },
 };
 const RARITY_COL = ['#7d8a96', '#7d8a96', '#22a65a', '#2f7fe0', '#ff8a00'];
 
@@ -684,6 +716,7 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const SP = {}; CONFIG.species.forEach((s, i) => { s.idx = i; s.i = i % 5; SP[s.id] = s; });
 CONFIG.bosses.forEach((b, i) => { b.boss = true; b.i = 5; SP[b.id] = b; });
 const ZONE_SPECIES = CONFIG.zones.map((_, z) => CONFIG.species.filter(s => s.z === z));
+const LASTZ = CONFIG.zones.length - 1, KRAKEN_Z = 3;   // last zone (Bermuda Triangle) and the Kraken's zone, the first ending
 function fmt(n) {
   n = Math.floor(n);
   if (n < 100000) return n.toLocaleString(LOCALE[LANG]);
@@ -782,9 +815,9 @@ const PF = BR ? (() => {
 };
 const SAVE_VERSION = 1;
 function defaultState() {
-  return { v: SAVE_VERSION, m: CONFIG.startMoney, te: 0, l: [0, 0, 0, 0], b: [0, 0, 0, 0],
+  return { v: SAVE_VERSION, m: CONFIG.startMoney, te: 0, l: [0, 0, 0, 0], b: CONFIG.zones.map(() => 0),
     c: CONFIG.species.map(() => 0), n: CONFIG.species.map(() => 0), cr: 0, cw: 0, cu: [0, 0, 0], ls: Date.now(), tu: 0, gb: 0,
-    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0, bh: 0, rb: 0 }, win: 0, snd: 1, q: 0, rl: 0, lk: 0, hh: [], wd: 0, fz: 0, ar: 0, nt: 0, br: 0 };
+    st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0, bh: 0, rb: 0 }, win: 0, snd: 1, q: 0, rl: 0, lk: 0, hh: [], wd: 0, fz: 0, ar: 0, nt: 0, br: 0, nw: 0 };
 }
 function migrate(o) {
   const d = defaultState();
@@ -793,7 +826,8 @@ function migrate(o) {
   const noQuests = o.q === undefined;
   for (const k in d) if (o[k] === undefined) o[k] = d[k];
   for (const k in d.st) if (o.st[k] === undefined) o.st[k] = d.st[k];
-  ['l', 'b'].forEach(k => { while (o[k].length < 4) o[k].push(0); });
+  while (o.l.length < 4) o.l.push(0);   // line, hook, bait, boat
+  while (o.b.length < CONFIG.zones.length) o.b.push(0);   // one boss per zone: saves from before a new zone get its slot
   while (o.cu.length < 3) o.cu.push(0);
   ['c', 'n'].forEach(k => { while (o[k].length < CONFIG.species.length) o[k].push(0); });
   if (noQuests && o.st.d > CONFIG.onboarding.freeDives) { o.q = CONFIG.onboarding.quests.length; o.rl = 1; }   // players from before the onboarding skip it
@@ -926,6 +960,18 @@ function crewCap(lv = S.cu[1]) { return crewRate() * 60 * CONFIG.crew.holdHours[
 function crewAccrue(sec) { if (!S.cr || sec <= 0) return 0; const b = S.cw; S.cw = Math.min(crewCap(), S.cw + crewRate() / 60 * sec); return S.cw - b; }
 const crewFull = () => S.cr && S.cw >= crewCap() - 0.5;
 const fmtH = h => h < 1 ? Math.round(h * 60) + ' min' : h + ' h';
+// Bermuda Triangle: the next Line level also asks for creatures already caught (CONFIG.upgrades.line.need); null = nothing missing
+function lineNeed(lv = S.l[0]) { const q = CONFIG.upgrades.line.need[lv]; if (!q) return null; const sp = SP[q[0]], have = S.n[sp.idx]; return have >= q[1] ? null : { sp, n: q[1], have }; }
+// the top Hook and Bait levels belong to the last boat
+const deepLocked = k => S.l[k === 'hook' ? 1 : 2] >= CONFIG.upgrades[k].deep && S.l[3] < LASTZ;
+// upgrades a chest or the wheel may give for free: never past a lock of the shop
+function freeUpgradeOpts() {
+  const U = CONFIG.upgrades, o = [];
+  if (S.l[0] < U.line.values.length - 1 && U.line.values[S.l[0]] < boatFloor() && !lineNeed()) o.push(0);
+  if (S.l[1] < U.hook.values.length - 1 && !deepLocked('hook')) o.push(1);
+  if (S.l[2] < U.bait.levels - 1 && !deepLocked('bait')) o.push(2);
+  return o;
+}
 
 /* ============================ spawning =========================== */
 const startDepth = s => zoneTop(s.z) + CONFIG.speciesBand[s.i] * (CONFIG.zones[s.z].floor - zoneTop(s.z));
@@ -1019,7 +1065,7 @@ function startIntro(z = 0) {
   teasers = []; chest = null; fishes = [];
   maxPx = Z.floor * PX;
   ZONE_SPECIES[z].forEach((sp, i) => {
-    const f = makeFish(sp, 0, 0); f.y = maxPx - 165 - i * 60; f.x = VW * (.22 + ((i * .41) % .56)); f.v *= .5; f.label = true;
+    const f = makeFish(sp, 0, 0); f.y = maxPx - 160 - i * 58; f.x = VW * (.22 + ((i * .41) % .56)); f.v *= .5; f.label = true; f.rainbow = false;   // the intro shows each species as it normally looks
     fishes.push(f);
   });
   boss = makeBoss(z, maxPx); boss.locked = false; boss.sleep = true;
@@ -1150,9 +1196,11 @@ function bossEncounter() {
     caught.unshift({ sp: boss.sp, lk: boss.lk, golden: false, val: Math.round(boss.sp.value * sellMult(z)), mult: 1, sw: 0, boss: true });
     shake = 16; flash = .75; sfx.boss(); cine = { type: 'catch', t: 0 };
     bossBanner = { txt: t('bossCaught', { boss: up(nm(boss.sp.id)) }), life: 2.6 };
-    if (z < 3) pendingModals.push({ type: 'boat', z: z + 1 });
+    // S.win: 1 = Kraken (the Mediterranean ending), 2 = the last boss
+    if (z === KRAKEN_Z && S.win < 1) { S.win = 1; pendingModals.push({ type: 'win', z }); }
+    if (z === LASTZ && z > KRAKEN_Z && S.win < 2) { S.win = 2; pendingModals.push({ type: 'win', z }); }
+    if (z < LASTZ) pendingModals.push({ type: 'boat', z: z + 1 });
     if (z === 0 && !S.cr) { S.cr = 1; pendingModals.push({ type: 'crew' }); }
-    if (z === 3 && !S.win) { S.win = 1; pendingModals.push({ type: 'win' }); }
     boss = null; save();
   } else {
     shake = 10; sfx.deny();
@@ -1222,7 +1270,24 @@ function update(dt) {
   const vy0 = camY - 200, vy1 = camY + VH + 200;
   for (const f of fishes) {
     if (f.gone || f.y < vy0 - 600 || f.y > vy1 + 600) continue;
-    f.ph += dt; f.x += f.dir * f.v * dt;
+    f.ph += dt;
+    f.x += f.dir * f.v * dt;
+    // the sentinel cloaks: it fades out and reappears a little further (never onto the hook)
+    if (f.lk.move === 'blink' && !f.frenzy && !intro) {
+      if (f.bk === undefined) { f.bk = -1; f.bt = rand(1.2, 3); }
+      if (f.bk < 0) { if ((f.bt -= dt) <= 0) f.bk = 0; }
+      else {
+        const before = f.bk; f.bk += dt / .5;
+        if (before < .5 && f.bk >= .5) {   // fully faded: jump
+          const mg = f.w * .5 + 10; let nx = clamp(f.x + (Math.random() < .5 ? -1 : 1) * rand(70, 130), mg, VW - mg);
+          const near = (phase === 'down' || phase === 'up') && Math.abs(f.y - hook.y) < 190;
+          if (near && Math.abs(nx - hook.x) < 85) nx = clamp(2 * f.x - nx, mg, VW - mg);
+          if (!(near && Math.abs(nx - hook.x) < 85)) f.x = nx;
+        }
+        if (f.bk >= 1) { f.bk = -1; f.bt = rand(2.2, 3.6); }
+      }
+      f.alpha = f.bk < 0 ? 1 : Math.abs(f.bk - .5) * 2; f.hid = f.alpha < .45;   // while faded it can be neither bumped nor caught
+    }
     const m = f.w * .5 + 4;
     if (f.enter) { if (f.x > m && f.x < VW - m) f.enter = false; }
     else if (f.x < m) { f.x = m; f.dir = 1; } else if (f.x > VW - m) { f.x = VW - m; f.dir = -1; }
@@ -1262,7 +1327,7 @@ function update(dt) {
       if (Math.random() < dt * 8) Snd.ok() && sfx.reel();
       if (grace <= 0 && !turbo) {
         if (!freeDive()) for (const f of fishes) {
-          if (f.gone || f.passed || Math.abs(f.y - hook.y) > 80) continue;
+          if (f.gone || f.passed || f.hid || Math.abs(f.y - hook.y) > 80) continue;
           if (hitTest(f, CONFIG.hookRadius)) {
             if (armorOn && shieldable(f)) {   // the armored hook passes through the first fish you already own; it stays in the water for the way up
               armorOn = false; f.passed = true; shake = Math.max(shake, 5); sfx.shield();
@@ -1297,7 +1362,7 @@ function update(dt) {
         if (dy > -20 && dy < 140 && Math.abs(dx) < CONFIG.boosts.net.pull + f.w * .5) { f.x += dx * Math.min(1, dt * CONFIG.boosts.net.pullK); f.y += Math.sign(dy) * Math.min(Math.abs(dy), 25 * dt); }
       }
       for (const f of fishes) {
-        if (f.gone || Math.abs(f.y - hook.y) > 80 || (full && !bonusCatch(f))) continue;
+        if (f.gone || f.hid || Math.abs(f.y - hook.y) > 80 || (full && !bonusCatch(f))) continue;
         if (hitTest(f, cr, reach)) attach(f, false);
       }
       if (hook.y <= 0) { if (frenzy) endFrenzy(); startSell(); }
@@ -1398,7 +1463,7 @@ function updateUParts(dt) {
 function moneyTarget() { const r = moneyPill.getBoundingClientRect(); return { x: (r.left + 19) / scale, y: (r.top + r.height / 2) / scale }; }
 
 /* ============================ render ============================= */
-const WATER = [[0, [60, 198, 232]], [30, [40, 164, 214]], [60, [29, 134, 192]], [150, [19, 90, 154]], [300, [11, 50, 112]], [450, [7, 29, 74]], [600, [4, 12, 38]], [2000, [2, 6, 20]]];
+const WATER = [[0, [60, 198, 232]], [30, [40, 164, 214]], [60, [29, 134, 192]], [150, [19, 90, 154]], [300, [11, 50, 112]], [450, [7, 29, 74]], [600, [4, 12, 38]], [660, [16, 10, 54]], [820, [34, 14, 78]], [1000, [20, 8, 52]], [2000, [6, 2, 20]]];
 function waterAt(m) {
   if (m <= 0) return WATER[0][1];
   for (let i = 1; i < WATER.length; i++) if (m <= WATER[i][0]) {
@@ -1460,6 +1525,18 @@ function drawBackdrop() {
       g.fillStyle = sg; g.beginPath(); g.arc(sx, sy, 150, 0, 7); g.fill();
       const sd = g.createLinearGradient(0, sy - 36, 0, sy + 36); sd.addColorStop(0, '#fff3c4'); sd.addColorStop(1, '#ff8a3d');
       g.fillStyle = sd; g.beginPath(); g.arc(sx, sy, 36, 0, 7); g.fill();
+    } else if (sc.light === 'storm') {
+      // a few stars between the clouds, and green lightning now and then
+      for (let i = 0; i < 18; i++) { const x = (i * 131.7) % VW, y = waterY - 60 - ((i * 71.3) % (VH * .8)); g.fillStyle = `rgba(210,200,255,${.25 + .35 * Math.abs(Math.sin(clock + i))})`; g.beginPath(); g.arc(x, y, 1, 0, 7); g.fill(); }
+      const T = 5.3, k = clock % T, n = Math.floor(clock / T);
+      if (k < .45) {
+        const a = k < .08 ? 1 : k < .16 ? .25 : k < .22 ? .8 : Math.max(0, 1 - (k - .22) / .23);
+        g.fillStyle = `rgba(150,255,205,${a * .2})`; g.fillRect(X0(), -10, XW(), waterY + 12);
+        let x = 40 + (n * 137) % (VW - 80), y = waterY - VH * .5;
+        g.strokeStyle = `rgba(200,255,225,${a})`; g.lineWidth = 2.5; g.lineJoin = 'round'; g.beginPath(); g.moveTo(x, y);
+        for (let i = 1; i <= 7; i++) { x += (((n * 31 + i * 17) % 9) - 4) * 6; y += (waterY - 40 - (waterY - VH * .5)) / 7; g.lineTo(x, y); }
+        g.stroke();
+      }
     } else {
       for (let i = 0; i < 46; i++) {
         const x = (i * 97.3) % VW, y = waterY - 20 - ((i * 53.7) % (VH * .9)), tw = .4 + .6 * Math.abs(Math.sin(clock * 1.5 + i));
@@ -1513,6 +1590,7 @@ const SCENES = [
   { sky: ['#4aa8e6', '#cdeefa'], light: 'day', clouds: 3, cloud: 'rgba(255,255,255,.92)', rays: 1, water: [30, 170, 190], waterK: .35, draw: y => drawCliffs(y) },
   { sky: ['#e8735a', '#ffd6a0'], light: 'sunset', clouds: 3, cloud: 'rgba(255,200,180,.85)', rays: .7, water: [70, 110, 160], waterK: .5, draw: y => drawOpenSea(y), reflect: y => drawGlitter(y, VW * .7, '255,190,120') },
   { sky: ['#060a22', '#2a2f6a'], light: 'moon', clouds: 2, cloud: 'rgba(70,80,130,.55)', rays: .15, water: [10, 26, 64], waterK: .85, draw: y => drawNightCoast(y), reflect: y => drawGlitter(y, VW * .76, '220,230,255') },
+  { sky: ['#0d0626', '#3a2168'], light: 'storm', clouds: 4, cloud: 'rgba(38,26,74,.9)', rays: .2, water: [34, 20, 86], waterK: .9, draw: y => drawBermuda(y), reflect: y => drawGlitter(y, VW * .5, '150,255,215') },
 ];
 function drawGlitter(waterY, x, col) {
   for (let i = 0; i < 16; i++) {
@@ -1579,6 +1657,33 @@ function drawNightCoast(waterY) {
   // lights of a village far away
   for (let i = 0; i < 6; i++) { g.fillStyle = `rgba(255,210,120,${.5 + .5 * Math.abs(Math.sin(clock + i))})`; g.fillRect(250 + i * 11, y - 10 - (i % 3) * 3, 2, 2); }
 }
+// boat 5: the Triangle itself, three beams of light meeting above the sea, a ghost galleon on the horizon
+function drawBermuda(waterY) {
+  const y = waterY - 1, A = [38, y], B = [VW - 38, y], C = [VW / 2, y - 212], pu = .6 + Math.sin(clock * 1.4) * .25;
+  // green haze low on the horizon
+  const hz = g.createLinearGradient(0, y - 90, 0, y); hz.addColorStop(0, 'rgba(110,255,200,0)'); hz.addColorStop(1, 'rgba(110,255,200,.28)');
+  g.fillStyle = hz; g.fillRect(X0(), y - 90, XW(), 90);
+  // the triangle: a faint veil inside, soft wide strokes, a bright thin core
+  const tg = g.createLinearGradient(0, C[1], 0, y); tg.addColorStop(0, `rgba(140,255,215,${.2 * pu})`); tg.addColorStop(1, 'rgba(140,255,215,0)');
+  g.fillStyle = tg; g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(C[0], C[1]); g.lineTo(B[0], B[1]); g.closePath(); g.fill();
+  g.lineJoin = 'round';
+  for (const [w, a] of [[10, .12], [5, .22], [1.8, .9]]) {
+    g.strokeStyle = `rgba(170,255,225,${a * pu})`; g.lineWidth = w;
+    g.beginPath(); g.moveTo(A[0], A[1]); g.lineTo(C[0], C[1]); g.lineTo(B[0], B[1]); g.stroke();
+  }
+  const cg = g.createRadialGradient(C[0], C[1], 2, C[0], C[1], 46); cg.addColorStop(0, `rgba(230,255,245,${.9 * pu})`); cg.addColorStop(1, 'rgba(150,255,215,0)');
+  g.fillStyle = cg; g.beginPath(); g.arc(C[0], C[1], 46, 0, 7); g.fill();
+  // sparks rising along the two beams
+  for (let i = 0; i < 10; i++) { const k = (clock * .22 + i / 10) % 1, P = i % 2 ? A : B, x = P[0] + (C[0] - P[0]) * k, yy = P[1] + (C[1] - P[1]) * k; g.fillStyle = `rgba(230,255,245,${Math.sin(k * Math.PI) * .9})`; g.beginPath(); g.arc(x, yy, 1.6, 0, 7); g.fill(); }
+  // a ghost galleon far away, listing, half its sails gone
+  g.save(); g.translate(362, y - 2); g.rotate(-.09); g.scale(.82, .82); g.fillStyle = 'rgba(14,8,40,.9)';
+  g.beginPath(); g.moveTo(-34, 0); g.lineTo(-30, -11); g.lineTo(26, -11); g.lineTo(36, -18); g.lineTo(30, 0); g.closePath(); g.fill();
+  g.fillRect(-18, -46, 2.5, 36); g.fillRect(8, -54, 2.5, 44);
+  g.beginPath(); g.moveTo(-15, -44); g.lineTo(-2, -38); g.lineTo(-15, -26); g.closePath(); g.fill();
+  g.beginPath(); g.moveTo(11, -52); g.quadraticCurveTo(28, -42, 11, -30); g.closePath(); g.fill();
+  g.fillStyle = `rgba(150,255,215,${.5 + .4 * Math.sin(clock * 3)})`; g.fillRect(-6, -9, 3, 3); g.fillRect(12, -9, 3, 3);
+  g.restore();
+}
 function drawCoast(waterY) {
   // far Sardinian coast: hills, white houses, a lighthouse
   const y = waterY - 1;
@@ -1632,6 +1737,7 @@ function drawSeaWorld() {
       pill(s.x, s.y - s.w * Math.max(.3, s.lk.h) * .5 - 16, (has ? nm(s.sp.id) : '???') + ' · ' + Math.ceil(startDepth(s.sp)) + ' m', 'rgba(6,26,48,.72)', true);
     }
   }
+  drawBermudaDeep(v0, v1);
   // ambient bubbles
   for (const p of parts) if (p.type === 'amb') { g.fillStyle = `rgba(220,245,255,${.25 * Math.min(1, p.life)})`; g.beginPath(); g.arc(p.x, p.y, p.r, 0, 7); g.fill(); }
   // fish
@@ -1648,12 +1754,12 @@ function drawSeaWorld() {
     for (const f of fishes) {
       if (f.gone || f.y < v0 || f.y > v1) continue;
       const ghost = phase === 'down' && f.y < turboPx;
-      if (ghost) g.globalAlpha = .45;
+      g.globalAlpha = (ghost ? .45 : 1) * (f.alpha ?? 1);
       drawFishAt(f.lk, f.x, f.y, f.w, f.dir, f.ph, fishMode(f));
-      if (ghost) g.globalAlpha = 1;
-      if (intro && f.label) pill(clamp(f.x, 70, VW - 70), f.y - f.hh * .5 - 14, nm(f.sp.id), RARITY_COL[f.sp.i], true);
+      g.globalAlpha = 1;
       if (f.ret) pill(clamp(f.x, 80, VW - 80), f.y - f.hh * .5 - 14, '👑 ' + nm(f.sp.id), '#c27c00', true);
     }
+    if (intro) for (const f of fishes) if (f.label) pill(clamp(f.x, 70, VW - 70), f.y - f.hh * .5 - 14, nm(f.sp.id), RARITY_COL[f.sp.i], true);   // names over every fish
     if (boss && !boss.gone && boss.y > v0 && boss.y < v1 + 100) drawBoss();
   }
   // surface waves + boat
@@ -1693,9 +1799,55 @@ function drawSeaWorld() {
   }
   for (const f of floats) if (f.world) floatText(f);
 }
+// what lies in the water of the Triangle: wrecks that never came home, as faint shapes behind the fish, and drifting signs of light
+function drawBermudaDeep(v0, v1) {
+  const top = CONFIG.zones[LASTZ - 1].floor * PX, col = 'rgba(150,120,235,.2)';
+  if (v1 < top || S.l[3] < LASTZ) return;
+  const at = m => m * PX, vis = (yy, r) => yy > v0 - r && yy < v1 + r;
+  let y = at(668);
+  if (vis(y, 140)) {   // galleon, bow down
+    g.save(); g.translate(92, y); g.rotate(.5); g.fillStyle = col;
+    g.beginPath(); g.moveTo(-70, 0); g.lineTo(-60, -22); g.lineTo(52, -22); g.lineTo(74, -40); g.lineTo(62, 0); g.quadraticCurveTo(0, 22, -70, 0); g.fill();
+    g.fillRect(-30, -96, 5, 76); g.fillRect(18, -112, 5, 92);
+    g.beginPath(); g.moveTo(-25, -92); g.quadraticCurveTo(6, -76, -25, -52); g.fill();
+    g.beginPath(); g.moveTo(23, -108); g.lineTo(50, -92); g.lineTo(40, -84); g.lineTo(23, -70); g.fill();
+    g.restore();
+  }
+  y = at(800);
+  if (vis(y, 130)) {   // an old propeller plane, nose in the dark
+    g.save(); g.translate(306, y); g.rotate(-.75); g.fillStyle = col;
+    g.beginPath(); g.ellipse(0, 0, 78, 13, 0, 0, 7); g.fill();
+    g.beginPath(); g.moveTo(14, -6); g.lineTo(-6, -86); g.lineTo(-26, -86); g.lineTo(-18, -6); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(14, 6); g.lineTo(-6, 86); g.lineTo(-26, 86); g.lineTo(-18, 6); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(-62, -4); g.lineTo(-84, -30); g.lineTo(-74, -2); g.closePath(); g.fill();
+    g.fillRect(74, -26, 4, 52);
+    g.restore();
+  }
+  y = at(918);
+  if (vis(y, 120)) {   // broken columns of something older
+    g.fillStyle = col;
+    [[60, 150, 0], [104, 96, .12], [330, 124, -.1]].forEach(([x, hh, r]) => { g.save(); g.translate(x, y + 60); g.rotate(r); g.fillRect(-13, -hh, 26, hh); g.fillRect(-18, -hh - 8, 36, 10); g.restore(); });
+  }
+  // signs of light: little triangles that drift up and fade in and out
+  for (let i = 0; i < 16; i++) {
+    const span = (CONFIG.zones[LASTZ].floor * PX - top), yy = top + ((i * 733 + clock * (7 + i % 4)) % span), x = (i * 97 + Math.sin(clock * .4 + i) * 22) % VW;
+    if (yy < v0 || yy > v1) continue;
+    const a = .22 + .22 * Math.sin(clock * 1.3 + i * 2), r = 5 + i % 4 * 2;
+    g.strokeStyle = `rgba(160,255,220,${a})`; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x, yy - r); g.lineTo(x + r * .87, yy + r * .5); g.lineTo(x - r * .87, yy + r * .5); g.closePath(); g.stroke();
+  }
+}
 function drawSeabed(y) {
   const z = S.l[3];
-  const sand = [['#e8d49a', '#caa968'], ['#8d7b62', '#5f513f'], ['#3d4a5e', '#27303e'], ['#1b1d2c', '#0e0f18']][z];
+  if (z === LASTZ && z > KRAKEN_Z) {   // the gate on the floor of the Triangle, behind its guardian
+    const cx = VW / 2, pu = .6 + Math.sin(clock * 1.6) * .25, T = [[cx - 150, y + 22], [cx, y - 230], [cx + 150, y + 22]];
+    const gg = g.createRadialGradient(cx, y - 70, 10, cx, y - 70, 230); gg.addColorStop(0, `rgba(130,255,210,${.34 * pu})`); gg.addColorStop(1, 'rgba(130,255,210,0)');
+    g.fillStyle = gg; g.beginPath(); g.arc(cx, y - 70, 230, 0, 7); g.fill();
+    g.lineJoin = 'round';
+    for (const [w, a] of [[16, .1], [8, .2], [3, .85]]) { g.strokeStyle = `rgba(170,255,225,${a * pu})`; g.lineWidth = w; g.beginPath(); g.moveTo(T[0][0], T[0][1]); g.lineTo(T[1][0], T[1][1]); g.lineTo(T[2][0], T[2][1]); g.stroke(); }
+    g.fillStyle = 'rgba(92,70,150,.9)';
+    [[34, 120], [78, 74], [322, 96], [366, 138]].forEach(([x, hh]) => { g.fillRect(x - 12, y + 20 - hh, 24, hh); g.fillRect(x - 17, y + 12 - hh, 34, 10); });
+  }
+  const sand = [['#e8d49a', '#caa968'], ['#8d7b62', '#5f513f'], ['#3d4a5e', '#27303e'], ['#1b1d2c', '#0e0f18'], ['#4a3478', '#1e1238']][z];
   const gr = g.createLinearGradient(0, y + 6, 0, y + 90);
   gr.addColorStop(0, sand[0]); gr.addColorStop(1, sand[1]);
   g.fillStyle = gr; g.beginPath(); g.moveTo(0, y + 20);
@@ -1705,7 +1857,7 @@ function drawSeabed(y) {
   // rocks & seaweed
   g.fillStyle = sand[1];
   [[30, 22], [90, 14], [310, 26], [365, 16]].forEach(([x, r]) => { g.beginPath(); g.ellipse(x, y + 18, r * 1.3, r, 0, Math.PI, 0); g.fill(); });
-  const wc = z >= 2 ? 'rgba(70,160,140,.8)' : 'rgba(60,170,90,.9)';
+  const wc = z >= LASTZ && z > KRAKEN_Z ? 'rgba(130,255,205,.8)' : z >= 2 ? 'rgba(70,160,140,.8)' : 'rgba(60,170,90,.9)';
   g.strokeStyle = wc; g.lineWidth = 4; g.lineCap = 'round';
   [50, 70, 250, 280, 340].forEach((x, i) => {
     g.beginPath(); g.moveTo(x, y + 18);
@@ -1730,11 +1882,12 @@ function drawBoat() {
   const lvl = S.l[3], { bob, tilt } = boatSway();
   const bx = BOAT_X();
   g.save(); g.translate(bx, bob); g.rotate(tilt);
-  const W = [120, 150, 175, 205][lvl];
+  const W = [120, 150, 175, 205, 216][lvl];
   // hull
   const hullCol = ['#fbfbf6', '#2f6fc8', '#d2443b', '#f3f3f3'][lvl], trim = ['#2d6fd0', '#f7f7f2', '#f7f7f2', '#f08a24'][lvl];
   g.fillStyle = 'rgba(0,30,60,.18)'; g.beginPath(); g.ellipse(0, 6, W * .55, 6, 0, 0, 7); g.fill();
-  if (lvl === 0) drawGozzo(W);
+  if (lvl === 4) drawSub(W);
+  else if (lvl === 0) drawGozzo(W);
   else {
     g.fillStyle = hullCol;
     g.beginPath(); g.moveTo(-W / 2, -26); g.lineTo(W / 2 + 8, -30); g.quadraticCurveTo(W / 2 - 6, 4, W / 2 - 22, 8); g.lineTo(-W / 2 + 16, 8); g.quadraticCurveTo(-W / 2, -4, -W / 2, -26); g.fill();
@@ -1742,13 +1895,13 @@ function drawBoat() {
     g.fillStyle = trim; g.fillRect(-W / 2 + 4, -24, W, 6);
   }
   // cabins
-  if (lvl >= 1) {
+  if (lvl >= 1 && lvl < 4) {
     g.fillStyle = lvl === 3 ? '#f7f7f7' : '#fbf6ea'; g.fillRect(-W * .32, -62, W * .36, 36);
     g.fillStyle = '#6cc3ef'; for (let i = 0; i < 3; i++) g.fillRect(-W * .29 + i * W * .11, -54, W * .08, 10);
     g.strokeStyle = '#334'; g.lineWidth = 2; g.beginPath(); g.moveTo(-W * .2, -62); g.lineTo(-W * .2, -84); g.stroke();
     g.fillStyle = '#e24'; g.fillRect(-W * .2, -84, 10, 6);
   }
-  if (lvl >= 2) { g.fillStyle = '#fbf6ea'; g.fillRect(-W * .28, -84, W * .24, 22); g.fillStyle = '#6cc3ef'; g.fillRect(-W * .25, -78, W * .18, 8); }
+  if (lvl >= 2 && lvl < 4) { g.fillStyle = '#fbf6ea'; g.fillRect(-W * .28, -84, W * .24, 22); g.fillStyle = '#6cc3ef'; g.fillRect(-W * .25, -78, W * .18, 8); }
   if (lvl === 3) drawResearchDeck(W);
   drawFisherman(W * .12);
   // rod, in the boat's frame: it rolls with the hull and its tip is rodTip()
@@ -1778,6 +1931,54 @@ function drawGozzo(W) {
   // painted eye on the bow
   g.fillStyle = '#f6f1e4'; g.strokeStyle = '#1b3a5c'; g.lineWidth = 1.5; g.beginPath(); g.ellipse(R - 22, -28, 5.5, 3.4, 0, 0, 7); g.fill(); g.stroke();
   g.fillStyle = '#1b3a5c'; g.beginPath(); g.arc(R - 21, -28, 1.8, 0, 7); g.fill();
+}
+// boat 5: a submarine on the surface. The fisherman stands on the casing in front of the tower; periscope, radar,
+// portholes lit from inside, the Triangle painted on the tower
+function drawSub(W) {
+  const L = -W / 2 - 12, R = W / 2 + 16, top = -26;
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  // tail fin and propeller guard at the stern
+  g.fillStyle = '#26364f'; g.beginPath(); g.moveTo(L + 16, top + 4); g.lineTo(L - 4, top - 22); g.lineTo(L + 8, top - 22); g.lineTo(L + 34, top + 2); g.closePath(); g.fill();
+  // pressure hull: long, round at the bow, tapering aft
+  const hull = new Path2D();
+  hull.moveTo(L, -6); hull.quadraticCurveTo(L + 6, top + 2, L + 40, top); hull.lineTo(R - 34, top); hull.bezierCurveTo(R - 4, top, R + 4, -12, R, -2); hull.bezierCurveTo(R - 2, 8, R - 22, 12, R - 40, 12); hull.lineTo(L + 30, 12); hull.quadraticCurveTo(L + 4, 10, L, -6);
+  const hg = g.createLinearGradient(0, top, 0, 12); hg.addColorStop(0, '#4f6a8f'); hg.addColorStop(.55, '#33496b'); hg.addColorStop(1, '#1d2b45');
+  g.fillStyle = hg; g.fill(hull);
+  g.save(); g.clip(hull);
+  g.fillStyle = '#f08a24'; g.fillRect(L, -3, R - L, 4);   // waterline band
+  g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(L, top, R - L, 5);
+  g.strokeStyle = 'rgba(10,20,40,.35)'; g.lineWidth = 1.2; for (let x = L + 46; x < R - 30; x += 34) { g.beginPath(); g.moveTo(x, top); g.lineTo(x, 12); g.stroke(); }   // hull plates
+  g.restore();
+  g.strokeStyle = 'rgba(8,16,34,.55)'; g.lineWidth = 2; g.stroke(hull);
+  // portholes glowing from inside, a torpedo tube at the bow
+  for (let i = 0; i < 4; i++) {
+    const x = -W * .34 + i * W * .21 + (i > 1 ? W * .04 : 0), y = -11, a = .75 + .25 * Math.sin(clock * 2 + i * 1.3);
+    const gl = g.createRadialGradient(x, y, 1, x, y, 11); gl.addColorStop(0, `rgba(150,255,225,${.55 * a})`); gl.addColorStop(1, 'rgba(150,255,225,0)');
+    g.fillStyle = gl; g.beginPath(); g.arc(x, y, 11, 0, 7); g.fill();
+    g.fillStyle = `rgba(190,255,235,${a})`; g.strokeStyle = '#c9a646'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 4.6, 0, 7); g.fill(); g.stroke();
+  }
+  g.strokeStyle = '#16233b'; g.lineWidth = 2; g.beginPath(); g.arc(R - 12, -7, 5, 0, 7); g.stroke();
+  // tower (sail) behind the fisherman
+  const tx = -W * .2, tw = W * .2, th = 46;
+  const tower = new Path2D(); tower.moveTo(tx - tw / 2 - 5, top + 1); tower.lineTo(tx - tw / 2, top - th + 8); tower.quadraticCurveTo(tx - tw / 2, top - th, tx - tw / 2 + 8, top - th); tower.lineTo(tx + tw / 2 - 4, top - th); tower.quadraticCurveTo(tx + tw / 2 + 6, top - th + 2, tx + tw / 2 + 9, top + 1); tower.closePath();
+  const tgr = g.createLinearGradient(tx - tw / 2, 0, tx + tw / 2, 0); tgr.addColorStop(0, '#3b5278'); tgr.addColorStop(1, '#2a3d5d');
+  g.fillStyle = tgr; g.fill(tower); g.strokeStyle = 'rgba(8,16,34,.55)'; g.lineWidth = 2; g.stroke(tower);
+  g.fillStyle = '#bfe9ff'; rr(tx - tw / 2 + 6, top - th + 8, tw - 10, 7, 3); g.fill();   // bridge window
+  const pu = .65 + Math.sin(clock * 1.8) * .3, ex = tx + 1, ey = top - 15;   // the Triangle, painted and faintly alive
+  g.strokeStyle = `rgba(150,255,215,${pu})`; g.lineWidth = 2.4; g.beginPath(); g.moveTo(ex, ey - 10); g.lineTo(ex + 10, ey + 7); g.lineTo(ex - 10, ey + 7); g.closePath(); g.stroke();
+  g.fillStyle = `rgba(210,255,240,${pu})`; g.beginPath(); g.arc(ex, ey + 1.5, 2, 0, 7); g.fill();
+  // periscope turning its head, antenna with a red light, small radar
+  const px = tx - 6, look = Math.sin(clock * .7) * 5;
+  g.strokeStyle = '#8a97aa'; g.lineWidth = 3; g.beginPath(); g.moveTo(px, top - th); g.lineTo(px, top - th - 30); g.lineTo(px + 6 + look, top - th - 30); g.stroke();
+  g.fillStyle = '#bfe9ff'; g.beginPath(); g.arc(px + 8 + look, top - th - 30, 2.6, 0, 7); g.fill();
+  g.strokeStyle = '#59657a'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(tx + 12, top - th); g.lineTo(tx + 12, top - th - 22); g.stroke();
+  g.fillStyle = `rgba(255,70,90,${.5 + .5 * Math.abs(Math.sin(clock * 2.5))})`; g.beginPath(); g.arc(tx + 12, top - th - 23, 2.2, 0, 7); g.fill();
+  const rw = 9 * Math.cos(clock * 2.4); g.strokeStyle = '#e8eef3'; g.lineWidth = 3; g.beginPath(); g.moveTo(tx + 3 - rw, top - th - 6); g.lineTo(tx + 3 + rw, top - th - 6); g.stroke();
+  // deck rail around the fishing spot, hatch
+  g.strokeStyle = '#c9a646'; g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(W * .0, top); g.lineTo(W * .0, top - 12); g.lineTo(W * .26, top - 12); g.lineTo(W * .26, top); g.moveTo(W * .09, top - 12); g.lineTo(W * .09, top); g.moveTo(W * .18, top - 12); g.lineTo(W * .18, top); g.stroke();
+  g.fillStyle = '#26364f'; g.beginPath(); g.ellipse(W * .36, top, 9, 3, 0, Math.PI, 0); g.fill();
+  g.lineCap = 'butt';
 }
 // boat 4: A-frame at the stern with a yellow mini-sub, radar and antenna on the bridge
 function drawResearchDeck(W) {
@@ -1815,7 +2016,9 @@ const HOOK_LOOK = [
   { col: '#dfe8ee', dark: '#6f7d88', prongs: 1, s: 1 },
   { col: '#eaa55e', dark: '#7a4418', prongs: 1, s: 1.25, barb: true },
   { col: '#ffd84d', dark: '#9a6300', prongs: 2, s: 1.4, barb: true, shine: true },
-  { col: '#a6f6ff', dark: '#15708f', prongs: 3, s: 1.55, barb: true, shine: true, glow: true, orbit: true, trail: true },
+  { col: '#a6f6ff', dark: '#15708f', prongs: 3, s: 1.55, barb: true, shine: true, glow: true, orbit: true, trail: true, gc: '160,245,255' },
+  // meteorite hook: black rock from the sky, violet fire in its cracks, three shards of it circling
+  { col: '#e3ccff', dark: '#2c1259', prongs: 3, s: 1.68, barb: true, shine: true, glow: true, orbit: true, trail: true, gc: '200,140,255', rock: true },
 ];
 const hookTier = (lv = S.l[1] + 1) => CONFIG.hookTiers.filter(x => lv >= x).length - 1;
 function drawHook(ctx, tier, tm) {
@@ -1823,7 +2026,7 @@ function drawHook(ctx, tier, tm) {
   ctx.save(); ctx.scale(H.s, H.s);
   if (H.glow) {
     const gl = ctx.createRadialGradient(0, 2, 1, 0, 2, 22 + Math.sin(tm * 4) * 3);
-    gl.addColorStop(0, 'rgba(160,245,255,.7)'); gl.addColorStop(1, 'rgba(160,245,255,0)');
+    gl.addColorStop(0, `rgba(${H.gc},.7)`); gl.addColorStop(1, `rgba(${H.gc},0)`);
     ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 2, 26, 0, 7); ctx.fill();
   }
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -1836,11 +2039,20 @@ function drawHook(ctx, tier, tm) {
     if (H.prongs >= 3) { ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(0, 12); ctx.moveTo(-2.6, 9.5); ctx.lineTo(0, 12.5); ctx.lineTo(2.6, 9.5); ctx.stroke(); }
   }
   if (H.shine) star(-7 + Math.sin(tm * 2) * 2, -4, 3 + Math.sin(tm * 6) * 1.2, 'rgba(255,255,255,.95)', ctx);
-  if (H.orbit) {   // crystal shards circling the trident; the ones behind it are dimmer
-    for (let i = 0; i < 5; i++) {
-      const a = tm * 1.8 + i * Math.PI * 2 / 5, x = Math.cos(a) * 17, y = -2 + Math.sin(a) * 7, front = Math.sin(a) > 0, r = front ? 2.6 : 1.8;
-      ctx.fillStyle = front ? 'rgba(220,252,255,.95)' : 'rgba(160,235,255,.55)';
-      ctx.beginPath(); ctx.moveTo(x, y - r * 1.4); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r * 1.4); ctx.lineTo(x - r, y); ctx.closePath(); ctx.fill();
+  if (H.rock) {   // the meteorite itself, set at the top of the shank, cracks pulsing
+    ctx.fillStyle = '#1b0f33'; ctx.strokeStyle = H.col; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-4.5, -15); ctx.lineTo(-2, -19.5); ctx.lineTo(3, -19); ctx.lineTo(5, -14.5); ctx.lineTo(2.5, -10.5); ctx.lineTo(-3, -11); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = `rgba(${H.gc},${.6 + .4 * Math.sin(tm * 6)})`; ctx.lineWidth = 1.1; ctx.beginPath(); ctx.moveTo(-2.5, -17); ctx.lineTo(.5, -14.5); ctx.lineTo(-1, -12); ctx.moveTo(.5, -14.5); ctx.lineTo(3.5, -15.5); ctx.stroke();
+  }
+  if (H.orbit) {   // shards circling the hook (crystal, or triangles of meteorite); the ones behind it are dimmer
+    const n = H.rock ? 3 : 5;
+    for (let i = 0; i < n; i++) {
+      const a = tm * 1.8 + i * Math.PI * 2 / n, x = Math.cos(a) * 17, y = -2 + Math.sin(a) * 7, front = Math.sin(a) > 0, r = (front ? 2.6 : 1.8) * (H.rock ? 1.35 : 1);
+      ctx.fillStyle = `rgba(${H.rock ? '236,215,255' : front ? '220,252,255' : '160,235,255'},${front ? .95 : .55})`;
+      ctx.beginPath();
+      if (H.rock) { ctx.moveTo(x, y - r * 1.2); ctx.lineTo(x + r, y + r * .7); ctx.lineTo(x - r, y + r * .7); }
+      else { ctx.moveTo(x, y - r * 1.4); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r * 1.4); ctx.lineTo(x - r, y); }
+      ctx.closePath(); ctx.fill();
     }
   }
   ctx.restore(); ctx.lineCap = 'butt';
@@ -1917,7 +2129,7 @@ function drawLineAndHook() {
   if (phase === 'up' && !full) {
     const pr = CONFIG.catchRadius * 1.6 + Math.sin(clock * 8) * 2;
     const ag = g.createRadialGradient(hook.x, hook.y, 2, hook.x, hook.y, pr);
-    const hc = hookTier() === 3 ? '160,245,255' : '255,240,150';
+    const hc = HOOK_LOOK[hookTier()].gc || '255,240,150';
     ag.addColorStop(0, `rgba(${hc},.42)`); ag.addColorStop(.7, `rgba(${hc},.2)`); ag.addColorStop(1, `rgba(${hc},0)`);
     g.fillStyle = ag; g.beginPath(); g.arc(hook.x, hook.y, pr, 0, 7); g.fill();
     g.strokeStyle = 'rgba(255,245,190,.75)'; g.lineWidth = 2; g.setLineDash([5, 5]);
@@ -1927,7 +2139,7 @@ function drawLineAndHook() {
   const tier = hookTier();
   if (HOOK_LOOK[tier].trail && (phase === 'down' || phase === 'up')) {
     hookTrail.push([hook.x, hook.y]); if (hookTrail.length > 16) hookTrail.shift();
-    hookTrail.forEach(([x, y], i) => { const k = i / hookTrail.length; g.fillStyle = `rgba(166,246,255,${(k * .45).toFixed(3)})`; g.beginPath(); g.arc(x, y, 3 + k * 9, 0, 7); g.fill(); });
+    hookTrail.forEach(([x, y], i) => { const k = i / hookTrail.length; g.fillStyle = `rgba(${HOOK_LOOK[tier].gc},${(k * .45).toFixed(3)})`; g.beginPath(); g.arc(x, y, 3 + k * 9, 0, 7); g.fill(); });
   } else hookTrail.length = 0;
   if (phase === 'down' || phase === 'up') drawBoostFX();
   g.save(); g.translate(hook.x, hook.y);
@@ -1958,7 +2170,7 @@ function drawBoss() {
   // name tag
   const need = CONFIG.zones[S.l[3]].bossHook;
   const label = (b.locked ? '🔒 ' : '👑 ') + nm(b.sp.id) + (b.locked ? ' · ' + t('bossLock', { n: need }) : '');
-  pill(b.x, y - b.w * .42 - 16, label, b.locked ? '#d8344f' : '#e39a00', true);
+  pill(b.x, y - b.w * Math.min(.42, b.lk.h * .5 + .12) - 16, label, b.locked ? '#d8344f' : '#e39a00', true);   // just above its back, tall or flat
 }
 function pill(x, y, txt, bg, center) {
   g.font = '900 13px ui-rounded,system-ui,sans-serif';
@@ -2040,8 +2252,9 @@ function drawScreenFX() {
   }
   if (zoneLabel && zoneLabel.life > 0 && (phase === 'down')) {
     const a = clamp(zoneLabel.life, 0, 1);
-    g.globalAlpha = a; g.font = '900 30px ui-rounded,system-ui,sans-serif'; g.textAlign = 'center';
-    g.lineWidth = 6; g.strokeStyle = 'rgba(6,26,48,.6)'; const s = up(t('zones')[zoneLabel.z]);
+    const s = up(t('zones')[zoneLabel.z]);
+    g.globalAlpha = a; fitFont(s, 30, VW - 40); g.textAlign = 'center';
+    g.lineWidth = 6; g.strokeStyle = 'rgba(6,26,48,.6)';
     g.strokeText(s, VW / 2, VH * .45); g.fillStyle = '#bff3ff'; g.fillText(s, VW / 2, VH * .45); g.globalAlpha = 1;
   }
   if (intro) {
@@ -2051,7 +2264,7 @@ function drawScreenFX() {
       const sub = z ? t('introZoneSub', { m: Z.floor, boss: nm(Z.boss) }) : t('introSub', { m: Z.floor });
       const y0 = VH * .8, sc = 1 + Math.max(0, .35 - k) * 1.2;
       g.save(); g.globalAlpha = a; g.textAlign = 'center'; g.translate(VW / 2, y0); g.scale(sc, sc);
-      g.lineWidth = 8; g.strokeStyle = 'rgba(6,26,48,.7)'; g.font = `900 ${z ? 40 : 30}px ui-rounded,system-ui,sans-serif`;
+      g.lineWidth = 8; g.strokeStyle = 'rgba(6,26,48,.7)'; fitFont(title, z ? 40 : 30, VW - 50);
       g.strokeText(title, 0, 0); g.fillStyle = '#ffd84d'; g.fillText(title, 0, 0);
       g.font = '900 15px ui-rounded,system-ui,sans-serif'; g.lineWidth = 5;
       wrapText(sub, 330).forEach((l, i) => { g.strokeText(l, 0, 30 + i * 20); g.fillStyle = '#fff'; g.fillText(l, 0, 30 + i * 20); });
@@ -2099,6 +2312,12 @@ function drawScreenFX() {
     g.restore(); g.globalAlpha = 1;
   }
   if (flash > 0) { g.fillStyle = `rgba(255,250,220,${flash * .7})`; g.fillRect(X0(), 0, XW(), VH); }
+}
+// sets the bold UI font at px, smaller if txt would be wider than maxW (long zone names in some languages)
+function fitFont(txt, px, maxW) {
+  const f = n => `900 ${n}px ui-rounded,system-ui,sans-serif`;
+  g.font = f(px); const w = g.measureText(txt).width;
+  if (w > maxW) g.font = f(Math.floor(px * maxW / w));
 }
 function wrapText(s, w) {
   const out = []; let cur = '';
@@ -2245,6 +2464,12 @@ function drawShape(ctx, lk, w, ph, mode) {
     case 'squid': return drawSquid(ctx, lk, w, ph, mode, c);
     case 'sun': return drawSun(ctx, lk, w, ph, mode, c);
     case 'angler': return drawAngler(ctx, lk, w, ph, mode, c);
+    case 'megalo': return drawMegalo(ctx, lk, w, ph, mode, c);
+    case 'helico': return drawHelico(ctx, lk, w, ph, mode, c);
+    case 'dunk': return drawDunk(ctx, lk, w, ph, mode, c);
+    case 'coel': return drawCoel(ctx, lk, w, ph, mode, c);
+    case 'automa': return drawAutoma(ctx, lk, w, ph, mode, c);
+    case 'anomalo': return drawAnomalo(ctx, lk, w, ph, mode, c);
   }
   // generic fish family: fish, shark, sword, viper
   const wag = Math.sin(ph * (lk.shape === 'shark' ? 5 : 8)) * .22;
@@ -2527,6 +2752,330 @@ function drawAngler(ctx, lk, w, ph, mode, c) {
   ctx.lineCap = 'butt';
 }
 
+/* ---------- Bermuda Triangle creatures ---------- */
+// the creatures of the Triangle do not have friendly eyes: a point of light in a dark socket, under a brow
+function eyeFierce(ctx, x, y, r, col, mode, brow = 1) {
+  if (mode === 2) return;
+  ctx.fillStyle = 'rgba(6,8,20,.85)'; ctx.beginPath(); ctx.arc(x, y, r * 1.25, 0, 7); ctx.fill();
+  const gr = ctx.createRadialGradient(x, y, 0, x, y, r * 2.6); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.save(); ctx.globalAlpha *= .8; ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, r * 2.6, 0, 7); ctx.fill(); ctx.restore();
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r * .78, 0, 7); ctx.fill();
+  ctx.fillStyle = '#10121c'; ctx.beginPath(); ctx.ellipse(x + r * .1, y, r * .2, r * .62, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(x + r * .3, y - r * .32, r * .2, 0, 7); ctx.fill();
+  if (brow) { ctx.strokeStyle = 'rgba(6,8,20,.9)'; ctx.lineWidth = Math.max(1.5, r * .55); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x - r * 1.5, y - r * 1.5); ctx.lineTo(x + r * 1.3, y - r * .75); ctx.stroke(); }
+}
+// helicoprion: a lean, dark hunter. The lower jaw carries the tooth whorl, a saw that turns inside the open mouth
+function drawHelico(ctx, lk, w, ph, mode, c) {
+  const h = w * lk.h, sil = mode === 2, lw = Math.max(1.2, w * .016), wag = Math.sin(ph * 5) * .2, open = .55 + Math.sin(ph * 2.2) * .25;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const fin = () => { ctx.fillStyle = sil ? SIL : c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.fill(); if (!sil) ctx.stroke(); };
+  // tail: long upper lobe
+  ctx.save(); ctx.translate(-w * .33, -h * .03); ctx.rotate(wag);
+  ctx.beginPath(); ctx.moveTo(w * .04, -h * .07); ctx.quadraticCurveTo(-w * .06, -h * .34, -w * .2, -h * .92); ctx.quadraticCurveTo(-w * .09, -h * .1, -w * .13, h * .46); ctx.quadraticCurveTo(-w * .04, h * .2, w * .04, h * .07); ctx.closePath(); fin(); ctx.restore();
+  // first dorsal with its spine, second dorsal, pelvic, anal
+  ctx.beginPath(); ctx.moveTo(w * .1, -h * .4); ctx.lineTo(w * .06, -h * 1.02); ctx.quadraticCurveTo(-w * .02, -h * .66, -w * .08, -h * .38); ctx.closePath(); fin();
+  if (!sil) { ctx.strokeStyle = c.belly; ctx.lineWidth = Math.max(1.5, w * .014); ctx.beginPath(); ctx.moveTo(w * .1, -h * .42); ctx.lineTo(w * .065, -h * 1.0); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(-w * .17, -h * .25); ctx.lineTo(-w * .23, -h * .5); ctx.lineTo(-w * .26, -h * .18); ctx.closePath(); fin();
+  ctx.beginPath(); ctx.moveTo(-w * .1, h * .3); ctx.lineTo(-w * .18, h * .56); ctx.lineTo(-w * .2, h * .22); ctx.closePath(); fin();
+  // lower jaw, drawn before the body: deep at the chin, where the whorl is set; only the top of the saw shows in the mouth
+  const L = w * .25, R = h * .27;
+  ctx.save(); ctx.translate(w * .2, h * .15); ctx.rotate(.12 + open * .2);
+  ctx.save(); ctx.translate(L * .63, R * .2);
+  if (!sil) {
+    ctx.rotate(ph * 1.1);
+    ctx.fillStyle = '#f7f3e6'; ctx.strokeStyle = 'rgba(40,30,30,.6)'; ctx.lineWidth = Math.max(.7, w * .005);
+    for (let i = 0; i < 14; i++) { const a = i * Math.PI / 7, r0 = R * .7, r1 = R * (1.1 + (i % 2) * .1); ctx.beginPath(); ctx.moveTo(Math.cos(a - .19) * r0, Math.sin(a - .19) * r0); ctx.lineTo(Math.cos(a + .08) * r1, Math.sin(a + .08) * r1); ctx.lineTo(Math.cos(a + .2) * r0, Math.sin(a + .2) * r0); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    ctx.fillStyle = '#d9cdb4'; ctx.beginPath(); ctx.arc(0, 0, R * .74, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(70,50,40,.75)'; ctx.lineWidth = Math.max(.8, w * .007); ctx.beginPath();
+    for (let k = 0; k <= 40; k++) { const a = k / 40 * Math.PI * 4.4, r = R * .68 * Math.exp(.21 * (a - Math.PI * 4.4)); k ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+    ctx.stroke();
+  } else { ctx.fillStyle = SIL; ctx.beginPath(); ctx.arc(0, 0, R * 1.1, 0, 7); ctx.fill(); }
+  ctx.restore();
+  const jp = new Path2D(); jp.moveTo(-w * .04, -h * .03); jp.lineTo(L * .3, h * .03); jp.lineTo(L, h * .01); jp.quadraticCurveTo(L * 1.08, R * 1.25, L * .64, R * 1.42); jp.quadraticCurveTo(L * .2, R * 1.5, -w * .06, h * .2); jp.closePath();
+  if (sil) ctx.fillStyle = SIL; else { const jg = ctx.createLinearGradient(0, 0, 0, R * 1.5); jg.addColorStop(0, c.body); jg.addColorStop(1, c.belly); ctx.fillStyle = jg; }
+  ctx.fill(jp); if (!sil) { ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.stroke(jp); }
+  ctx.restore();
+  // body: slender, a long snout over the mouth
+  const p = new Path2D();
+  p.moveTo(w * .5, -h * .04);
+  p.bezierCurveTo(w * .4, -h * .34, w * .2, -h * .46, w * .04, -h * .43);
+  p.bezierCurveTo(-w * .1, -h * .4, -w * .2, -h * .12, -w * .35, -h * .08);
+  p.lineTo(-w * .35, h * .03);
+  p.bezierCurveTo(-w * .2, h * .08, -w * .1, h * .36, w * .06, h * .36);
+  p.bezierCurveTo(w * .14, h * .36, w * .19, h * .26, w * .22, h * .16);   // throat, up to the corner of the mouth
+  p.quadraticCurveTo(w * .36, h * .1, w * .5, -h * .04);                     // underside of the snout
+  ctx.fillStyle = sil ? SIL : bodyGrad(ctx, h, c); ctx.fill(p);
+  if (!sil) {
+    ctx.save(); ctx.clip(p);
+    ctx.fillStyle = c.pc; ctx.globalAlpha *= .45;
+    for (let i = 0; i < 12; i++) { ctx.beginPath(); ctx.ellipse(w * (.3 - (i * .37) % .6), h * (((i * .53) % .46) - .36), w * (.012 + (i % 3) * .006), h * .03, 0, 0, 7); ctx.fill(); }
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(8,10,26,.5)'; ctx.lineWidth = Math.max(1, w * .008);
+    for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(w * (.15 - i * .028), -h * .14); ctx.quadraticCurveTo(w * (.135 - i * .028), h * .0, w * (.15 - i * .028), h * .14); ctx.stroke(); }
+  }
+  ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.stroke(p);
+  // pectoral
+  { const sw = Math.sin(ph * 4) * h * .05; ctx.beginPath(); ctx.moveTo(w * .1, h * .22); ctx.quadraticCurveTo(w * .04, h * .56 + sw, -w * .08, h * .7 + sw); ctx.quadraticCurveTo(-w * .02, h * .42, w * .0, h * .28); ctx.closePath(); fin(); }
+  eyeFierce(ctx, w * .33, -h * .13, Math.max(2, h * .075), mode === 0 ? lk.glow : c.pc, mode);
+}
+// dunkleosteus: the armoured fish. A head of bone plates, and instead of teeth two blades of bone that sharpen each other
+function drawDunk(ctx, lk, w, ph, mode, c) {
+  const h = w * lk.h, sil = mode === 2, lw = Math.max(1.2, w * .018), wag = Math.sin(ph * 4.5) * .2, jaw = .35 + Math.sin(ph * 2) * .3;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const fin = () => { ctx.fillStyle = sil ? SIL : c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.fill(); if (!sil) ctx.stroke(); };
+  ctx.save(); ctx.translate(-w * .3, -h * .02); ctx.rotate(wag);
+  ctx.beginPath(); ctx.moveTo(w * .05, -h * .1); ctx.quadraticCurveTo(-w * .08, -h * .22, -w * .21, -h * .62); ctx.quadraticCurveTo(-w * .12, -h * .04, -w * .17, h * .3); ctx.quadraticCurveTo(-w * .06, h * .16, w * .05, h * .1); ctx.closePath(); fin(); ctx.restore();
+  ctx.beginPath(); ctx.moveTo(w * .0, -h * .42); ctx.quadraticCurveTo(-w * .1, -h * .78, -w * .22, -h * .3); ctx.closePath(); fin();
+  ctx.beginPath(); ctx.moveTo(-w * .08, h * .34); ctx.lineTo(-w * .18, h * .56); ctx.lineTo(-w * .2, h * .24); ctx.closePath(); fin();
+  // soft trunk behind the armour
+  const tr = new Path2D();
+  tr.moveTo(w * .14, -h * .45); tr.bezierCurveTo(-w * .04, -h * .46, -w * .2, -h * .2, -w * .32, -h * .1); tr.lineTo(-w * .32, h * .07); tr.bezierCurveTo(-w * .2, h * .2, -w * .04, h * .42, w * .14, h * .4); tr.closePath();
+  ctx.fillStyle = sil ? SIL : bodyGrad(ctx, h, c); ctx.fill(tr); ctx.strokeStyle = c.out; ctx.lineWidth = lw; if (!sil) ctx.stroke(tr);
+  // the gape, dark, behind both jaws
+  const hx = w * .2, hy = h * .12, ja = .16 + jaw * .3;
+  if (!sil) { ctx.fillStyle = '#12060a'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(w * .49, h * .06); ctx.lineTo(w * .46, h * .46); ctx.closePath(); ctx.fill(); }
+  // lower jaw: a blade of bone with a cusp at the tip, hinged far back
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(ja);
+  const lj = new Path2D(); lj.moveTo(-w * .05, -h * .01); lj.lineTo(w * .19, h * .02); lj.lineTo(w * .225, -h * .17); lj.lineTo(w * .262, h * .03); lj.quadraticCurveTo(w * .25, h * .2, w * .12, h * .24); lj.quadraticCurveTo(-w * .01, h * .25, -w * .06, h * .15); lj.closePath();
+  if (sil) ctx.fillStyle = SIL; else { const g2 = ctx.createLinearGradient(0, -h * .1, 0, h * .25); g2.addColorStop(0, c.pc); g2.addColorStop(1, shadeAny(c.pc, -.35)); ctx.fillStyle = g2; }
+  ctx.fill(lj);
+  if (!sil) { ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.stroke(lj); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = Math.max(1, w * .01); ctx.beginPath(); ctx.moveTo(w * .0, h * .0); ctx.lineTo(w * .19, h * .02); ctx.lineTo(w * .225, -h * .16); ctx.stroke(); }
+  ctx.restore();
+  // skull and trunk shield
+  const hp = new Path2D();
+  hp.moveTo(w * .5, -h * .02);
+  hp.bezierCurveTo(w * .49, -h * .36, w * .34, -h * .56, w * .16, -h * .54);
+  hp.lineTo(w * .09, -h * .5); hp.lineTo(w * .06, -h * .28); hp.lineTo(w * .1, -h * .04); hp.lineTo(w * .05, h * .22); hp.lineTo(w * .09, h * .44);
+  hp.quadraticCurveTo(w * .17, h * .42, hx, hy);                  // behind the jaw hinge
+  hp.lineTo(w * .4, h * .06); hp.lineTo(w * .44, h * .27); hp.lineTo(w * .475, h * .06);   // the upper blade: a fang of bone at the front
+  hp.closePath();
+  if (sil) ctx.fillStyle = SIL; else { const gr = ctx.createLinearGradient(0, -h * .56, 0, h * .45); gr.addColorStop(0, shadeAny(c.pc, -.42)); gr.addColorStop(.45, c.pc); gr.addColorStop(1, shadeAny(c.pc, -.3)); ctx.fillStyle = gr; }
+  ctx.fill(hp);
+  if (!sil) {
+    ctx.save(); ctx.clip(hp);
+    ctx.strokeStyle = 'rgba(14,10,6,.6)'; ctx.lineWidth = Math.max(1.2, w * .012);   // the seams between the plates
+    ctx.beginPath(); ctx.moveTo(w * .25, -h * .62); ctx.quadraticCurveTo(w * .18, -h * .12, w * .21, h * .18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w * .225, -h * .26); ctx.quadraticCurveTo(w * .37, -h * .42, w * .5, -h * .22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w * .215, -h * .02); ctx.quadraticCurveTo(w * .33, -h * .04, w * .41, h * .06); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w * .07, -h * .3); ctx.lineTo(w * .215, -h * .32); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w * .09, h * .1); ctx.lineTo(w * .2, h * .08); ctx.stroke();
+    ctx.fillStyle = 'rgba(14,10,6,.3)'; for (let i = 0; i < 11; i++) { ctx.beginPath(); ctx.arc(w * (.11 + (i * .37) % .36), h * (((i * .53) % .8) - .5), Math.max(.8, w * .007), 0, 7); ctx.fill(); }
+    ctx.fillStyle = 'rgba(255,255,255,.13)'; ctx.beginPath(); ctx.ellipse(w * .33, -h * .43, w * .13, h * .05, -.3, 0, 7); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = Math.max(1, w * .01); ctx.beginPath(); ctx.moveTo(w * .25, h * .1); ctx.lineTo(w * .4, h * .06); ctx.lineTo(w * .44, h * .26); ctx.stroke();   // the cutting edge
+  }
+  ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.stroke(hp);
+  { const sw = Math.sin(ph * 4) * h * .05; ctx.beginPath(); ctx.moveTo(w * .1, h * .3); ctx.quadraticCurveTo(w * .02, h * .62 + sw, -w * .1, h * .7 + sw); ctx.quadraticCurveTo(-w * .04, h * .46, w * .02, h * .34); ctx.closePath(); fin(); }
+  // eye inside its ring of bone
+  if (!sil) { ctx.strokeStyle = shadeAny(c.pc, -.45); ctx.lineWidth = Math.max(1.5, w * .016); ctx.beginPath(); ctx.arc(w * .36, -h * .17, h * .115, 0, 7); ctx.stroke(); }
+  eyeFierce(ctx, w * .36, -h * .17, Math.max(2, h * .075), mode === 0 ? lk.glow : c.belly, mode);
+}
+// coelacanth: the fish that should be extinct. Fleshy lobed fins, a three-lobed tail, pale flecks, eyes that give the light back
+function drawCoel(ctx, lk, w, ph, mode, c) {
+  const h = w * lk.h, sil = mode === 2, lw = Math.max(1.2, w * .02), wag = Math.sin(ph * 4) * .16;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  const lobe = (x, y, len, ang, k) => {   // stalk + fan with rays
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang + Math.sin(ph * 3.5 + k) * .22);
+    ctx.fillStyle = sil ? SIL : c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = lw;
+    ctx.beginPath(); ctx.moveTo(len * .4, -len * .2); ctx.quadraticCurveTo(len * 1.15, -len * .5, len * 1.08, 0); ctx.quadraticCurveTo(len * 1.15, len * .5, len * .4, len * .2); ctx.closePath(); ctx.fill(); if (!sil) ctx.stroke();
+    if (!sil) { ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = Math.max(.7, lw * .5); for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(len * .5, i * len * .06); ctx.lineTo(len * 1.02, i * len * .17); ctx.stroke(); } }
+    ctx.fillStyle = sil ? SIL : c.body; ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.beginPath(); ctx.ellipse(len * .28, 0, len * .32, len * .17, 0, 0, 7); ctx.fill(); if (!sil) ctx.stroke();
+    ctx.restore();
+  };
+  // tail: broad, with the small extra lobe in the middle
+  ctx.save(); ctx.translate(-w * .28, 0); ctx.rotate(wag);
+  ctx.fillStyle = sil ? SIL : c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(w * .02, -h * .2); ctx.quadraticCurveTo(-w * .12, -h * .52, -w * .2, -h * .34); ctx.quadraticCurveTo(-w * .17, -h * .12, -w * .2, -h * .08); ctx.lineTo(-w * .27, -h * .08); ctx.quadraticCurveTo(-w * .3, 0, -w * .27, h * .08); ctx.lineTo(-w * .2, h * .08); ctx.quadraticCurveTo(-w * .17, h * .12, -w * .2, h * .34); ctx.quadraticCurveTo(-w * .12, h * .52, w * .02, h * .2); ctx.closePath(); ctx.fill(); if (!sil) ctx.stroke();
+  if (!sil) { ctx.strokeStyle = 'rgba(0,0,0,.22)'; ctx.lineWidth = Math.max(.7, lw * .5); for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(-w * .02, i * h * .05); ctx.lineTo(-w * .19, i * h * .1); ctx.stroke(); } }
+  ctx.restore();
+  // fins behind the body: sail-like first dorsal, lobed second dorsal, anal and pelvic
+  ctx.fillStyle = sil ? SIL : c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(w * .2, -h * .4); ctx.lineTo(w * .12, -h * .86); ctx.lineTo(w * .05, -h * .62); ctx.lineTo(w * .0, -h * .8); ctx.lineTo(-w * .02, -h * .42); ctx.closePath(); ctx.fill(); if (!sil) ctx.stroke();
+  lobe(-w * .1, -h * .36, w * .15, -2.35, 0); lobe(-w * .12, h * .34, w * .15, 2.35, 1); lobe(w * .06, h * .4, w * .15, 2.0, 2);
+  const p = new Path2D();
+  p.moveTo(w * .5, h * .02); p.bezierCurveTo(w * .44, -h * .46, w * .08, -h * .56, -w * .3, -h * .22); p.lineTo(-w * .3, h * .22); p.bezierCurveTo(w * .08, h * .56, w * .42, h * .5, w * .5, h * .02);
+  ctx.fillStyle = sil ? SIL : bodyGrad(ctx, h, c); ctx.fill(p);
+  if (!sil) {
+    ctx.save(); ctx.clip(p);
+    ctx.fillStyle = c.pc; ctx.globalAlpha *= .8;
+    for (let i = 0; i < 16; i++) { const x = w * (.3 - (i * .371) % .58), y = h * (((i * .533) % .8) - .4); ctx.beginPath(); ctx.ellipse(x, y, w * (.014 + (i % 3) * .008), h * (.025 + (i % 2) * .02), (i * 1.3) % 3, 0, 7); ctx.fill(); }
+    ctx.globalAlpha /= .8;
+    ctx.strokeStyle = 'rgba(0,0,0,.28)'; ctx.lineWidth = Math.max(1, w * .012); ctx.beginPath(); ctx.moveTo(w * .26, -h * .44); ctx.quadraticCurveTo(w * .2, 0, w * .27, h * .44); ctx.stroke();   // gill cover
+    ctx.restore();
+  }
+  ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.stroke(p);
+  lobe(w * .2, h * .16, w * .16, 2.5, 3);
+  if (!sil) { ctx.strokeStyle = c.out; ctx.lineWidth = Math.max(1, w * .014); ctx.beginPath(); ctx.moveTo(w * .495, h * .1); ctx.quadraticCurveTo(w * .44, h * .13, w * .37, h * .2); ctx.stroke(); }
+  eyeFierce(ctx, w * .36, -h * .1, Math.max(2.2, h * .095), mode === 0 ? lk.glow : c.pc, mode, 0);
+}
+// sentinel of a drowned city: a fish of dark metal that still patrols. Plates, seams of light, a crystal heart, a slit for an eye
+function drawAutoma(ctx, lk, w, ph, mode, c) {
+  const h = w * lk.h, sil = mode === 2, lw = Math.max(1.2, w * .018), pu = .65 + Math.sin(ph * 3) * .35;
+  const light = mode === 0 ? '127,233,255' : mode === 1 ? '255,246,200' : '255,255,255';
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  // tail: three blades on a joint
+  ctx.save(); ctx.translate(-w * .3, 0); ctx.rotate(Math.sin(ph * 5) * .16);
+  ctx.fillStyle = sil ? SIL : c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = lw;
+  [[-.62, -1], [0, 0], [.62, 1]].forEach(([a, k]) => { ctx.save(); ctx.rotate(a + Math.sin(ph * 5 + k) * .12); ctx.beginPath(); ctx.moveTo(0, -h * .05); ctx.lineTo(-w * .2, -h * .11); ctx.lineTo(-w * .24, 0); ctx.lineTo(-w * .2, h * .11); ctx.lineTo(0, h * .05); ctx.closePath(); ctx.fill(); if (!sil) ctx.stroke(); ctx.restore(); });
+  ctx.fillStyle = sil ? SIL : c.back; ctx.beginPath(); ctx.arc(0, 0, h * .12, 0, 7); ctx.fill(); if (!sil) ctx.stroke();
+  ctx.restore();
+  // dorsal and ventral blades
+  ctx.fillStyle = sil ? SIL : c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(w * .1, -h * .42); ctx.lineTo(-w * .08, -h * .92); ctx.lineTo(-w * .12, -h * .4); ctx.closePath(); ctx.fill(); if (!sil) ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(w * .04, h * .36); ctx.lineTo(-w * .1, h * .7 + Math.sin(ph * 4) * h * .04); ctx.lineTo(-w * .08, h * .34); ctx.closePath(); ctx.fill(); if (!sil) ctx.stroke();
+  // hull
+  const p = new Path2D();
+  p.moveTo(w * .5, 0); p.bezierCurveTo(w * .36, -h * .5, -w * .04, -h * .52, -w * .31, -h * .12); p.lineTo(-w * .31, h * .12); p.bezierCurveTo(-w * .04, h * .46, w * .34, h * .42, w * .5, 0);
+  ctx.fillStyle = sil ? SIL : bodyGrad(ctx, h, c); ctx.fill(p);
+  if (!sil) {
+    ctx.save(); ctx.clip(p);
+    ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.beginPath(); ctx.ellipse(w * .08, -h * .34, w * .26, h * .07, -.08, 0, 7); ctx.fill();
+    // plate seams: a dark groove and a thread of light beside it
+    [[.26, 0], [-.14, 1], [-.24, 2]].forEach(([x, i]) => {
+      ctx.strokeStyle = 'rgba(4,10,12,.6)'; ctx.lineWidth = Math.max(1.2, w * .012); ctx.beginPath(); ctx.moveTo(w * x, -h * .6); ctx.quadraticCurveTo(w * (x - .05), 0, w * x, h * .6); ctx.stroke();
+      ctx.strokeStyle = `rgba(${light},${.35 + .45 * Math.abs(Math.sin(ph * 2 + i * 1.4))})`; ctx.lineWidth = Math.max(.8, w * .007); ctx.beginPath(); ctx.moveTo(w * (x - .016), -h * .6); ctx.quadraticCurveTo(w * (x - .066), 0, w * (x - .016), h * .6); ctx.stroke();
+    });
+    // signs engraved on the rear plate
+    ctx.strokeStyle = `rgba(${light},${.55 * pu})`; ctx.lineWidth = Math.max(.8, w * .008);
+    for (let i = 0; i < 3; i++) { const x = -w * (.185 + i * .0), y = h * (-.18 + i * .16), r = h * .045; ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x + r * .87, y + r * .5); ctx.lineTo(x - r * .87, y + r * .5); ctx.closePath(); ctx.stroke(); }
+    ctx.restore();
+  }
+  ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.stroke(p);
+  // the heart: a crystal behind a ring, its light breathing
+  const hx = w * .06, hy = 0, R = h * .25;
+  if (!sil) {
+    const gl = ctx.createRadialGradient(hx, hy, 0, hx, hy, R * 2.3); gl.addColorStop(0, `rgba(${light},${.5 * pu})`); gl.addColorStop(1, `rgba(${light},0)`);
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(hx, hy, R * 2.3, 0, 7); ctx.fill();
+    const cg = ctx.createRadialGradient(hx - R * .25, hy - R * .3, R * .05, hx, hy, R); cg.addColorStop(0, '#ffffff'); cg.addColorStop(.35, `rgba(${light},1)`); cg.addColorStop(1, mode === 0 ? '#0d3f66' : c.back);
+    ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(hx, hy, R, 0, 7); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = Math.max(.8, w * .008);   // facets
+    ctx.save(); ctx.translate(hx, hy); ctx.rotate(ph * .5); ctx.beginPath(); for (let i = 0; i < 3; i++) { const a = i * Math.PI * 2 / 3 - Math.PI / 2; i ? ctx.lineTo(Math.cos(a) * R * .62, Math.sin(a) * R * .62) : ctx.moveTo(Math.cos(a) * R * .62, Math.sin(a) * R * .62); } ctx.closePath(); ctx.stroke(); ctx.restore();
+  } else { ctx.fillStyle = SIL; }
+  ctx.strokeStyle = sil ? SIL : c.fin; ctx.lineWidth = Math.max(2, w * .028); ctx.beginPath(); ctx.arc(hx, hy, R, 0, 7); ctx.stroke();
+  if (!sil) { ctx.strokeStyle = c.out; ctx.lineWidth = Math.max(.8, w * .008); ctx.beginPath(); ctx.arc(hx, hy, R * 1.12, 0, 7); ctx.stroke(); }
+  // the eye: a slit of light across the head
+  if (!sil) {
+    const ex0 = w * .32, ex1 = w * .44, ey = -h * .1;
+    ctx.strokeStyle = 'rgba(4,10,12,.9)'; ctx.lineWidth = Math.max(3, w * .04); ctx.beginPath(); ctx.moveTo(ex0, ey - h * .02); ctx.quadraticCurveTo(w * .39, ey - h * .06, ex1, ey + h * .03); ctx.stroke();
+    ctx.strokeStyle = `rgba(${light},${.7 + .3 * pu})`; ctx.lineWidth = Math.max(1.4, w * .016); ctx.beginPath(); ctx.moveTo(ex0 + w * .01, ey - h * .02); ctx.quadraticCurveTo(w * .39, ey - h * .055, ex1 - w * .012, ey + h * .022); ctx.stroke();
+    const k = (Math.sin(ph * 1.3) + 1) / 2, sx = ex0 + (ex1 - ex0) * (.2 + k * .6);   // the light inside the slit looks around
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(sx, ey - h * .035 + Math.abs(k - .5) * h * .05, Math.max(1.2, w * .012), 0, 7); ctx.fill();
+  }
+}
+// anomalocaris: half a billion years old and it looks like it came from another world. Eyes on stalks, two grasping arms, rows of swimming flaps
+function drawAnomalo(ctx, lk, w, ph, mode, c) {
+  const h = w * lk.h, sil = mode === 2, lw = Math.max(1.2, w * .018);
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  // tail fan
+  ctx.fillStyle = sil ? SIL : c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = lw;
+  for (let i = 0; i < 3; i++) for (const d of [-1, 1]) { ctx.save(); ctx.translate(-w * (.3 + i * .03), 0); ctx.rotate(d * (.5 + i * .28) + Math.sin(ph * 4 + i) * .1 * d); ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-w * .12, -h * .1, -w * .2, 0); ctx.quadraticCurveTo(-w * .12, h * .06, 0, 0); ctx.fill(); if (!sil) ctx.stroke(); ctx.restore(); }
+  // swimming flaps: a wave runs along them, upper row behind the body, lower row in front
+  const flap = (i, d) => { const x = w * (.2 - i * .058), wv = Math.sin(ph * 6 - i * .75), len = h * (.34 + .1 * Math.sin(i / 8 * Math.PI)); ctx.save(); ctx.translate(x, d * h * .12); ctx.rotate(d * (1.25 + wv * .3) + .25); ctx.beginPath(); ctx.moveTo(0, -w * .03); ctx.quadraticCurveTo(len * .7, -w * .05, len, 0); ctx.quadraticCurveTo(len * .7, w * .04, 0, w * .03); ctx.closePath(); ctx.fillStyle = sil ? SIL : (d < 0 ? c.back : c.fin); ctx.fill(); if (!sil) ctx.stroke(); ctx.restore(); };
+  for (let i = 0; i < 9; i++) flap(i, -1);
+  // body: segmented, tapering
+  const p = new Path2D();
+  p.moveTo(w * .36, -h * .02); p.bezierCurveTo(w * .32, -h * .3, w * .0, -h * .3, -w * .32, -h * .06); p.lineTo(-w * .32, h * .06); p.bezierCurveTo(w * .0, h * .26, w * .3, h * .26, w * .36, -h * .02);
+  ctx.fillStyle = sil ? SIL : bodyGrad(ctx, h * .6, c); ctx.fill(p);
+  if (!sil) { ctx.save(); ctx.clip(p); ctx.strokeStyle = 'rgba(40,6,12,.4)'; ctx.lineWidth = Math.max(1, w * .01); for (let i = 0; i < 10; i++) { const x = w * (.24 - i * .058); ctx.beginPath(); ctx.moveTo(x, -h * .4); ctx.quadraticCurveTo(x - w * .03, 0, x, h * .4); ctx.stroke(); } ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.ellipse(0, -h * .16, w * .28, h * .05, 0, 0, 7); ctx.fill(); ctx.restore(); }
+  ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.stroke(p);
+  for (let i = 0; i < 9; i++) flap(i, 1);
+  // head shield
+  const hd = new Path2D(); hd.ellipse(w * .34, -h * .04, w * .12, h * .2, -.15, 0, 7);
+  ctx.fillStyle = sil ? SIL : c.body; ctx.fill(hd); ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.stroke(hd);
+  // the two arms: curled, spined, opening and closing
+  const grab = Math.sin(ph * 2.4) * .25;
+  for (const [k, col] of [[0, c.back], [1, c.fin]]) {
+    ctx.save(); ctx.translate(w * .42, h * (.04 + k * .04)); ctx.rotate(.5 + k * .2 + grab);
+    let x = 0, y = 0, a = 0;
+    for (let sgm = 0; sgm < 7; sgm++) {
+      const L = w * .045 * (1 - sgm * .07), th = Math.max(1.5, w * .034 * (1 - sgm * .1)); a += .34;
+      const nx = x + Math.cos(a) * L, ny = y + Math.sin(a) * L;
+      ctx.strokeStyle = sil ? SIL : col; ctx.lineWidth = th; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(nx, ny); ctx.stroke();
+      if (!sil) { ctx.strokeStyle = c.pc; ctx.lineWidth = Math.max(.8, w * .008); ctx.beginPath(); ctx.moveTo(nx, ny); ctx.lineTo(nx + Math.cos(a + 1.7) * w * .03, ny + Math.sin(a + 1.7) * w * .03); ctx.stroke(); }
+      x = nx; y = ny;
+    }
+    ctx.restore();
+  }
+  // eyes on stalks: black, wet, a red point of light inside
+  for (const [dx, dy, r] of [[.3, -.4, .085], [.39, -.36, .1]]) {
+    const ex = w * dx + Math.sin(ph * 2 + dx * 9) * w * .008, ey = h * dy;
+    ctx.strokeStyle = sil ? SIL : c.body; ctx.lineWidth = Math.max(2, w * .028); ctx.beginPath(); ctx.moveTo(w * (dx + .02), -h * .16); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.fillStyle = sil ? SIL : '#0b0810'; ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(ex, ey, h * r, 0, 7); ctx.fill(); if (!sil) ctx.stroke();
+    if (!sil) { const gr = ctx.createRadialGradient(ex, ey, 0, ex, ey, h * r); gr.addColorStop(0, mode === 0 ? lk.glow : c.pc); gr.addColorStop(.6, 'rgba(0,0,0,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(ex, ey, h * r, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(ex + h * r * .35, ey - h * r * .35, h * r * .2, 0, 7); ctx.fill(); }
+  }
+}
+// shade() for any CSS colour the palettes use (hex in normal mode, hsl() in rainbow mode)
+function shadeAny(col, k) { return col[0] === '#' ? shade(col, k) : col; }
+
+// the last boss: a megalodon that is half there. See-through body, the skeleton glowing inside, scars of light
+function drawMegalo(ctx, lk, w, ph, mode, c) {
+  const h = w * lk.h, sil = mode === 2, lw = Math.max(1.5, w * .012), wag = Math.sin(ph * 4) * .16, jaw = .5 + Math.sin(ph * 1.6) * .5;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.save();
+  if (!sil) ctx.globalAlpha *= .66;
+  const fin = () => { ctx.fillStyle = sil ? SIL : c.fin; ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.fill(); if (!sil) ctx.stroke(); };
+  // tail
+  ctx.save(); ctx.translate(-w * .37, -h * .01); ctx.rotate(wag);
+  ctx.beginPath(); ctx.moveTo(w * .04, -h * .05); ctx.quadraticCurveTo(-w * .05, -h * .3, -w * .15, -h * .82); ctx.quadraticCurveTo(-w * .075, -h * .1, -w * .11, h * .5); ctx.quadraticCurveTo(-w * .04, h * .24, w * .04, h * .05); ctx.closePath(); fin(); ctx.restore();
+  // dorsal, second dorsal, pelvic
+  ctx.beginPath(); ctx.moveTo(w * .12, -h * .44); ctx.quadraticCurveTo(w * .05, -h * .86, -w * .07, -h * .96); ctx.quadraticCurveTo(-w * .035, -h * .66, -w * .07, -h * .42); ctx.closePath(); fin();
+  ctx.beginPath(); ctx.moveTo(-w * .22, -h * .22); ctx.lineTo(-w * .285, -h * .37); ctx.lineTo(-w * .29, -h * .15); ctx.closePath(); fin();
+  ctx.beginPath(); ctx.moveTo(-w * .15, h * .32); ctx.lineTo(-w * .235, h * .5); ctx.lineTo(-w * .24, h * .22); ctx.closePath(); fin();
+  // body: heavy shoulders, cone snout over the mouth, a thin stalk before the tail
+  const p = new Path2D();
+  p.moveTo(w * .5, -h * .09);
+  p.bezierCurveTo(w * .42, -h * .4, w * .2, -h * .52, w * .04, -h * .48);
+  p.bezierCurveTo(-w * .1, -h * .45, -w * .2, -h * .1, -w * .39, -h * .055);
+  p.lineTo(-w * .39, h * .04);
+  p.bezierCurveTo(-w * .22, h * .07, -w * .12, h * .44, w * .05, h * .47);
+  p.bezierCurveTo(w * .24, h * .5, w * .36, h * .4, w * .42, h * .2);
+  p.quadraticCurveTo(w * .485, h * .08, w * .5, -h * .09);
+  if (sil) ctx.fillStyle = SIL; else { const gr = ctx.createLinearGradient(0, -h * .55, 0, h * .55); gr.addColorStop(0, c.back); gr.addColorStop(.5, c.body); gr.addColorStop(1, c.belly); ctx.fillStyle = gr; }
+  ctx.fill(p);
+  ctx.restore();   // the rest is solid: bones, teeth, scars, eye
+  if (sil) return;
+  ctx.save(); ctx.clip(p);
+  // mouth
+  const mx = w * .27, my = h * .2, open = h * (.05 + jaw * .07);
+  ctx.fillStyle = 'rgba(6,20,30,.85)'; ctx.beginPath(); ctx.moveTo(w * .49, h * .0); ctx.lineTo(mx, my - open * .2); ctx.lineTo(w * .47, my + open + h * .1); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 7; i++) { const k = i / 7, x = w * .48 - (w * .48 - mx) * k, y = h * 0 + (my - open * .2) * k; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - w * .012, y + h * .13 * (1 - k * .5)); ctx.lineTo(x - w * .028, y + h * .012); ctx.closePath(); ctx.fill(); }
+  for (let i = 0; i < 6; i++) { const k = i / 6, x = w * .455 - (w * .455 - mx) * k, y = (my + open + h * .09) - (open + h * .09) * k; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - w * .01, y - h * .1 * (1 - k * .5)); ctx.lineTo(x - w * .026, y - h * .01); ctx.closePath(); ctx.fill(); }
+  // skeleton: spine, ribs and the short spines above it, drawn twice (soft halo, bright core)
+  const spine = k => [w * (.3 - k * .67), -h * .08 + Math.sin(k * 2.2) * h * .07];
+  for (const [col, lwK] of [['rgba(190,255,245,.35)', 3.2], ['rgba(255,255,255,.95)', 1]]) {
+    ctx.strokeStyle = col; ctx.lineWidth = Math.max(1.2, w * .008) * lwK;
+    ctx.beginPath(); for (let i = 0; i <= 16; i++) { const [x, y] = spine(i / 16); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+    ctx.lineWidth = Math.max(1, w * .006) * lwK;
+    for (let i = 1; i < 12; i++) {
+      const k = i / 12, [x, y] = spine(k), L = h * .34 * Math.sin(Math.PI * Math.min(1, k * 1.35 + .12));
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x - w * .03, y + L * .6, x + w * .012, y + L); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - w * .012, y - h * .13 * (1 - k * .6)); ctx.stroke();
+    }
+  }
+  // gill slits and three scars of light across the flank
+  ctx.strokeStyle = 'rgba(8,60,70,.5)'; ctx.lineWidth = Math.max(1.2, w * .008);
+  for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(w * (.2 - i * .028), -h * .16); ctx.quadraticCurveTo(w * (.185 - i * .028), h * .02, w * (.2 - i * .028), h * .16); ctx.stroke(); }
+  const fl = .7 + Math.sin(ph * 5) * .3;
+  for (const [col, lwK] of [[`rgba(120,255,225,${.35 * fl})`, 4], [`rgba(235,255,250,${.95 * fl})`, 1.3]]) {
+    ctx.strokeStyle = col; ctx.lineWidth = Math.max(1.2, w * .008) * lwK;
+    [[.06, -.4, -.01, -.16], [.0, -.41, -.07, -.17], [-.06, -.38, -.13, -.16]].forEach(([x1, y1, x2, y2]) => { ctx.beginPath(); ctx.moveTo(w * x1, h * y1); ctx.lineTo(w * x2, h * y2); ctx.stroke(); });
+  }
+  ctx.restore();
+  ctx.strokeStyle = c.out; ctx.lineWidth = lw; ctx.stroke(p);
+  // pectoral fin over the body
+  ctx.save(); ctx.globalAlpha *= .8;
+  { const sw = Math.sin(ph * 3) * h * .05; ctx.beginPath(); ctx.moveTo(w * .15, h * .24); ctx.quadraticCurveTo(w * .09, h * .58 + sw, -w * .01, h * .7 + sw); ctx.quadraticCurveTo(w * .03, h * .46, w * .05, h * .32); ctx.closePath(); fin(); }
+  ctx.restore();
+  // eye: a ghost light under a heavy brow (a calm arc while it sleeps in the intro)
+  const ex = w * .37, ey = -h * .16;
+  if (eyesClosed) { ctx.strokeStyle = '#eafffb'; ctx.lineWidth = Math.max(1.5, w * .01); ctx.beginPath(); ctx.arc(ex, ey, w * .018, .3, Math.PI - .3); ctx.stroke(); }
+  else {
+    glowDot(ctx, ex, ey, Math.max(2.5, w * .016), 'rgba(160,255,235,.95)', mode);
+    ctx.strokeStyle = 'rgba(8,60,70,.85)'; ctx.lineWidth = Math.max(2, w * .012); ctx.beginPath(); ctx.moveTo(ex - w * .035, ey - h * .12); ctx.lineTo(ex + w * .03, ey - h * .04); ctx.stroke();
+  }
+}
+
 /* ============================ UI ================================= */
 const $ = id => document.getElementById(id);
 const moneyPill = $('moneyPill'), moneyEl = $('money');
@@ -2595,20 +3144,20 @@ const ICONS = {
 };
 const IC_BG = { line: '#e3efff', hook: '#eef1f4', bait: '#ffe7ec', boat: '#e3f6ff' };
 function shopItems() {
-  const U = CONFIG.upgrades, items = [];
+  const U = CONFIG.upgrades, items = [], needLast = t('needBoatX', { boat: t('boats')[LASTZ] });
   // line
   { const lv = S.l[0], mx = lv >= U.line.values.length - 1, cost = mx ? 0 : U.line.costs[lv];
-    const capped = !mx && U.line.values[lv] >= boatFloor();
-    items.push({ k: 'line', lv, mx, cost, locked: capped ? t('needBoat') : null,
+    const capped = !mx && U.line.values[lv] >= boatFloor(), nd = mx || capped ? null : lineNeed(lv);
+    items.push({ k: 'line', lv, mx, cost, locked: capped ? t('needBoat') : nd ? `${t('needCatch', { n: nd.n, fish: nm(nd.sp.id) })} (${nd.have}/${nd.n})` : null,
       eff: mx ? t('maxed') : t('effLine', { a: U.line.values[lv], b: U.line.values[lv + 1] }) }); }
   { const lv = S.l[1], mx = lv >= U.hook.values.length - 1, cost = mx ? 0 : U.hook.costs[lv];
-    items.push({ k: 'hook', lv, mx, cost, eff: mx ? t('maxed') : t('effHook', { a: U.hook.values[lv], b: U.hook.values[lv + 1] }) }); }
+    items.push({ k: 'hook', lv, mx, cost, locked: !mx && deepLocked('hook') ? needLast : null, eff: mx ? t('maxed') : t('effHook', { a: U.hook.values[lv], b: U.hook.values[lv + 1] }) }); }
   { const lv = S.l[2], mx = lv >= U.bait.levels - 1, cost = mx ? 0 : U.bait.costs[lv];
     const f = v => (Math.round(v * 10) / 10).toString();
-    items.push({ k: 'bait', lv, mx, cost, eff: mx ? t('maxed') : t('effBait', { a: f(rareMult(lv)), b: f(rareMult(lv + 1)), c: f(goldChance(lv) * 100), d: f(goldChance(lv + 1) * 100) }) }); }
-  { const lv = S.l[3], mx = lv >= 3, cost = mx ? 0 : U.boat.costs[lv];
+    items.push({ k: 'bait', lv, mx, cost, locked: !mx && deepLocked('bait') ? needLast : null, eff: mx ? t('maxed') : t('effBait', { a: f(rareMult(lv)), b: f(rareMult(lv + 1)), c: f(goldChance(lv) * 100), d: f(goldChance(lv + 1) * 100) }) }); }
+  { const lv = S.l[3], mx = lv >= LASTZ, cost = mx ? 0 : U.boat.costs[lv];
     const lock = !mx && !S.b[lv] ? t('needBoss', { boss: nm(CONFIG.zones[lv].boss) }) : null;
-    items.push({ k: 'boat', lv, mx, cost, locked: lock, name: mx ? t('boats')[3] : t('boats')[lv + 1],
+    items.push({ k: 'boat', lv, mx, cost, locked: lock, name: mx ? t('boats')[LASTZ] : t('boats')[lv + 1],
       eff: mx ? t('maxed') : t('effBoat', { zone: t('zones')[lv + 1], m: CONFIG.zones[lv + 1].floor }) }); }
   return items;
 }
@@ -2630,7 +3179,7 @@ function renderShop() {
     const can = !it.mx && !it.locked && S.m >= it.cost;
     const d = document.createElement('div'); d.className = 'card';
     const title = it.k === 'boat' ? `${t('boat')} · ${it.name}` : t(it.k);
-    const lvTxt = it.k === 'boat' ? `${it.lv + 1}/4` : `${t('lvl')} ${it.lv + 1}`;
+    const lvTxt = it.k === 'boat' ? `${it.lv + 1}/${CONFIG.zones.length}` : `${t('lvl')} ${it.lv + 1}`;
     const icon = it.k === 'hook' ? ICONS.hook.replace(/#5b6b78/g, HOOK_LOOK[hookTier()].dark) : ICONS[it.k];
     d.innerHTML = `<div class="ic" style="background:${IC_BG[it.k]}">${icon}</div>
       <div class="info"><div class="name">${title} <span class="lvpill">${lvTxt}</span></div><div class="eff">${it.locked ? '🔒 ' + it.locked : it.eff}</div></div>`;
@@ -2733,6 +3282,8 @@ function goalText() {
   }
   const z = S.l[3], Z = CONFIG.zones[z], boss = nm(Z.boss);
   if (!S.b[z]) {
+    const nd = lineDepth() < Z.floor ? lineNeed() : null;
+    if (nd) return `🔬 ${t('needCatch', { n: nd.n, fish: nm(nd.sp.id) })}<span class="gbar"><i style="width:${Math.round(nd.have / nd.n * 100)}%"></i><b>${nd.have}/${nd.n}</b></span>`;   // catch-to-unlock in the last zone
     if (maxDepthM() < Z.floor) {   // with a bar: how far the line goes towards the boss
       const top = z ? CONFIG.zones[z - 1].floor : 0, k = clamp((maxDepthM() - top) / (Z.floor - top), 0, 1);
       return `🎯 ${boss}<span class="gbar"><i style="width:${Math.round(k * 100)}%"></i><b>${maxDepthM()}/${Z.floor} m</b></span>`;
@@ -2740,7 +3291,7 @@ function goalText() {
     if (S.l[1] + 1 < Z.bossHook) return '🎯 ' + t('goalHook', { boss, n: Z.bossHook });
     return '🎯 ' + t('goalCatch', { boss, m: Z.floor });
   }
-  if (z < 3) return '🎯 ' + t('goalBoat', { boat: t('boats')[z + 1] });
+  if (z < LASTZ) return '🎯 ' + t('goalBoat', { boat: t('boats')[z + 1] });
   return '🏆 ' + t('goalDone');
 }
 let lastHUD = '';
@@ -2804,10 +3355,7 @@ function rollChest() {
   let type = 'upgrade';
   if (S.st.ch > 1) { const w = CONFIG.chest.weights; let r = Math.random() * (w[0] + w[1] + w[2]); type = (r -= w[0]) < 0 ? 'coins' : (r -= w[1]) < 0 ? 'upgrade' : 'bait'; }
   if (type === 'upgrade') {
-    const U = CONFIG.upgrades, opts = [];
-    if (S.l[0] < U.line.values.length - 1 && U.line.values[S.l[0]] < boatFloor()) opts.push(0);
-    if (S.l[1] < U.hook.values.length - 1) opts.push(1);
-    if (S.l[2] < U.bait.levels - 1) opts.push(2);
+    const opts = freeUpgradeOpts();
     // the very first chest gives Line: a longer line = new fish right away
     if (opts.length) return { type, k: S.st.ch === 1 && opts[0] === 0 ? 0 : opts[Math.floor(Math.random() * opts.length)] };
     type = 'coins';
@@ -2867,10 +3415,7 @@ function wheelReward(sl) {
   return { type: 'bait' };
 }
 function rollChestUpgrade() {
-  const U = CONFIG.upgrades, opts = [];
-  if (S.l[0] < U.line.values.length - 1 && U.line.values[S.l[0]] < boatFloor()) opts.push(0);
-  if (S.l[1] < U.hook.values.length - 1) opts.push(1);
-  if (S.l[2] < U.bait.levels - 1) opts.push(2);
+  const opts = freeUpgradeOpts();
   return opts.length ? { type: 'upgrade', k: opts[Math.floor(Math.random() * opts.length)] } : null;
 }
 function wheelLabel(sl) {
@@ -2957,7 +3502,7 @@ function showSummary() {
     const list = root.querySelector('#haulList');
     groups.slice(0, 12).forEach(gr => {
       const d = document.createElement('div'); d.className = 'hi' + (gr.it.rainbow ? ' rainbow' : gr.it.golden ? ' gold' : '') + (gr.it.boss || gr.it.ret ? ' boss' : '');
-      d.appendChild(thumb(gr.it.lk, gr.it.boss ? 56 : Math.min(48, Math.max(28, gr.it.sp.size * .8)), fishMode(gr.it)));
+      d.appendChild(thumb(gr.it.lk, gr.it.boss ? 56 : Math.min(48, Math.max(28, gr.it.sp.size * .8)) * (gr.it.lk.h >= .8 ? .78 : 1), fishMode(gr.it)));   // very tall shapes still fit the tile
       d.insertAdjacentHTML('beforeend', `<span>${gr.n > 1 ? '×' + gr.n + ' · ' : ''}${fmt(gr.val)}</span>`);
       list.appendChild(d);
     });
@@ -3011,13 +3556,13 @@ function showSummary() {
     const pm = pendingModals.shift();
     if (pm.type === 'boat') showModal(`<h2>${t('newBoat')}</h2>${boatSVG(pm.z)}<p>${t('newBoatText', { boat: t('boats')[pm.z], zone: t('zones')[pm.z], m: CONFIG.zones[pm.z].floor })}</p><button class="btn green" style="width:100%" id="okB">${t('ok')}</button>`, r => r.querySelector('#okB').onclick = closeModal);
     if (pm.type === 'crew') showModal(`<h2>${t('crewUnlocked')}</h2><div style="font-size:54px">⚓</div><p>${t('crewText')}</p><button class="btn green" style="width:100%" id="okB">${t('ok')}</button>`, r => r.querySelector('#okB').onclick = closeModal);
-    if (pm.type === 'win') showModal(winHTML(), r => { const c = thumb(LOOK.kraken, 42, 0); c.style.width = '120px'; r.querySelector('#krakenPic').appendChild(c); r.querySelector('#okB').onclick = closeModal; });
+    if (pm.type === 'win') showModal(winHTML(pm.z), r => { const c = thumb(LOOK[CONFIG.zones[pm.z].boss], pm.z === KRAKEN_Z ? 42 : 54, 0); c.style.width = '120px'; r.querySelector('#krakenPic').appendChild(c); r.querySelector('#okB').onclick = closeModal; });
   }
 }
 function boatSVG(z) { return `<div style="margin:6px auto;width:90px">${ICONS.boat}</div>`; }
-function winHTML() {
-  const mm = Math.floor(S.st.pt / 60);
-  return `<h2>${t('victory')}</h2><div style="width:120px;margin:0 auto" id="krakenPic"></div><p>${t('victoryText')}</p>
+function winHTML(z) {
+  const mm = Math.floor(S.st.pt / 60), k = z === KRAKEN_Z ? 'victory' : 'victory2';
+  return `<h2>${t(k)}</h2><div style="width:120px;margin:0 auto" id="krakenPic"></div><p>${t(k + 'Text')}</p>
   <div class="stats">
     <div class="stat"><b>${S.st.d}</b><span>${t('sDives')}</span></div>
     <div class="stat"><b>${S.st.md} m</b><span>${t('sDepth')}</span></div>
@@ -3026,6 +3571,32 @@ function winHTML() {
     <div class="stat"><b>${mm} min</b><span>${t('sTime')}</span></div>
     <div class="stat"><b>${S.st.g}</b><span>${t('sGold')}</span></div>
   </div><button class="btn gold" style="width:100%" id="okB">${t('ok')}</button>`;
+}
+// one-time news for players who already had the Kraken when the Bermuda Triangle arrived: they would never see the
+// "new boat" window, which opens only when the boss is caught
+function showNews() {
+  const Z = CONFIG.zones[LASTZ];
+  showModal(`<h2>${t('newsT')}</h2><div class="newsPic" id="newsPic"></div><p>${t('newsText', { m: Z.floor })}</p>
+    <div class="row"><button class="btn" id="okB">${t('cont')}</button><button class="btn gold" id="shopB">🛒 ${t('shop')}</button></div>`, r => {
+    const c = document.createElement('canvas'); c.width = 520; c.height = 240; c.style.cssText = 'width:260px;height:120px;border-radius:14px';
+    const x = c.getContext('2d'); x.scale(2, 2); r.querySelector('#newsPic').appendChild(c);
+    const t0 = performance.now();
+    const draw = now => {   // the creatures of the new zone as glowing silhouettes, the boss behind them
+      if (!c.isConnected) return;
+      const k = (now - t0) / 1000, bg = x.createLinearGradient(0, 0, 0, 120);
+      bg.addColorStop(0, '#3a1f78'); bg.addColorStop(1, '#170b3c'); x.fillStyle = bg; x.fillRect(0, 0, 260, 120);
+      x.save(); x.globalAlpha = .8 + Math.sin(k * 2) * .15;
+      const tg = x.createRadialGradient(130, 62, 4, 130, 62, 130); tg.addColorStop(0, 'rgba(150,255,210,.85)'); tg.addColorStop(1, 'rgba(150,255,210,0)');
+      x.fillStyle = tg; x.fillRect(0, 0, 260, 120); x.restore();
+      drawFishAt(LOOK[Z.boss], 132 + Math.sin(k * .8) * 6, 58, 190, 1, k, 2, x);
+      ZONE_SPECIES[LASTZ].forEach((sp, i) => drawFishAt(LOOK[sp.id], 34 + i * 48, 98 + Math.sin(k * 1.6 + i) * 3, Math.min(40, sp.size * .5), i % 2 ? -1 : 1, k + i, 2, x));
+      x.fillStyle = '#fff'; x.font = '900 30px ui-rounded,system-ui,sans-serif'; x.textAlign = 'center'; x.fillText('???', 130, 34);
+      animFrame(draw);
+    };
+    animFrame(draw); sfx.fresh(); setTimeout(() => sfx.boss(), 250);
+    r.querySelector('#okB').onclick = closeModal;
+    r.querySelector('#shopB').onclick = () => { closeModal(); if (!modalOpen()) setTimeout(() => openPanel(shopEl), 60); };
+  });
 }
 // time away: the crew fills the hold; the player collects it from the crew panel
 function checkAway(seconds) {
@@ -3363,6 +3934,7 @@ async function boot() {
   if (S.st.d === 0) startIntro();
   refreshHUD(true);
   PF.ready();
+  if (!S.nw) { if (S.b[KRAKEN_Z] && S.l[3] < LASTZ) showNews(); S.nw = 1; }   // once per save
   checkAway(away);
   save();
 }
