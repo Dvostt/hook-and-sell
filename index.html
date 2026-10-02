@@ -900,7 +900,7 @@ const PF = BR ? (() => {
   hookPause() {}, audioEnabled: () => true, onAudio() {}, score() {},
   rewardedSupported: () => true, rewarded: () => simulatedAd(), interstitial() {}, track() {}, warn() {}, error() {},
 };
-const GAME_VERSION = '1.3.5';   // goes out with every analytics event: change it with every archive that is uploaded
+const GAME_VERSION = '1.3.6';   // goes out with every analytics event: change it with every archive that is uploaded
 /* ---- analytics: where do players leave? ----
    Every event goes through track(). Only the Playgama build sends them (Bridge analytics); in local tests they are kept in window.__hsEvents.
    Progression is a short, fixed list of steps, each with its own name (step_first_cast, step_dive_3, step_boss_1...): Playgama's
@@ -4032,9 +4032,15 @@ function drawManta(ctx, lk, w, ph, mode, c) {
   const cl = sky ? ['190,90,255', '70,220,235', '255,120,190'] : ['255,255,255', '255,255,255', '255,255,255'], ca = sky ? 1 : .4;
   blob(-w * .06, -tip * .52, w * .25, cl[0], .55 * ca); blob(w * .02, tip * .5, w * .23, cl[1], .46 * ca); if (!LITE) blob(-w * .2, tip * .08, w * .12, cl[2], .4 * ca);
   // the sky behind: it stays where it is on the screen while the manta glides over it, like a window
-  const m = ctx.getTransform(), ox = (m.e / (m.a || 1)) * .55, oy = (m.f / (m.d || 1)) * .12;   // less up and down: the camera moves fast on a dive
+  // (where the manta is on the screen, in its own units: by the size of the transform, never by one of its terms alone. Turned a quarter
+  // of a turn, as on the first frame of the haul, that term is almost zero, and the sky would be 10^18 away: the loop below never ended)
+  const m = ctx.getTransform(), sx = Math.hypot(m.a, m.b) || 1, sy = Math.hypot(m.c, m.d) || 1, flip = m.a * m.d - m.b * m.c < 0 ? -1 : 1;
+  const ox = (m.e / sx) * flip * .55, oy = (m.f / sy) * .12;   // less up and down: the camera moves fast on a dive
   { const T = w * (LITE ? .2 : .13), cool = new Path2D(), warm = new Path2D(), big = [];   // stars: most are dust (drawn in two batches, they twinkle by size), a few are bright and have rays
-    for (let gx = Math.floor((ox - w * .55) / T); gx <= Math.floor((ox + w * .45) / T); gx++) for (let gy = Math.floor((oy - h * .55) / T); gy <= Math.floor((oy + h * .55) / T); gy++) for (let k = 0; k < 2; k++) {
+    // counted cells, never more than 40 a side: whatever the numbers, the loop ends
+    const gx0 = Math.floor((ox - w * .55) / T), gy0 = Math.floor((oy - h * .55) / T), nx = Math.min(40, Math.floor((ox + w * .45) / T) - gx0), ny = Math.min(40, Math.floor((oy + h * .55) / T) - gy0);
+    for (let ix = 0; ix <= nx; ix++) for (let iy = 0; iy <= ny; iy++) for (let k = 0; k < 2; k++) {
+      const gx = gx0 + ix, gy = gy0 + iy;
       const r1 = starHash(gx, gy, k * 3 + 1), r2 = starHash(gx, gy, k * 3 + 2), r3 = starHash(gx, gy, k * 3 + 3), x = (gx + r1) * T - ox, y = (gy + r2) * T - oy, tw = .55 + .45 * Math.sin(ph * (1.5 + r3 * 3) + r1 * 40);
       if (r3 > .9) big.push([x, y, tw]);
       else { const r = Math.max(.6, w * (.0035 + r3 * .0065)) * (.55 + .45 * tw), q = r3 > .5 ? cool : warm; q.moveTo(x + r, y); q.arc(x, y, r, 0, 7); }
