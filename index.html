@@ -4,8 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Hook &amp; Sell: Fishing to Atlantis</title>
-<!-- YouTube Playables SDK: MUST be loaded before any game code -->
-<script src="https://www.youtube.com/game_api/v1"></script>
 <style>
 :root{
   --ink:#0b2540; --ink2:#4a6076; --panel:#fff8ec; --card:#ffffff; --card-sh:#eadfca;
@@ -812,11 +810,13 @@ const coinHTML = (cls = 'sm') => `<span class="coin ${cls}"></span>`;
 
 /* ============================ platform layer ===================== */
 /* One game, three hosts. The build decides which SDK script sits in <head>:
-   - YouTube Playables build: the YouTube game SDK   -> ytgame
+   - YouTube Playables build: the YouTube game SDK   -> ytgame (only in the package the build marks as YouTube's)
    - Playgama build:          the Playgama Bridge SDK -> bridge (also covers YouTube and 20+ portals)
    - no SDK / local file:    localStorage + simulated rewarded ad
    Everything the game needs from the host goes through PF. */
-const YT = (typeof ytgame !== 'undefined' && ytgame.IN_PLAYABLES_ENV) ? ytgame : null;
+// (The YouTube SDK takes any page shown inside a frame for a Playable and waits for YouTube to answer. Only the YouTube package is one:
+// the build marks it with data-host="youtube" on <html>. The same file anywhere else, embedded in someone's page too, runs on its own.)
+const YT = (typeof ytgame !== 'undefined' && ytgame.IN_PLAYABLES_ENV && document.documentElement.dataset.host === 'youtube') ? ytgame : null;
 const BR = (typeof bridge !== 'undefined') ? bridge : null;
 const QS = new URLSearchParams(location.search);
 // local testing only (localhost or a file opened from disk, never online or inside a host platform):
@@ -900,7 +900,7 @@ const PF = BR ? (() => {
   hookPause() {}, audioEnabled: () => true, onAudio() {}, score() {},
   rewardedSupported: () => true, rewarded: () => simulatedAd(), interstitial() {}, track() {}, warn() {}, error() {},
 };
-const GAME_VERSION = '1.3.7';   // goes out with every analytics event: change it with every archive that is uploaded
+const GAME_VERSION = '1.3.8';   // goes out with every analytics event: change it with every archive that is uploaded
 /* ---- analytics: where do players leave? ----
    Every event goes through track(). Only the Playgama build sends them (Bridge analytics); in local tests they are kept in window.__hsEvents.
    Progression is a short, fixed list of steps, each with its own name (step_first_cast, step_dive_3, step_boss_1...): Playgama's
