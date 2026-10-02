@@ -900,7 +900,7 @@ const PF = BR ? (() => {
   hookPause() {}, audioEnabled: () => true, onAudio() {}, score() {},
   rewardedSupported: () => true, rewarded: () => simulatedAd(), interstitial() {}, track() {}, warn() {}, error() {},
 };
-const GAME_VERSION = '1.3.6';   // goes out with every analytics event: change it with every archive that is uploaded
+const GAME_VERSION = '1.3.7';   // goes out with every analytics event: change it with every archive that is uploaded
 /* ---- analytics: where do players leave? ----
    Every event goes through track(). Only the Playgama build sends them (Bridge analytics); in local tests they are kept in window.__hsEvents.
    Progression is a short, fixed list of steps, each with its own name (step_first_cast, step_dive_3, step_boss_1...): Playgama's
@@ -922,12 +922,22 @@ function defaultState() {
 }
 function migrate(o) {
   const d = defaultState();
-  if (!o || typeof o !== 'object') return d;
-  // v1 is the first version: fill any missing field so older/partial saves never break
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return d;
+  // v1 is the first version: fill any missing field so older/partial saves never break.
+  // A save that comes back damaged must not stop the game either: every field is a number (never below zero), a list of numbers
+  // or the table of the statistics; whatever is not goes back to its starting value, and the levels stay inside their tables
   const noQuests = o.q === undefined, noSeen = o.bs === undefined;
-  for (const k in d) if (o[k] === undefined) o[k] = d[k];
-  for (const k in d.st) if (o.st[k] === undefined) o.st[k] = d.st[k];
+  const num = (v, def) => typeof v === 'number' && isFinite(v) && v >= 0 ? v : def;
+  for (const k in d) {
+    const dv = d[k], v = o[k];
+    if (Array.isArray(dv)) o[k] = Array.isArray(v) ? v.map(x => num(x, 0)) : dv;
+    else if (typeof dv === 'object') { if (!v || typeof v !== 'object' || Array.isArray(v)) o[k] = dv; else for (const kk in dv) v[kk] = num(v[kk], dv[kk]); }
+    else o[k] = num(v, dv);
+  }
   while (o.l.length < 4) o.l.push(0);   // line, hook, bait, boat
+  { const U = CONFIG.upgrades, top = [U.line.values.length - 1, U.hook.values.length - 1, U.bait.levels - 1, CONFIG.zones.length - 1], lim = (v, hi) => Math.max(0, Math.min(hi, Math.floor(v)));
+    o.l = o.l.slice(0, 4).map((v, i) => lim(v, top[i]));
+    o.q = lim(o.q, CONFIG.onboarding.quests.length); o.cp = lim(o.cp, 3); o.ss = lim(o.ss, 3); o.win = lim(o.win, 3); o.sg = lim(o.sg, CONFIG.seal.stones); o.sv = lim(o.sv, o.sg); o.bs = lim(o.bs, 255); }
   if (noSeen) o.bs = (2 << o.l[3]) - 1;   // players from before the dark bosses saw every boss up to their zone in full colour
   while (o.b.length < CONFIG.zones.length) o.b.push(0);   // one boss per zone: saves from before a new zone get its slot
   while (o.cu.length < 3) o.cu.push(0);
@@ -1050,6 +1060,9 @@ const X0 = () => -offX - 10, XW = () => VW + offX * 2 + 20;   // full-screen hor
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2.5);
   const w = window.innerWidth, h = window.innerHeight;
+  // a window with no size (the page around the game has hidden or flattened its frame): keep the last layout. With a scale of zero
+  // the field would be infinitely wide, and the loops that draw across it would never end
+  if (!(w >= 40 && h >= 40)) return;
   scale = Math.min(w / VW, h / MIN_VH); VH = h / scale; offX = (w / scale - VW) / 2;
   cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
   fxc.width = cv.width; fxc.height = cv.height;
@@ -5522,10 +5535,14 @@ function frame(ts) {
   if (started && (phase === 'down' || phase === 'up')) perfFrame(raw);
   // (never in the first seconds: a page that is still loading is not a slow device)
   if (!LITE && ts > 12000 && (phase === 'down' || phase === 'up') && raw > 0 && raw < 250) { slowMs = raw > 25 ? slowMs + raw : Math.max(0, slowMs - raw * .5); if (slowMs > 1500) LITE = true; }
-  if (started) { updateCine(dt); updateStory(dt); updatePayouts(dt); update(dt * timeScale); }
-  render();
+  // one frame that goes wrong must not be the last one: the loop goes on, and the error is still reported (the first few)
+  try {
+    if (started) { updateCine(dt); updateStory(dt); updatePayouts(dt); update(dt * timeScale); }
+    render();
+  } catch (e) { for (let i = 0; i < 60; i++) g.restore(); if (frameErrs++ < 3) setTimeout(() => { throw e; }); }   // (the drawing is left as it was before the frame: no clip or transform stays behind)
   rafId = requestAnimationFrame(frame);
 }
+let frameErrs = 0;
 function pauseGame() {
   if (paused) return;
   paused = true; pausedAt = Date.now(); PERF.skip = true; perfFlush();
