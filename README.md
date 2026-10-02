@@ -1,4 +1,4 @@
-# Hook & Sell
+# Hook & Sell: Fishing to Atlantis
 
 A casual one-finger fishing game built for YouTube Playables.
 

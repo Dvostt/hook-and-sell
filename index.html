@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Hook &amp; Sell</title>
+<title>Hook &amp; Sell: Fishing to Atlantis</title>
 <!-- YouTube Playables SDK: MUST be loaded before any game code -->
 <script src="https://www.youtube.com/game_api/v1"></script>
 <style>
@@ -900,7 +900,7 @@ const PF = BR ? (() => {
   hookPause() {}, audioEnabled: () => true, onAudio() {}, score() {},
   rewardedSupported: () => true, rewarded: () => simulatedAd(), interstitial() {}, track() {}, warn() {}, error() {},
 };
-const GAME_VERSION = '1.3.4';   // goes out with every analytics event: change it with every archive that is uploaded
+const GAME_VERSION = '1.3.5';   // goes out with every analytics event: change it with every archive that is uploaded
 /* ---- analytics: where do players leave? ----
    Every event goes through track(). Only the Playgama build sends them (Bridge analytics); in local tests they are kept in window.__hsEvents.
    Progression is a short, fixed list of steps, each with its own name (step_first_cast, step_dive_3, step_boss_1...): Playgama's
@@ -3188,6 +3188,8 @@ function drawTitle() {
   g.lineWidth = 10; g.strokeStyle = '#0b3a66'; g.strokeText('Hook & Sell', 0, 0);
   const tg = g.createLinearGradient(0, -36, 0, 6); tg.addColorStop(0, '#fff6c2'); tg.addColorStop(1, '#ffb300');
   g.fillStyle = tg; g.fillText('Hook & Sell', 0, 0);
+  // the second half of the name (the same in every language): where all this fishing leads
+  g.font = '900 21px ui-rounded,system-ui,sans-serif'; g.lineWidth = 6; g.strokeStyle = '#0b3a66'; g.strokeText('Fishing to Atlantis', 0, 30); g.fillStyle = '#eaf8ff'; g.fillText('Fishing to Atlantis', 0, 30);
   g.restore();
 }
 
