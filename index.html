@@ -845,14 +845,19 @@ function simulatedAd() {
 const LB_ID = 'top_earnings';   // leaderboard tag, same id in the Playgama cabinet and in playgama-bridge-config.json
 const PF = BR ? (() => {
   // Playgama Bridge SDK v2
-  let rewardWaiter = null, rewardGot = false;
+  let rewardWaiter = null, rewardLate = 0;
+  const rewardEnd = ok => { clearTimeout(rewardLate); const r = rewardWaiter; rewardWaiter = null; if (r) r(ok); };
   const mock = () => { try { return BR.platform.id === 'mock'; } catch (e) { return true; } };
   return {
     name: 'bridge',
     init: () => BR.initialize().then(() => {
+      // the reward is given on 'rewarded' and only then, whenever it comes: before the ad closes, or after it (some hosts, and the
+      // QA Tool, send it last). A close without it waits a moment for a late 'rewarded' before it counts as no reward
       BR.advertisement.on(BR.EVENT_NAME.REWARDED_STATE_CHANGED, st => {
-        if (st === 'rewarded') rewardGot = true;
-        if ((st === 'closed' || st === 'failed') && rewardWaiter) { const r = rewardWaiter; rewardWaiter = null; r(st === 'closed' && rewardGot); }
+        if (!rewardWaiter) return;
+        if (st === 'rewarded') rewardEnd(true);
+        else if (st === 'failed') rewardEnd(false);
+        else if (st === 'closed') { clearTimeout(rewardLate); rewardLate = setTimeout(() => rewardEnd(false), 1500); }
       });
     }),
     firstFrame() {},
@@ -874,7 +879,7 @@ const PF = BR ? (() => {
     rewardedSupported: () => mock() || !!BR.advertisement.isRewardedSupported,
     rewarded(id) {
       if (mock()) return simulatedAd();
-      return new Promise(res => { rewardGot = false; rewardWaiter = res; try { BR.advertisement.showRewarded(id); } catch (e) { rewardWaiter = null; res(false); } });
+      return new Promise(res => { rewardEnd(false); rewardWaiter = res; try { BR.advertisement.showRewarded(id); } catch (e) { rewardEnd(false); } });
     },
     interstitial(id) { try { if (!mock() && BR.advertisement.isInterstitialSupported) BR.advertisement.showInterstitial(id); } catch (e) {} },
     track(name, data) { try { if (BR.analytics && BR.analytics.send) BR.analytics.send(name, data); } catch (e) {} },
@@ -908,7 +913,7 @@ const PF = BR ? (() => {
   hookPause() {}, audioEnabled: () => true, onAudio() {}, score() {},
   rewardedSupported: () => true, rewarded: () => simulatedAd(), interstitial() {}, track() {}, warn() {}, error() {},
 };
-const GAME_VERSION = '1.3.10';   // goes out with every analytics event: change it with every archive that is uploaded
+const GAME_VERSION = '1.3.11';   // goes out with every analytics event: change it with every archive that is uploaded
 /* ---- analytics: where do players leave? ----
    Every event goes through track(). Only the Playgama build sends them (Bridge analytics); in local tests they are kept in window.__hsEvents.
    Progression is a short, fixed list of steps, each with its own name (step_first_cast, step_dive_3, step_boss_1...): Playgama's
