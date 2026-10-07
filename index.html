@@ -125,6 +125,7 @@ button{font:inherit;cursor:pointer}
 .crewBubble.full{background:#fff0c2;animation:pulse .9s infinite}
 .crewBubble.full::after{border-top-color:#fff0c2}
 .crewBubble.full .cbBar i{background:var(--red)}
+.crewBubble.soon{background:#e9eef3;color:var(--ink2)}.crewBubble.soon .coin,.crewBubble.soon .cbBar{display:none}
 .scene{border-radius:18px;overflow:hidden;box-shadow:0 3px 0 var(--card-sh);margin-bottom:10px;background:#8fd8ff}
 .scene canvas{display:block;width:100%;height:auto}
 .crewStats{display:flex;justify-content:space-between;gap:10px;margin:2px 4px 6px;font-weight:800;color:var(--ink2);font-size:14px}
@@ -389,6 +390,7 @@ const CONFIG = {
     },
     awayMin: 60,                             // s away before the "your crew kept fishing" popup
   },
+  crewSoon: 2,              // from this many dives the crew boat shows on the horizon, locked, until the first boss brings it
   hookRadius: 9,            // hit area going down (dodging)
   catchRadius: 19,          // hit area going up (grabbing): bigger = easier to chain catches
 };
@@ -416,7 +418,7 @@ const TXT = {
     crewTitle: 'Equipaggio', crewRate: 'Pesca', hold: 'Stiva', claim: 'Riscuoti', holdFull: 'Stiva piena: l\'equipaggio è fermo',
     upg: 'Potenziamenti', sailors: 'Marinai', luck: 'Fortuna', effSailors: '{a}/min → <b>{b}/min</b>',
     effHold: '{a} → <b>{b}</b> di pesca', effLuck: 'Riscossione ×{m}: {a}% → <b>{b}%</b>', lucky: 'Colpo di fortuna! ×{m}',
-    goCrew: 'Vai dall\'equipaggio', awayFull: 'La stiva è piena e l\'equipaggio si è fermato: potenzia la Stiva per farlo pescare più a lungo.',
+    goCrew: 'Vai dall\'equipaggio', soon: "Presto", crewSoonT: "Equipaggio in arrivo", crewSoonText: "Quando catturi il primo boss ({boss}) arriva un equipaggio che pesca per te, anche quando non giochi.", awayFull: 'La stiva è piena e l\'equipaggio si è fermato: potenzia la Stiva per farlo pescare più a lungo.',
     fullShort: 'PIENA', nothing: 'Stiva vuota', perMinU: '/min',
     newBoat: 'Nuova barca in negozio!', newBoatText: 'Il {boat} ti porta nella zona {zone}, fino a {m} m.',
     bossCaught: 'CATTURA LEGGENDARIA: {boss}!', victory: 'Hai catturato il Kraken!',
@@ -458,7 +460,7 @@ const TXT = {
     crewTitle: 'Crew', crewRate: 'Fishing', hold: 'Hold', claim: 'Collect', holdFull: 'Hold full: your crew stopped',
     upg: 'Upgrades', sailors: 'Sailors', luck: 'Luck', effSailors: '{a}/min → <b>{b}/min</b>',
     effHold: '{a} → <b>{b}</b> of fishing', effLuck: 'Collection ×{m}: {a}% → <b>{b}%</b>', lucky: 'Lucky haul! ×{m}',
-    goCrew: 'Go to your crew', awayFull: 'The hold is full, so your crew stopped. Upgrade the Hold to let them fish longer.',
+    goCrew: 'Go to your crew', soon: "Soon", crewSoonT: "Crew coming soon", crewSoonText: "Catch your first boss ({boss}) and a crew joins you: it fishes for you even when you are not playing.", awayFull: 'The hold is full, so your crew stopped. Upgrade the Hold to let them fish longer.',
     fullShort: 'FULL', nothing: 'Hold empty', perMinU: '/min',
     newBoat: 'New boat in the shop!', newBoatText: 'The {boat} takes you to the {zone}, down to {m} m.',
     bossCaught: 'LEGENDARY CATCH: {boss}!', victory: 'You caught the Kraken!',
@@ -500,7 +502,7 @@ const TXT = {
     crewTitle: 'Команда', crewRate: 'Улов', hold: 'Трюм', claim: 'Забрать', holdFull: 'Трюм полон: команда стоит',
     upg: 'Улучшения', sailors: 'Матросы', luck: 'Удача', effSailors: '{a}/мин → <b>{b}/мин</b>',
     effHold: '{a} → <b>{b}</b> рыбалки', effLuck: 'Сбор ×{m}: {a}% → <b>{b}%</b>', lucky: 'Удачный улов! ×{m}',
-    goCrew: 'К команде', awayFull: 'Трюм полон, и команда остановилась. Улучши трюм, чтобы она рыбачила дольше.',
+    goCrew: 'К команде', soon: "Скоро", crewSoonT: "Команда скоро", crewSoonText: "Поймай первого босса ({boss}), и к тебе присоединится команда: она ловит рыбу, даже когда ты не играешь.", awayFull: 'Трюм полон, и команда остановилась. Улучши трюм, чтобы она рыбачила дольше.',
     fullShort: 'ПОЛОН', nothing: 'Трюм пуст', perMinU: '/мин',
     newBoat: 'Новая лодка в магазине!', newBoatText: '{boat}: зона «{zone}», до {m} м.',
     bossCaught: 'ЛЕГЕНДАРНЫЙ УЛОВ: {boss}!', victory: 'Ты поймал Кракена!',
@@ -542,7 +544,7 @@ const TXT = {
     crewTitle: 'Tayfa', crewRate: 'Av', hold: 'Ambar', claim: 'Topla', holdFull: 'Ambar dolu: tayfa durdu',
     upg: 'Geliştirmeler', sailors: 'Denizciler', luck: 'Şans', effSailors: '{a}/dk → <b>{b}/dk</b>',
     effHold: '{a} → <b>{b}</b> av süresi', effLuck: 'Toplama ×{m}: %{a} → <b>%{b}</b>', lucky: 'Şanslı av! ×{m}',
-    goCrew: 'Tayfaya git', awayFull: 'Ambar doldu ve tayfa durdu. Daha uzun avlanmaları için Ambarı geliştir.',
+    goCrew: 'Tayfaya git', soon: "Yakında", crewSoonT: "Tayfa yakında", crewSoonText: "İlk boss'u ({boss}) yakala, bir tayfa sana katılsın: sen oynamazken bile senin için balık tutar.", awayFull: 'Ambar doldu ve tayfa durdu. Daha uzun avlanmaları için Ambarı geliştir.',
     fullShort: 'DOLU', nothing: 'Ambar boş', perMinU: '/dk',
     newBoat: 'Mağazada yeni tekne!', newBoatText: '{boat} seni {zone} bölgesine, {m} m\'ye kadar götürür.',
     bossCaught: 'EFSANEVİ AV: {boss}!', victory: 'Kraken\'i yakaladın!',
@@ -584,7 +586,7 @@ const TXT = {
     crewTitle: 'Tripulación', crewRate: 'Pesca', hold: 'Bodega', claim: 'Recoger', holdFull: 'Bodega llena: la tripulación paró',
     upg: 'Mejoras', sailors: 'Marineros', luck: 'Suerte', effSailors: '{a}/min → <b>{b}/min</b>',
     effHold: '{a} → <b>{b}</b> de pesca', effLuck: 'Cobro ×{m}: {a}% → <b>{b}%</b>', lucky: '¡Golpe de suerte! ×{m}',
-    goCrew: 'Ir a la tripulación', awayFull: 'La bodega está llena y la tripulación se detuvo. Mejora la Bodega para que pesquen más tiempo.',
+    goCrew: 'Ir a la tripulación', soon: "Pronto", crewSoonT: "Tripulación en camino", crewSoonText: "Atrapa tu primer jefe ({boss}) y se unirá una tripulación: pesca por ti incluso cuando no juegas.", awayFull: 'La bodega está llena y la tripulación se detuvo. Mejora la Bodega para que pesquen más tiempo.',
     fullShort: 'LLENA', nothing: 'Bodega vacía', perMinU: '/min',
     newBoat: '¡Barco nuevo en la tienda!', newBoatText: 'El {boat} te lleva a la zona {zone}, hasta {m} m.',
     bossCaught: 'CAPTURA LEGENDARIA: {boss}!', victory: '¡Atrapaste al Kraken!',
@@ -626,7 +628,7 @@ const TXT = {
     crewTitle: 'Tripulação', crewRate: 'Pesca', hold: 'Porão', claim: 'Recolher', holdFull: 'Porão cheio: a tripulação parou',
     upg: 'Melhorias', sailors: 'Marinheiros', luck: 'Sorte', effSailors: '{a}/min → <b>{b}/min</b>',
     effHold: '{a} → <b>{b}</b> de pesca', effLuck: 'Coleta ×{m}: {a}% → <b>{b}%</b>', lucky: 'Golpe de sorte! ×{m}',
-    goCrew: 'Ir à tripulação', awayFull: 'O porão está cheio e a tripulação parou. Melhore o Porão para pescarem por mais tempo.',
+    goCrew: 'Ir à tripulação', soon: "Em breve", crewSoonT: "Tripulação a caminho", crewSoonText: "Pegue seu primeiro chefe ({boss}) e uma tripulação se junta a você: ela pesca por você mesmo quando você não está jogando.", awayFull: 'O porão está cheio e a tripulação parou. Melhore o Porão para pescarem por mais tempo.',
     fullShort: 'CHEIO', nothing: 'Porão vazio', perMinU: '/min',
     newBoat: 'Barco novo na loja!', newBoatText: 'O {boat} leva você à zona {zone}, até {m} m.',
     bossCaught: 'PESCA LENDÁRIA: {boss}!', victory: 'Você pegou o Kraken!',
@@ -668,7 +670,7 @@ const TXT = {
     crewTitle: 'Crew', crewRate: 'Fang', hold: 'Laderaum', claim: 'Einsammeln', holdFull: 'Laderaum voll: die Crew pausiert',
     upg: 'Upgrades', sailors: 'Matrosen', luck: 'Glück', effSailors: '{a}/Min → <b>{b}/Min</b>',
     effHold: '{a} → <b>{b}</b> Angelzeit', effLuck: 'Einsammeln ×{m}: {a}% → <b>{b}%</b>', lucky: 'Glücksfang! ×{m}',
-    goCrew: 'Zur Crew', awayFull: 'Der Laderaum ist voll, deshalb hat die Crew aufgehört. Verbessere den Laderaum, damit sie länger angelt.',
+    goCrew: 'Zur Crew', soon: "Bald", crewSoonT: "Crew kommt bald", crewSoonText: "Fang deinen ersten Boss ({boss}), dann kommt eine Crew dazu: sie angelt für dich, auch wenn du nicht spielst.", awayFull: 'Der Laderaum ist voll, deshalb hat die Crew aufgehört. Verbessere den Laderaum, damit sie länger angelt.',
     fullShort: 'VOLL', nothing: 'Laderaum leer', perMinU: '/Min',
     newBoat: 'Neues Boot im Laden!', newBoatText: 'Das {boat} bringt dich in die Zone {zone}, bis {m} m.',
     bossCaught: 'LEGENDÄRER FANG: {boss}!', victory: 'Du hast den Kraken gefangen!',
@@ -846,11 +848,17 @@ const LB_ID = 'top_earnings';   // leaderboard tag, same id in the Playgama cabi
 const PF = BR ? (() => {
   // Playgama Bridge SDK v2
   let rewardWaiter = null, rewardLate = 0;
+  // the interstitial is asked for only when Bridge would show it (120 s after start, 90 s apart: playgama-bridge-config.json);
+  // asking earlier is refused and logged as a failed ad. A shown or failed ad both start the wait again
+  let adT0 = 0, adLast = -1e9;
+  const adReady = () => { const n = performance.now(); return n - adT0 >= 122e3 && n - adLast >= 92e3; };
   const rewardEnd = ok => { clearTimeout(rewardLate); const r = rewardWaiter; rewardWaiter = null; if (r) r(ok); };
   const mock = () => { try { return BR.platform.id === 'mock'; } catch (e) { return true; } };
   return {
     name: 'bridge',
     init: () => BR.initialize().then(() => {
+      adT0 = performance.now();
+      BR.advertisement.on(BR.EVENT_NAME.INTERSTITIAL_STATE_CHANGED, st => { if (st === 'closed' || st === 'failed') adLast = performance.now(); });
       // the reward is given on 'rewarded' and only then, whenever it comes: before the ad closes, or after it (some hosts, and the
       // QA Tool, send it last). A close without it waits a moment for a late 'rewarded' before it counts as no reward
       BR.advertisement.on(BR.EVENT_NAME.REWARDED_STATE_CHANGED, st => {
@@ -881,7 +889,7 @@ const PF = BR ? (() => {
       if (mock()) return simulatedAd();
       return new Promise(res => { rewardEnd(false); rewardWaiter = res; try { BR.advertisement.showRewarded(id); } catch (e) { rewardEnd(false); } });
     },
-    interstitial(id) { try { if (!mock() && BR.advertisement.isInterstitialSupported) BR.advertisement.showInterstitial(id); } catch (e) {} },
+    interstitial(id) { try { if (!mock() && BR.advertisement.isInterstitialSupported && adReady()) { adLast = performance.now(); BR.advertisement.showInterstitial(id); } } catch (e) {} },
     track(name, data) { try { if (BR.analytics && BR.analytics.send) BR.analytics.send(name, data); } catch (e) {} },
     warn() {}, error() {},
   };
@@ -913,7 +921,7 @@ const PF = BR ? (() => {
   hookPause() {}, audioEnabled: () => true, onAudio() {}, score() {},
   rewardedSupported: () => true, rewarded: () => simulatedAd(), interstitial() {}, track() {}, warn() {}, error() {},
 };
-const GAME_VERSION = '1.3.11';   // goes out with every analytics event: change it with every archive that is uploaded
+const GAME_VERSION = '1.3.12';   // goes out with every analytics event: change it with every archive that is uploaded
 /* ---- analytics: where do players leave? ----
    Every event goes through track(). Only the Playgama build sends them (Bridge analytics); in local tests they are kept in window.__hsEvents.
    Progression is a short, fixed list of steps, each with its own name (step_first_cast, step_dive_3, step_boss_1...): Playgama's
@@ -2285,7 +2293,7 @@ function drawSeaWorld() {
     if (boss && !boss.gone && boss.y > v0 && boss.y < v1 + 100) drawBoss();
   }
   // surface waves + boat
-  if (v0 < 200) { if (S.cr) drawCrewBoatFar(); drawBoat(); drawWaves(); }
+  if (v0 < 200) { if (S.cr || crewSoon()) drawCrewBoatFar(); drawBoat(); drawWaves(); }
   // line + hook + catch
   if (meet) { const k = meet.t - MEET.eye - MEET.wipe; g.globalAlpha = 1 - ease((k + .25) / .25) * ease((MEET.hold - k) / .3); }   // the hook steps back while the name of the boss is on the screen
   drawLineAndHook(); g.globalAlpha = 1;
@@ -4740,7 +4748,12 @@ async function renderLeaderboard() {
     body.appendChild(d);
   });
 }
-document.getElementById('crewBtn').onclick = () => openPanel(crewEl);
+document.getElementById('crewBtn').onclick = () => {
+  if (S.cr) { openPanel(crewEl); return; }
+  if (phase !== 'surface' || story || intro || modalOpen()) return;
+  track('crew_soon_opened', { dives: S.st.d });
+  showModal(`<h2>⚓ ${t('crewSoonT')}</h2><div style="font-size:54px">🔒</div><p>${t('crewSoonText', { boss: bossName(0) })}</p><button class="btn green" style="width:100%" id="okB">${t('ok')}</button>`, r => r.querySelector('#okB').onclick = closeModal);
+};
 $('shopBtn').onclick = () => openPanel(shopEl);
 $('albumBtn').onclick = () => { albumSeen = albumCount(); openPanel(albumEl); };
 // while the first purchase is being guided: the cross closes the shop and ends the guide; a tap outside only shakes the card to buy
@@ -4936,12 +4949,15 @@ function goalText() {
 }
 let lastHUD = '';
 const CREW_BOAT = { x: VW * .13, y: -2 };
+const crewSoon = () => !S.cr && S.st.d >= CONFIG.crewSoon;
 function refreshCrewBubble() {
-  const b = $('crewBtn');
-  const on = S.cr && phase === 'surface' && !intro && !story && !anyPanelOpen() && !modalOpen() && Math.abs(camY + VH * .5) < 25;
+  const b = $('crewBtn'), soon = crewSoon();
+  b.classList.toggle('soon', soon);
+  const on = (S.cr || soon) && phase === 'surface' && !intro && !story && !anyPanelOpen() && !modalOpen() && Math.abs(camY + VH * .5) < 25;
   b.classList.toggle('show', !!on);
   if (!on) return;
   b.style.left = (CREW_BOAT.x * scale) + 'px'; b.style.top = ((CREW_BOAT.y - 44 - camY) * scale) + 'px';
+  if (soon) { $('crewAmt').textContent = '🔒 ' + t('soon'); return; }
   $('crewAmt').textContent = fmt(S.cw);
   $('crewFill').style.width = (crewCap() ? clamp(S.cw / crewCap(), 0, 1) * 100 : 0) + '%';
   b.classList.toggle('full', crewFull());
@@ -5181,7 +5197,7 @@ function showSummary() {
     tick();
     const dbl = root.querySelector('#dblBtn');
     if (haulTotal <= 0) dbl.disabled = true;
-    if (!PF.rewardedSupported()) dbl.style.display = 'none';
+    if (!PF.rewardedSupported() || S.st.d <= 2) dbl.style.display = 'none';   // no ad offer on the first two hauls: a new player just keeps fishing
     dbl.onclick = async () => {
       dbl.disabled = true;
       const ok = await showRewardedAd();
@@ -5479,16 +5495,16 @@ function startCrewScene(cv) {
 function rrC(c, x0, y0, w, h, r) { c.beginPath(); c.moveTo(x0 + r, y0); c.arcTo(x0 + w, y0, x0 + w, y0 + h, r); c.arcTo(x0 + w, y0 + h, x0, y0 + h, r); c.arcTo(x0, y0 + h, x0, y0, r); c.arcTo(x0, y0, x0 + w, y0, r); c.closePath(); }
 /* the crew boat seen far away on the horizon, next to yours */
 function drawCrewBoatFar() {
-  const bob = Math.sin(clock * 1.4 + 1) * 1.5, s = .42;
-  g.save(); g.translate(CREW_BOAT.x, CREW_BOAT.y + bob); g.scale(s, s);
+  const bob = Math.sin(clock * 1.4 + 1) * 1.5, s = .42, soon = !S.cr;   // not yet unlocked: a pale boat with nobody on board
+  g.save(); g.translate(CREW_BOAT.x, CREW_BOAT.y + bob); g.scale(s, s); if (soon) g.globalAlpha = .45;
   g.fillStyle = '#2f6fc8'; g.beginPath(); g.moveTo(-70, -20); g.lineTo(78, -24); g.quadraticCurveTo(64, 6, 50, 8); g.lineTo(-58, 8); g.quadraticCurveTo(-72, -2, -70, -20); g.fill();
   g.fillStyle = '#f7f7f2'; g.fillRect(-68, -19, 144, 5);
   g.fillStyle = '#fbf6ea'; g.fillRect(-58, -52, 44, 32); g.fillStyle = '#6cc3ef'; g.fillRect(-52, -46, 12, 9); g.fillRect(-34, -46, 12, 9);
   g.strokeStyle = '#f08a24'; g.lineWidth = 5; g.beginPath(); g.moveTo(40, -22); g.lineTo(62, -70); g.stroke();
   g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 2; g.beginPath(); g.moveTo(62, -70); g.lineTo(80, 10); g.stroke();
-  for (let i = 0; i < 1 + Math.min(3, Math.floor(S.cu[0] / 2)); i++) { g.fillStyle = '#f2c29b'; g.beginPath(); g.arc(10 + i * 14, -30, 5, 0, 7); g.fill(); g.fillStyle = '#e2463b'; g.beginPath(); g.arc(10 + i * 14, -33, 5.5, Math.PI, 0); g.fill(); }
+  if (!soon) for (let i = 0; i < 1 + Math.min(3, Math.floor(S.cu[0] / 2)); i++) { g.fillStyle = '#f2c29b'; g.beginPath(); g.arc(10 + i * 14, -30, 5, 0, 7); g.fill(); g.fillStyle = '#e2463b'; g.beginPath(); g.arc(10 + i * 14, -33, 5.5, Math.PI, 0); g.fill(); }
   g.restore();
-  if (!crewFull() && Math.random() < .02) parts.push({ x: CREW_BOAT.x + 30, y: 0, vx: rand(-40, -10), vy: rand(-160, -110), life: .5, max: .5, type: 'drop', r: 2.5 });
+  if (!soon && !crewFull() && Math.random() < .02) parts.push({ x: CREW_BOAT.x + 30, y: 0, vx: rand(-40, -10), vy: rand(-160, -110), life: .5, max: .5, type: 'drop', r: 2.5 });
 }
 
 /* ============================ loop, pause & boot ================= */
