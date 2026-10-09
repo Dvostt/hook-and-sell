@@ -921,7 +921,7 @@ const PF = BR ? (() => {
   hookPause() {}, audioEnabled: () => true, onAudio() {}, score() {},
   rewardedSupported: () => true, rewarded: () => simulatedAd(), interstitial() {}, track() {}, warn() {}, error() {},
 };
-const GAME_VERSION = '1.3.12';   // goes out with every analytics event: change it with every archive that is uploaded
+const GAME_VERSION = '1.3.13';   // goes out with every analytics event: change it with every archive that is uploaded
 /* ---- analytics: where do players leave? ----
    Every event goes through track(). Only the Playgama build sends them (Bridge analytics); in local tests they are kept in window.__hsEvents.
    Progression is a short, fixed list of steps, each with its own name (step_first_cast, step_dive_3, step_boss_1...): Playgama's
@@ -1035,10 +1035,17 @@ const Snd = {
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     o.connect(g); g.connect(this.out); o.start(t0); o.stop(t0 + dur + 0.02);
   },
-  noise(dur, vol = .3, freq = 1200, delay = 0) {
-    if (!this.ok()) return;
+  // one fading burst of noise per length, made once (making it on every splash left garbage behind: small stalls on phones)
+  bufs: {},
+  noiseBuf(dur) {
+    if (this.bufs[dur]) return this.bufs[dur];
     const c = this.ctx, n = Math.floor(c.sampleRate * dur), buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
     for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    return this.bufs[dur] = buf;
+  },
+  noise(dur, vol = .3, freq = 1200, delay = 0) {
+    if (!this.ok()) return;
+    const c = this.ctx, buf = this.noiseBuf(dur);
     const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), t0 = c.currentTime + delay;
     s.buffer = buf; f.type = 'lowpass'; f.frequency.value = freq; g.gain.value = vol;
     s.connect(f); f.connect(g); g.connect(this.out); s.start(t0);
@@ -1072,21 +1079,26 @@ const sfx = {
 // outlined text always gets round corners: a mitred outline grows spikes on M, N, V and W
 function roundText(c) { const st = c.strokeText; c.strokeText = function (...a) { const j = c.lineJoin; c.lineJoin = 'round'; st.apply(c, a); c.lineJoin = j; }; return c; }
 const cv = document.getElementById('c'), g = roundText(cv.getContext('2d'));
-const fxc = document.getElementById('fx'), fxg = fxc.getContext('2d');
+const fxc = document.getElementById('fx'), fxg = fxc.getContext('2d'); let fxDirty = true;
 /* The playfield is a portrait column VW units wide. On tall screens it fills the width; on wide
    screens (desktop, landscape phones, anything up to 32:9) it is fitted to the height and centred,
    and the sky, sea and seabed simply continue on the sides. offX = side margin in playfield units. */
 const VW = 400, MIN_VH = 620; let VH = 700, scale = 1, DPR = 1, offX = 0;
+// drawing resolution: the screen's own pixel density, but at most 2, and never more than RES_PX pixels in all (a phone at 3× and
+// a big retina window would otherwise fill 2 to 5 million pixels a frame). A device that stays slow steps it down (resLevel)
+const RES_PX = 2.2e6, RES_STEPS = [1, .8, .65, .5]; let resLevel = 0;
 const X0 = () => -offX - 10, XW = () => VW + offX * 2 + 20;   // full-screen horizontal span for fills
 function resize() {
-  DPR = Math.min(window.devicePixelRatio || 1, 2.5);
   const w = window.innerWidth, h = window.innerHeight;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
   // a window with no size (the page around the game has hidden or flattened its frame): keep the last layout. With a scale of zero
   // the field would be infinitely wide, and the loops that draw across it would never end
   if (!(w >= 40 && h >= 40)) return;
   scale = Math.min(w / VW, h / MIN_VH); VH = h / scale; offX = (w / scale - VW) / 2;
-  cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
-  fxc.width = cv.width; fxc.height = cv.height;
+  DPR = Math.max(1, Math.min(DPR, Math.sqrt(RES_PX / (w * h))) * RES_STEPS[resLevel]);
+  // (a canvas given its own size again is wiped and allocated anew: only when the size changes, e.g. not on every bar show/hide that keeps it)
+  const cw = Math.round(w * DPR), ch = Math.round(h * DPR);
+  if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; fxc.width = cw; fxc.height = ch; fxDirty = true; }
   const ui = document.getElementById('ui');
   // the buttons and windows live in a box over the field. On a short landscape screen (a phone on its side, with the browser's bar)
   // the field is a narrow column: the box then stays at least 460 px wide, centred, and goes compact (smaller buttons, windows fitted)
@@ -1097,6 +1109,9 @@ function resize() {
   if (window.__hsReady) { render(); }
 }
 window.addEventListener('resize', resize); resize();
+// a phone short of graphics memory can take the canvas away (it shows empty) and give it back a moment later: count it, redraw at once
+cv.addEventListener('contextlost', () => { try { track('canvas_lost', { phase, zone: S.l[3] + 1, dpr: Math.round(DPR * 100) / 100 }); } catch (e) {} });
+cv.addEventListener('contextrestored', () => { fxDirty = true; try { render(); } catch (e) {} });
 
 /* ============================ game state ========================= */
 let phase = 'surface';            // surface | down | up | sell | summary
@@ -3055,8 +3070,11 @@ function drawScreenFX() {
   }
   // screen-space floats + coins
   for (const f of floats) if (!f.world) floatText(f);
-  fxg.setTransform(DPR * scale, 0, 0, DPR * scale, 0, 0); fxg.clearRect(0, 0, VW + offX * 2 + 10, VH + 10);
-  for (const p of uparts) { fxg.fillStyle = '#ffd84d'; fxg.strokeStyle = '#b27500'; fxg.lineWidth = 1.5; fxg.beginPath(); fxg.arc(p.x, p.y, 6, 0, 7); fxg.fill(); fxg.stroke(); fxg.fillStyle = 'rgba(255,255,255,.8)'; fxg.beginPath(); fxg.arc(p.x - 2, p.y - 2, 1.8, 0, 7); fxg.fill(); }
+  if (uparts.length || fxDirty) {   // the coin layer: left alone while there is nothing on it and nothing to wipe
+    fxDirty = uparts.length > 0;
+    fxg.setTransform(DPR * scale, 0, 0, DPR * scale, 0, 0); fxg.clearRect(0, 0, VW + offX * 2 + 10, VH + 10);
+    for (const p of uparts) { fxg.fillStyle = '#ffd84d'; fxg.strokeStyle = '#b27500'; fxg.lineWidth = 1.5; fxg.beginPath(); fxg.arc(p.x, p.y, 6, 0, 7); fxg.fill(); fxg.stroke(); fxg.fillStyle = 'rgba(255,255,255,.8)'; fxg.beginPath(); fxg.arc(p.x - 2, p.y - 2, 1.8, 0, 7); fxg.fill(); }
+  }
   if ((phase === 'down' || phase === 'up') && !meet) {
     // depth readout
     const m = Math.max(0, Math.round(hook.y / PX));
@@ -5575,7 +5593,11 @@ function frame(ts) {
   const raw = ts - (lastT || ts), dt = Math.min(.05, raw / 1000); lastT = ts;
   if (started && (phase === 'down' || phase === 'up')) perfFrame(raw);
   // (never in the first seconds: a page that is still loading is not a slow device)
-  if (!LITE && ts > 12000 && (phase === 'down' || phase === 'up') && raw > 0 && raw < 250) { slowMs = raw > 25 ? slowMs + raw : Math.max(0, slowMs - raw * .5); if (slowMs > 1500) LITE = true; }
+  // (first the glows and dust go, then the drawing resolution steps down, one step each time it is still slow)
+  if (resLevel < RES_STEPS.length - 1 && ts > 12000 && (phase === 'down' || phase === 'up') && raw > 0 && raw < 250) {
+    slowMs = raw > 25 ? slowMs + raw : Math.max(0, slowMs - raw * .5);
+    if (slowMs > 1500) { slowMs = 0; if (!LITE) LITE = true; else if (DPR > 1) { resLevel++; resize(); } else resLevel = RES_STEPS.length - 1; track('quality_down', { lite: LITE, res: resLevel, dpr: Math.round(DPR * 100) / 100 }); }
+  }
   // one frame that goes wrong must not be the last one: the loop goes on, and the error is still reported (the first few)
   try {
     if (started) { updateCine(dt); updateStory(dt); updatePayouts(dt); update(dt * timeScale); }
