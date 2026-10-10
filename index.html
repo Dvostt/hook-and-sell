@@ -847,7 +847,7 @@ function simulatedAd() {
 const LB_ID = 'top_earnings';   // leaderboard tag, same id in the Playgama cabinet and in playgama-bridge-config.json
 const PF = BR ? (() => {
   // Playgama Bridge SDK v2
-  let rewardWaiter = null, rewardLate = 0;
+  let rewardWaiter = null, rewardLate = 0, brReady = false;
   // the interstitial is asked for only when Bridge would show it (120 s after start, 90 s apart: playgama-bridge-config.json);
   // asking earlier is refused and logged as a failed ad. A shown or failed ad both start the wait again
   let adT0 = 0, adLast = -1e9;
@@ -857,7 +857,7 @@ const PF = BR ? (() => {
   return {
     name: 'bridge',
     init: () => BR.initialize().then(() => {
-      adT0 = performance.now();
+      brReady = true; adT0 = performance.now();
       BR.advertisement.on(BR.EVENT_NAME.INTERSTITIAL_STATE_CHANGED, st => { if (st === 'closed' || st === 'failed') adLast = performance.now(); });
       // the reward is given on 'rewarded' and only then, whenever it comes: before the ad closes, or after it (some hosts, and the
       // QA Tool, send it last). A close without it waits a moment for a late 'rewarded' before it counts as no reward
@@ -865,7 +865,7 @@ const PF = BR ? (() => {
         if (!rewardWaiter) return;
         if (st === 'rewarded') rewardEnd(true);
         else if (st === 'failed') rewardEnd(false);
-        else if (st === 'closed') { clearTimeout(rewardLate); rewardLate = setTimeout(() => rewardEnd(false), 1500); }
+        else if (st === 'closed') { clearTimeout(rewardLate); rewardLate = setTimeout(() => rewardEnd(false), 2500); }
       });
     }),
     firstFrame() {},
@@ -884,9 +884,10 @@ const PF = BR ? (() => {
     lbPopup: () => BR.leaderboards.showNativePopup(LB_ID),
     playerId: () => { try { return BR.player.id; } catch (e) { return null; } },
     playerName: () => { try { return BR.player.isAuthorized ? BR.player.name : null; } catch (e) { return null; } },
-    rewardedSupported: () => mock() || !!BR.advertisement.isRewardedSupported,
+    rewardedSupported: () => mock() || (brReady && !!BR.advertisement.isRewardedSupported),
     rewarded(id) {
       if (mock()) return simulatedAd();
+      if (!brReady) return Promise.resolve(false);   // the platform never started: no ad, no wait
       return new Promise(res => { rewardEnd(false); rewardWaiter = res; try { BR.advertisement.showRewarded(id); } catch (e) { rewardEnd(false); } });
     },
     interstitial(id) { try { if (!mock() && BR.advertisement.isInterstitialSupported && adReady()) { adLast = performance.now(); BR.advertisement.showInterstitial(id); } } catch (e) {} },
@@ -921,7 +922,7 @@ const PF = BR ? (() => {
   hookPause() {}, audioEnabled: () => true, onAudio() {}, score() {},
   rewardedSupported: () => true, rewarded: () => simulatedAd(), interstitial() {}, track() {}, warn() {}, error() {},
 };
-const GAME_VERSION = '1.3.13';   // goes out with every analytics event: change it with every archive that is uploaded
+const GAME_VERSION = '1.3.14';   // goes out with every analytics event: change it with every archive that is uploaded
 /* ---- analytics: where do players leave? ----
    Every event goes through track(). Only the Playgama build sends them (Bridge analytics); in local tests they are kept in window.__hsEvents.
    Progression is a short, fixed list of steps, each with its own name (step_first_cast, step_dive_3, step_boss_1...): Playgama's
@@ -939,7 +940,7 @@ function defaultState() {
   return { v: SAVE_VERSION, m: CONFIG.startMoney, te: 0, l: [0, 0, 0, 0], b: CONFIG.zones.map(() => 0),
     c: CONFIG.species.map(() => 0), n: CONFIG.species.map(() => 0), cr: 0, cw: 0, cu: [0, 0, 0], ls: Date.now(), tu: 0, so: 0, gd: 0, gb: 0,
     st: { d: 0, md: 0, bc: 0, pt: 0, g: 0, ch: 0, bh: 0, rb: 0 }, win: 0, snd: 1, q: 0, rl: 0, lk: 0, hh: [], wd: 0, fz: 0, ar: 0, nt: 0, br: 0, nw: 0, bs: 0,   // bs: bosses met on the floor, one bit per zone
-    sg: 0, sv: 0, sn: 0, ss: 0, cp: 0 };   // seal: stones caught, stones shown going in, dive of the next stone, story stage (1 stones appeared, 2 last one swallowed, 3 seal complete); pieces of the Colossus
+    sg: 0, sv: 0, sn: 0, ss: 0, cp: 0, pc: 0 };   // pc: a chest caught and not opened yet   // seal: stones caught, stones shown going in, dive of the next stone, story stage (1 stones appeared, 2 last one swallowed, 3 seal complete); pieces of the Colossus
 }
 function migrate(o) {
   const d = defaultState();
@@ -958,7 +959,12 @@ function migrate(o) {
   while (o.l.length < 4) o.l.push(0);   // line, hook, bait, boat
   { const U = CONFIG.upgrades, top = [U.line.values.length - 1, U.hook.values.length - 1, U.bait.levels - 1, CONFIG.zones.length - 1], lim = (v, hi) => Math.max(0, Math.min(hi, Math.floor(v)));
     o.l = o.l.slice(0, 4).map((v, i) => lim(v, top[i]));
-    o.q = lim(o.q, CONFIG.onboarding.quests.length); o.cp = lim(o.cp, 3); o.ss = lim(o.ss, 3); o.win = lim(o.win, 3); o.sg = lim(o.sg, CONFIG.seal.stones); o.sv = lim(o.sv, o.sg); o.bs = lim(o.bs, 255); }
+    o.q = lim(o.q, CONFIG.onboarding.quests.length); o.cp = lim(o.cp, 3); o.ss = lim(o.ss, 3); o.win = lim(o.win, 3); o.sg = lim(o.sg, CONFIG.seal.stones); o.sv = lim(o.sv, o.sg); o.bs = lim(o.bs, 255); o.pc = lim(o.pc, 1);
+    const C = CONFIG.crew.costs; o.cu = o.cu.slice(0, 3).map((v, i) => lim(v, [C.sailors, C.hold, C.luck][i].length));   // crew levels inside their tables
+    ['gb', 'ar', 'nt'].forEach(k => { o[k] = lim(o[k], 99); });   // boosts: whole dives
+  }
+  { // the Colossus: three pieces exactly when its boss is caught
+    if (o.b.length > ATLANTIS_Z) o.cp = o.b[ATLANTIS_Z] ? 3 : Math.min(o.cp, 2); }
   if (noSeen) o.bs = (2 << o.l[3]) - 1;   // players from before the dark bosses saw every boss up to their zone in full colour
   while (o.b.length < CONFIG.zones.length) o.b.push(0);   // one boss per zone: saves from before a new zone get its slot
   while (o.cu.length < 3) o.cu.push(0);
@@ -988,9 +994,31 @@ function jumpTo(name) {
 }
 let S = defaultState();
 let loaded = false, saving = false, saveDirty = false;
+// a platform call that may never answer: past `ms` it counts as failed
+const within = (pr, ms) => new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('timeout')), ms); Promise.resolve(pr).then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); }); });
+// the save could not be read (the platform's storage was not ready, or did not answer): nothing is written over it until it can be,
+// so a failed read never turns into a new game saved over the real one. It is tried again in the background
+let loadFailed = false;
+async function readSave() {
+  for (let i = 0; i < 3; i++) {
+    try { return { ok: true, raw: await within(PF.load(), 6000) }; } catch (e) { PF.warn(); }
+    await new Promise(r => setTimeout(r, 400 * (i + 1)));
+  }
+  return { ok: false, raw: null };
+}
+function retryLoad() {
+  setTimeout(async () => {
+    const r = await readSave(); if (!r.ok) { retryLoad(); return; }
+    loadFailed = false;
+    let old = null; try { old = r.raw ? migrate(JSON.parse(r.raw)) : null; } catch (e) {}
+    // the stored game is further on than what was played meanwhile: it comes back (only at the surface, between dives)
+    if (old && old.st.d > S.st.d && phase === 'surface' && !intro && !story && !modalOpen()) { S = old; displayMoney = S.m; refreshHUD(true); }
+    save();
+  }, 15000);
+}
 async function loadGame() {
-  let raw = null;
-  try { raw = await PF.load(); } catch (e) { PF.warn(); }
+  const r = await readSave(), raw = r.raw;
+  if (!r.ok) { loadFailed = true; retryLoad(); }
   try { S = migrate(raw ? JSON.parse(raw) : null); } catch (e) { S = defaultState(); }
   if (LOCAL_TEST && QS.get('soldi')) S.m = Math.max(S.m, +QS.get('soldi') || 0);
   if (LOCAL_TEST && QS.get('salto') && !raw) jumpTo(QS.get('salto'));   // only on an empty slot: a reload keeps what was played since
@@ -999,13 +1027,15 @@ async function loadGame() {
   loaded = true;
 }
 function save() {
-  if (!loaded) return;                       // never save before loadData resolved
+  if (!loaded || loadFailed) return;         // never save before the save was read
   S.ls = Date.now();
-  let data = JSON.stringify(S);
+  // during a dive the save keeps the game as it was when the dive began: a dive counts once its haul is paid. A page closed in the
+  // middle of one (a boss caught on the way up, boosts used) comes back to the surface as before the cast, never half-counted
+  let data = diveSnap && phase !== 'surface' && phase !== 'summary' ? diveSnap : JSON.stringify(S);
   if (data.length > 60000) { data = JSON.stringify(defaultState()); } // safety: stay far below 64 KiB
   if (saving) { saveDirty = true; return; }
   saving = true;
-  Promise.resolve().then(() => PF.save(data)).catch(() => PF.warn()).finally(() => { saving = false; if (saveDirty) { saveDirty = false; save(); } });
+  within(Promise.resolve().then(() => PF.save(data)), 8000).catch(() => PF.warn()).finally(() => { saving = false; if (saveDirty) { saveDirty = false; save(); } });   // (a save that never answers must not stop the next ones)
 }
 async function getLang() {
   let l = 'en';
@@ -1109,6 +1139,7 @@ function resize() {
   if (window.__hsReady) { render(); }
 }
 window.addEventListener('resize', resize); resize();
+window.addEventListener('pagehide', () => { try { save(); } catch (e) {} });
 // a phone short of graphics memory can take the canvas away (it shows empty) and give it back a moment later: count it, redraw at once
 cv.addEventListener('contextlost', () => { try { track('canvas_lost', { phase, zone: S.l[3] + 1, dpr: Math.round(DPR * 100) / 100 }); } catch (e) {} });
 cv.addEventListener('contextrestored', () => { fxDirty = true; try { render(); } catch (e) {} });
@@ -1128,6 +1159,7 @@ let flashCol = '255,250,220';
 let meet = null;   // the first meeting with a boss: { t, b }, see startMeet
 const MEET = { eye: .55, wipe: .85, hold: 1.25 };   // seconds: the eyes flare, the light crosses the shape, the name stays
 let cine = null, timeScale = 1, zoomK = 1, zoomTo = 1, zoomCx = 200, zoomCy = 300, payouts = [], payHold = 0, crewClaimUntil = 0;
+let diveSnap = null;   // the save as it was when this dive began (see save())
 let teasers = [], chest = null, chestGot = false, haulChest = false, baitBoost = false, intro = null, resumeQ = [];
 
 // express ride: down to the top of the zone where the line ends, but always leave minDodge metres to dodge
@@ -1525,7 +1557,9 @@ function labelX(f) { g.font = '900 13px ui-rounded,system-ui,sans-serif'; const 
 // a blade of light crosses it from head to tail and leaves its colours behind (the Colossus: a ring of light out of its heart),
 // the dashes of its outline fly off as sparks, the fish dart away; then its name, large, and the dive goes on.
 function startMeet() {
-  const b = boss; S.bs |= 1 << b.z; save();
+  const b = boss; S.bs |= 1 << b.z;
+  if (diveSnap) { const o = JSON.parse(diveSnap); o.bs = S.bs; diveSnap = JSON.stringify(o); }   // having seen the boss is kept even if this dive is lost to a reload
+  save();
   silOutline(b.lk); meet = { t: 0, b, o: OUTLINES.get(b.lk) };
   $('toasts').innerHTML = ''; sfx.meet(); step('boss_met_' + (b.z + 1));
 }
@@ -1562,11 +1596,12 @@ function showRuleCard() {
     });
 }
 function cast() {
-  if (phase !== 'surface' || anyPanelOpen() || modalOpen()) return;
+  if (!started || paused || phase !== 'surface' || anyPanelOpen() || modalOpen()) return;   // (a tap while the game is still loading, or during a pause, does nothing)
   if (intro || story) return;   // intros and story scenes cannot be skipped
   if (guideOn()) { bump($('hintArrow')); return; }   // first the shop
   if (S.st.d === CONFIG.onboarding.freeDives && !S.rl) { S.rl = 1; save(); showRuleCard(); return; }
   Snd.init(); Snd.sync();
+  diveSnap = JSON.stringify(S);
   if (S.st.d === 0) step('first_cast');
   spawnDive(); zoneLabel = null;
   phase = 'down'; caught = []; combo = 0; lastCatch = -9; diveBest = 0; grace = CONFIG.grace; diveT = 0; full = false;
@@ -1734,7 +1769,7 @@ window.addEventListener('keydown', e => {
       const b = m.querySelector('#contBtn, #okB, #openB'); if (b) b.click();
       return;
     }
-    if (anyPanelOpen()) closePanels();
+    if (anyPanelOpen()) { const x = document.querySelector('.sheet.open [data-close]'); if (x) x.click(); else closePanels(); }   // (as its cross: the guided shop lets go)
     return;
   }
   if ((e.key === ' ' || e.key === 'Enter') && phase === 'surface' && !anyPanelOpen()) { Snd.init(); Snd.sync(); cast(); }
@@ -1965,6 +2000,7 @@ function updateSell(dt) {
   }
 }
 function updateUParts(dt) {
+  if (!uparts.length) return;
   const mp = moneyTarget();
   for (const p of uparts) {
     p.t += dt;
@@ -2042,7 +2078,7 @@ function drawBackdrop() {
         const hgt = 90 + i * 20, base = waterY - VH * (.46 - i * .06), gr = g.createLinearGradient(0, 0, 0, hgt);
         gr.addColorStop(0, `rgba(${c3},0)`); gr.addColorStop(.35, `rgba(${c3},${a3})`); gr.addColorStop(1, `rgba(${c3},0)`);
         g.fillStyle = gr;
-        for (let x = X0(); x < X0() + XW(); x += 10) { const yy = base + Math.sin(x * .011 + clock * .25 + o) * 34 + Math.sin(x * .027 - clock * .4 + o) * 12; g.save(); g.translate(0, yy); g.fillRect(x, 0, 10.5, hgt); g.restore(); }
+        for (let x = X0(); x < X0() + XW(); x += 10) { const yy = base + Math.sin(x * .011 + clock * .25 + o) * 34 + Math.sin(x * .027 - clock * .4 + o) * 12; g.translate(0, yy); g.fillRect(x, 0, 10.5, hgt); g.translate(0, -yy); }   // (moved there and back: cheaper than save/restore)
       });
     } else if (sc.light === 'storm') {
       // a few stars between the clouds, and green lightning now and then
@@ -2092,12 +2128,11 @@ function drawBackdrop() {
     const rayA = clamp(1 - m0 / 70, 0, 1) * .16 * sc.rays;
     if (rayA > 0) {
       g.save(); g.globalCompositeOperation = 'lighter';
-      for (let i = 0; i < 5; i++) {
-        const x = (i * 97 + Math.sin(clock * .3 + i) * 20) % VW;
-        const rg = g.createLinearGradient(0, top, 0, top + 520);
-        rg.addColorStop(0, `rgba(200,245,255,${rayA})`); rg.addColorStop(1, 'rgba(200,245,255,0)');
-        g.fillStyle = rg; g.beginPath(); g.moveTo(x, top); g.lineTo(x + 34, top); g.lineTo(x + 120, top + 520); g.lineTo(x + 40, top + 520); g.fill();
-      }
+      const rg = g.createLinearGradient(0, top, 0, top + 520);   // (one gradient for the five rays: they differ only in x)
+      rg.addColorStop(0, `rgba(200,245,255,${rayA})`); rg.addColorStop(1, 'rgba(200,245,255,0)');
+      g.fillStyle = rg; g.beginPath();
+      for (let i = 0; i < 5; i++) { const x = (i * 97 + Math.sin(clock * .3 + i) * 20) % VW; g.moveTo(x, top); g.lineTo(x + 34, top); g.lineTo(x + 120, top + 520); g.lineTo(x + 40, top + 520); g.closePath(); }
+      g.fill();
       g.restore();
     }
     if (waterY > 0 && sc.reflect) sc.reflect(waterY);
@@ -3290,16 +3325,23 @@ function pal(lk, mode) {
   if (mode === 3) { const h = (clock * 140) % 360; return { back: `hsl(${h},85%,45%)`, body: `hsl(${h + 70},90%,62%)`, belly: `hsl(${h + 140},90%,86%)`, fin: `hsl(${h + 210},85%,58%)`, pc: `hsl(${h + 280},95%,75%)`, out: `hsl(${h},60%,22%)` }; }
   if (mode === 2) return { back: SIL, body: SIL, belly: SIL, fin: SIL, pc: SIL, out: SIL };
   if (mode === 1) return GOLD;
-  return { back: lk.back, body: lk.body, belly: lk.belly, fin: lk.fin, pc: lk.pc || lk.fin, out: lk.rim || shade(lk.back, -.35) };
+  return lk.__pal || (lk.__pal = { back: lk.back, body: lk.body, belly: lk.belly, fin: lk.fin, pc: lk.pc || lk.fin, out: lk.rim || shade(lk.back, -.35) });   // (made once per creature, not per fish per frame)
 }
 function shade(hex, k) {
   const n = parseInt(hex.slice(1), 16); let r = n >> 16, gg = (n >> 8) & 255, b = n & 255;
   const f = v => clamp(Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k), 0, 255);
   return `rgb(${f(r)},${f(gg)},${f(b)})`;
 }
+// the body's shading from back to belly: the same few gradients serve every frame (one per canvas, height and colours), instead of
+// a new one for every fish in every frame (garbage the phone has to clear: small stalls)
+const GRADS = new WeakMap();
 function bodyGrad(ctx, h, c) {
-  const gr = ctx.createLinearGradient(0, -h * .5, 0, h * .5);
-  gr.addColorStop(0, c.back); gr.addColorStop(.45, c.body); gr.addColorStop(1, c.belly); return gr;
+  let m = GRADS.get(ctx); if (!m) GRADS.set(ctx, m = new Map());
+  const hh = Math.max(1, Math.round(h)), key = hh + c.back + c.body + c.belly;   // (to the pixel: a shade that moves by half a pixel is not seen)
+  let gr = m.get(key); if (gr) return gr;
+  if (m.size > 2000) m.clear();
+  gr = ctx.createLinearGradient(0, -hh * .5, 0, hh * .5);
+  gr.addColorStop(0, c.back); gr.addColorStop(.45, c.body); gr.addColorStop(1, c.belly); m.set(key, gr); return gr;
 }
 let eyesClosed = false;
 let eyesGlow = null;   // "r,g,b" while a boss is drawn as a dark shape: its eyes alone are lit
@@ -5039,9 +5081,8 @@ function closeModal() { $('modalWrap').classList.remove('show'); nextModal(); }
 function afterModals() { if (phase === 'summary') phase = 'surface'; refreshHUD(true); runStory(); }
 function thumb(lk, w, mode) { const c = document.createElement('canvas'); c.width = 120; c.height = 68; const x = c.getContext('2d'); x.scale(2, 2); drawFishAt(lk, 30, 17, w, 1, 1.2, mode, x); return c; }
 function rollChest() {
-  S.st.ch++;
   let type = 'bait';   // the very first chest gives golden bait: more golden fish on the next dives (the first Line is bought in the shop)
-  if (S.st.ch > 1) { const w = CONFIG.chest.weights; let r = Math.random() * (w[0] + w[1] + w[2]); type = (r -= w[0]) < 0 ? 'coins' : (r -= w[1]) < 0 ? 'upgrade' : 'bait'; }
+  if (S.st.ch > 0) { const w = CONFIG.chest.weights; let r = Math.random() * (w[0] + w[1] + w[2]); type = (r -= w[0]) < 0 ? 'coins' : (r -= w[1]) < 0 ? 'upgrade' : 'bait'; }
   if (type === 'upgrade') {
     const opts = freeUpgradeOpts();
     if (opts.length) return { type, k: opts[Math.floor(Math.random() * opts.length)] };
@@ -5083,7 +5124,7 @@ function showChestModal() {
     const btn = root.querySelector('#openB');
     const open = () => {
       if (opened) { closeModal(); return; }
-      opened = true; t0 = performance.now(); applyChest(rw); sfx.gold();
+      opened = true; t0 = performance.now(); S.st.ch++; S.pc = 0; applyChest(rw); sfx.gold();
       root.querySelector('#chestTxt').innerHTML = chestText(rw);
       btn.textContent = t('ok'); btn.className = 'btn green'; btn.style.width = '100%';
       const r = c.getBoundingClientRect();
@@ -5171,8 +5212,8 @@ function showWheel() {
   });
 }
 function showSummary() {
-  doubledNow = false;
-  if (haulChest) { haulChest = false; showChestModal(); }
+  doubledNow = false; diveSnap = null;   // the haul is paid: from here the save is the game itself
+  if (haulChest) { haulChest = false; S.pc = 1; showChestModal(); }   // (S.pc: a chest caught and not opened yet comes back after a reload)
   // group the haul by species/golden
   const groups = [];
   for (const it of haulItems) {
@@ -5218,9 +5259,11 @@ function showSummary() {
     if (!PF.rewardedSupported() || S.st.d <= 2) dbl.style.display = 'none';   // no ad offer on the first two hauls: a new player just keeps fishing
     dbl.onclick = async () => {
       dbl.disabled = true;
+      const gain = haulTotal;   // this haul, even if the window is closed and another dive ends before the ad answers
       const ok = await showRewardedAd();
       if (ok) {
-        S.m += haulTotal; S.te += haulTotal; save(); sendScore(); sfx.gold();
+        S.m += gain; S.te += gain; save(); sendScore(); sfx.gold();
+        if (!v.isConnected) return;
         // the ×2 stamps over the total, which counts up to the doubled value
         const vr = v.getBoundingClientRect(), from = haulTotal, t0 = performance.now();
         const mr = $('modal').getBoundingClientRect();   // above the window, so the total stays visible while it counts up
@@ -5617,7 +5660,7 @@ function resumeGame() {
   paused = false; lastT = 0; document.documentElement.classList.remove('hs-paused');
   const away = (Date.now() - pausedAt) / 1000;
   Snd.sync();
-  if (started) { if (phase === 'surface') checkAway(away); else crewAccrue(away); }
+  if (started) { if (phase === 'surface' && !intro && !story && !cine) checkAway(away); else crewAccrue(away); }   // (never over an intro or a story scene)
   resumeQ.splice(0).forEach(f => requestAnimationFrame(f));
   rafId = requestAnimationFrame(frame);
 }
@@ -5643,13 +5686,13 @@ async function boot() {
   render();
   PF.firstFrame();
   rafId = requestAnimationFrame(frame);
-  try { await PF.init(); } catch (e) { PF.warn(); }
+  try { await within(PF.init(), 8000); } catch (e) { PF.warn(); }
   try {
     Snd.sdkOn = PF.audioEnabled();
     PF.onAudio(on => { Snd.sdkOn = on; Snd.init(); Snd.sync(); });
     PF.hookPause(() => { hostPaused = true; pauseGame(); }, () => { hostPaused = false; resumeGame(); });
   } catch (e) { PF.warn(); }
-  const [lang] = await Promise.all([getLang(), loadGame()]);
+  const [lang] = await Promise.all([within(getLang(), 4000).catch(() => 'en'), loadGame()]);
   LANG = lang; document.documentElement.lang = LANG;
   $('shopLbl').textContent = t('shop'); $('albumLbl').textContent = t('album');
   displayMoney = S.m; albumSeen = albumCount(); renderSoundBtn();
@@ -5662,6 +5705,7 @@ async function boot() {
   PF.ready();
   track(S.st.d === 0 ? 'session_new' : 'session_returning', { dives: S.st.d, zone: S.l[3] + 1 });
   if (!S.nw) { if (S.b[KRAKEN_Z] && S.l[3] < BERMUDA_Z) showNews(); S.nw = 1; }   // once per save
+  if (S.pc) showChestModal();   // a chest caught before the page closed
   checkAway(away);
   runStory();   // a story scene the last session did not get to show
   save();
